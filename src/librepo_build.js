@@ -23,6 +23,15 @@ import {LibraryRepository, Library, LibraryNotFoundError} from './librepo';
 import {Agent} from './agent';
 
 
+export class BuildLibrary extends Library
+{
+	constructor(name, metadata, repo) {
+		super(name);
+		this.metadata = metadata;
+		this.repo = repo;
+	}
+}
+
 /**
  * A library repository that fetches it's content via the Build library endpoint.
  */
@@ -42,9 +51,10 @@ export class BuildLibraryRepository extends LibraryRepository {
 	}
 
 	_buildLibrary(name, lib) {
-		if (lib.length!=1)
+		if (lib.length!==1) {
 			throw new LibraryNotFoundError(this, name);
-		return new BuildLibrary(name, lib, this);
+		}
+		return new BuildLibrary(name, lib[0], this);
 	}
 
 	names() {
@@ -76,17 +86,5 @@ export class BuildLibraryRepository extends LibraryRepository {
 	qualify(uri) {
 		return this.endpoint + uri;
 	}
-
-}
-
-
-class BuildLibrary extends Library
-{
-	constructor(name, metadata, repo) {
-		super(name);
-		this.metadata = metadata;
-		this.repo = repo;
-	}
-
 
 }
