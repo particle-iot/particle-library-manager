@@ -135,7 +135,7 @@ describe('LibraryManager', () => {
 		it('straems content', () => {
 			const sut = new MemoryLibraryFile('file', 'nice', 'ext', 'lots of content here', '123');
 			let result = '';
-			const ws = Writable();
+			const ws = Writable();  // eslint-disable-line new-cap
 			ws._write = (chunk, enc, next) => {
 				result += chunk;
 				next();

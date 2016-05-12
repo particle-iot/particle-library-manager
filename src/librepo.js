@@ -86,7 +86,7 @@ export class Library {
 	get name() {
 		return this._name;
 	}
-	
+
 	/**
 	 * A promise of the library files available.
 	 * @returns {Promise.<Array>}   The files that make up this library.
@@ -121,12 +121,15 @@ export class MemoryLibraryFile extends LibraryFile {
 	/**
 	 *
 	 * @param {Writable} stream receives the streamed content.
+	 * @returns {None} nothing
 	 */
 	content(stream) {
 		const Readable = require('stream').Readable;
-		var s = new Readable;
-		s._read = () => { rs.push(this.string_content); rs.push(null); };
-		s.pipe(stream);
+		const rs = new Readable;
+		rs._read = () => {
+			rs.push(this.string_content);
+			rs.push(null);
+		};
+		rs.pipe(stream);
 	}
-	
 }

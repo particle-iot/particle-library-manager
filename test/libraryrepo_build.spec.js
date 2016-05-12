@@ -24,10 +24,9 @@ chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
 import {BuildLibraryRepository, BuildLibrary} from '../src/librepo_build';
-import {LibraryNotFoundError} from '../src/librepo';
 import {Agent} from '../src/agent';
 
-describe("Build", () => {
+describe('Build', () => {
 
 	describe('Library Repo', () => {
 		it('is constructed with the endpoint url', () => {
@@ -77,13 +76,13 @@ describe("Build", () => {
 	});
 
 
-	describe("Library", () => {
-		it("throws an error if no id is provided", () => {
+	describe('Library', () => {
+		it('throws an error if no id is provided', () => {
 			expect(() => new BuildLibrary('name', {}, {})).to.throw(TypeError);
 			expect(() => new BuildLibrary('name', { id: ''}, 'repo')).to.throw('library \'name\' not found in repo \'repo\'.');
 		});
 
-		it("constructs with an id", () => {
+		it('constructs with an id', () => {
 			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
 			expect(sut.metadata.id).to.be.equal('123');
 		});
