@@ -24,51 +24,69 @@ chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
 import {BuildLibraryRepository, BuildLibrary} from '../src/librepo_build';
+import {LibraryNotFoundError} from '../src/librepo';
 import {Agent} from '../src/agent';
 
-describe('Build Library Repo', () => {
-	it('is constructed with the endpoint url', () => {
-		const endpoint = 'abcde';
-		const sut = new BuildLibraryRepository({endpoint});
-		expect(sut).has.property('endpoint').which.is.equal(endpoint);
-		expect(sut).has.property('agent').which.is.instanceOf(Agent);
+describe("Build", () => {
+
+	describe('Library Repo', () => {
+		it('is constructed with the endpoint url', () => {
+			const endpoint = 'abcde';
+			const sut = new BuildLibraryRepository({endpoint});
+			expect(sut).has.property('endpoint').which.is.equal(endpoint);
+			expect(sut).has.property('agent').which.is.instanceOf(Agent);
+		});
+
+		it('fetches the library index using an agent', sinon.test(() => {
+			const sut = new BuildLibraryRepository({endpoint: 'abc.com/'});
+			const agent = sinon.stub(sut.agent);
+			agent.get.returns(Promise.reject('unknown args'));
+			agent.get.withArgs('abc.com/libs.json').returns(Promise.resolve({body: '123'}));
+			return expect(sut.index()).to.eventually.equal('123');
+		}));
+
+		it('rubs the lotion on its skin or it gets the hose again', () => {
+			const sut = Promise.reject('the lotion');
+			expect(sut).eventually.reject;
+		});
+
+		it('fetches library names', sinon.test(()=> {
+			const sut = new BuildLibraryRepository({endpoint: 'abc.com/'});
+			const index = sinon.stub(sut, 'index');
+			index.returns(Promise.resolve([{title: 'lib1'}, {title: 'lib2'}]));
+			return expect(sut.names()).eventually.deep.equal(['lib1', 'lib2']);
+		}));
+
+		it('fetches known libraries', sinon.test(() => {
+			const sut = new BuildLibraryRepository({endpoint: '$$$/'});
+			const get = sinon.stub(sut, 'get');
+			const lib = {title: 'uberlib', id: '123'};
+			get.returns(Promise.reject('unknown args'));
+			get.withArgs('libs.json', {name: 'uberlib'}).returns(Promise.resolve([lib]));
+			return expect(sut.fetch('uberlib')).eventually.deep.equal(new BuildLibrary('uberlib', lib, sut));
+		}));
+
+		it('throws exception for unknown libraries', sinon.test(() => {
+			const sut = new BuildLibraryRepository({endpoint: '$$$/'});
+			const get = sinon.stub(sut, 'get');
+			get.returns(Promise.reject('unknown args'));
+			get.withArgs('libs.json', {name: 'uberlib'}).returns(Promise.resolve([]));
+			return expect(sut.fetch('uberlib')).eventually.rejectedWith('LibraryNotFoundError: library \'uberlib\' not found in repo \'[object Object]\'.');
+		}));
+
 	});
 
-	it('fetches the library index using an agent', sinon.test(() => {
-		const sut = new BuildLibraryRepository({endpoint:'abc.com/'});
-		const agent = sinon.stub(sut.agent);
-		agent.get.returns(Promise.reject('unknown args'));
-		agent.get.withArgs('abc.com/libs.json').returns(Promise.resolve({body:'123'}));
-		return expect(sut.index()).to.eventually.equal('123');
-	}));
 
-	it('rubs the lotion on its skin or it gets the hose again', () => {
-		const sut = Promise.reject('the lotion');
-		expect(sut).eventually.reject;
+	describe("Library", () => {
+		it("throws an error if no id is provided", () => {
+			expect(() => new BuildLibrary('name', {}, {})).to.throw(TypeError);
+			expect(() => new BuildLibrary('name', { id: ''}, 'repo')).to.throw('library \'name\' not found in repo \'repo\'.');
+		});
+
+		it("constructs with an id", () => {
+			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
+			expect(sut.metadata.id).to.be.equal('123');
+		});
 	});
-
-	it('fetches library names', sinon.test(()=>{
-		const sut = new BuildLibraryRepository({endpoint:'abc.com/'});
-		const index = sinon.stub(sut, 'index');
-		index.returns(Promise.resolve([{title:'lib1'}, {title:'lib2'}]));
-		return expect(sut.names()).eventually.deep.equal( [ 'lib1', 'lib2' ]);
-	}));
-
-	it('fetches known libraries', sinon.test(() => {
-		const sut = new BuildLibraryRepository({endpoint:'$$$/'});
-		const get = sinon.stub(sut, 'get');
-		const lib = {title:'uberlib', id:'123'};
-		get.returns(Promise.reject('unknown args'));
-		get.withArgs('libs.json',{name:'uberlib'}).returns(Promise.resolve([lib]));
-		return expect(sut.fetch('uberlib')).eventually.deep.equal(new BuildLibrary('uberlib', lib, sut));
-	}));
-
-	it('throws exception for unknown libraries', sinon.test(() => {
-		const sut = new BuildLibraryRepository({endpoint:'$$$/'});
-		const get = sinon.stub(sut, 'get');
-		get.returns(Promise.reject('unknown args'));
-		get.withArgs('libs.json',{name:'uberlib'}).returns(Promise.resolve([]));
-		return expect(sut.fetch('uberlib')).eventually.rejectedWith('LibraryNotFoundError: library \'uberlib\' not found in repo \'[object Object]\'.');
-	}));
 
 });
