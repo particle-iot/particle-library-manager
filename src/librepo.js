@@ -23,21 +23,21 @@ import 'babel-polyfill';
  * Base class of errors from a library repository.
  */
 export class LibraryRepositoryError extends Error {
-	constructor(repo) {
-		super();
+	constructor(repo, message) {
+		super(message);
 		this.repo = repo;
-		Error.captureStackTrace(this, this.constructor);
+		this.name = 'LibraryRepositoryError';
 	}
 }
 
 
 export class LibraryNotFoundError extends LibraryRepositoryError {
-	constructor(repo, library) {
-		super(repo);
+	constructor(repo, library, message) {
+		super(repo, message);
 		this.library = library;
 		this.message = `library '${this.library}' not found in repo '${this.repo}'.`;
+		this.name = 'LibraryNotFoundError';
 	}
-
 }
 
 
