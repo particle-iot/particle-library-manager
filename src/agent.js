@@ -19,150 +19,152 @@
 
 import 'babel-polyfill';
 import request from 'superagent';
-
+import prefix from 'superagent-prefix';
 
 
 // Todo - share this with the particle-api-js project
 // It's currently WiP - unused functionality is not tested and hence commented out.
 
-export class Agent
-{
-    constructor(prefix=undefined, debug = undefined) {
-        this.prefix = prefix;
-        this.debug = debug
-    }
+export class Agent {
 
-    get(uri, auth=undefined, query = undefined) {
-        return this.request({ uri, auth, method: 'get', query: query });
-    }
+	constructor(baseUrl = undefined, debug = undefined) {
+		this.prefix = prefix(baseUrl);
+		this.debug = debug;
+	}
 
-    head(uri, auth) {
-        return this.request({ uri, auth, method: 'head' });
-    }
+	get(uri, auth = undefined, query = undefined) {
+		return this.request({uri, auth, method: 'get', query: query});
+	}
 
-    post(uri, data, auth) {
-        return this.request({ uri, data, auth, method: 'post' });
-    }
+	head(uri, auth) {
+		return this.request({uri, auth, method: 'head'});
+	}
 
-    put(uri, data, auth) {
-        return this.request({ uri, data, auth, method: 'put' });
-    }
+	post(uri, data, auth) {
+		return this.request({uri, data, auth, method: 'post'});
+	}
 
-    delete(uri, data, auth) {
-        return this.request({ uri, data, auth, method: 'delete' });
-    }
+	put(uri, data, auth) {
+		return this.request({uri, data, auth, method: 'put'});
+	}
+
+	delete(uri, data, auth) {
+		return this.request({uri, data, auth, method: 'delete'});
+	}
 
 
-    /**
-     *
-     * @param uri           The URI to request
-     * @param method        The method used to request the URI.
-     * @param data          Request body - files and form must be undefined
-     * @param auth          Authorization token or a username/password.
-     * @param query         Query parameter
-     * @param form          Form fields
-     * @param files         array of file names and file content
-     * @return A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
-     */
-    request({ uri, method, data = undefined, auth, query = undefined, form = undefined, files = undefined }) {
-        let requestFiles = undefined; // this._sanitize(files);
-        return this._request({ uri, method, data, auth, query, form, files: requestFiles });
-    }
+	/**
+	 *
+	 * @param {String} uri           The URI to request
+	 * @param {String} method        The method used to request the URI, should be in uppercase.
+	 * @param {String} data          Arbitrary data to send as the body.
+	 * @param {Object} auth          Authorization
+	 * @param {String} query         Query parameters
+	 * @param {Object} form          Form fields
+	 * @param {Object} files         array of file names and file content
+	 * @return {Promise} A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
+	 */
+	request({uri, method, data = undefined, auth, query = undefined, form = undefined, files = undefined}) {
+		let requestFiles = undefined; // this._sanitize(files);
+		return this._request({uri, method, data, auth, query, form, files: requestFiles});
+	}
 
-    /**
-     *
-     * @param uri           The URI to request
-     * @param method        The method used to request the URI, should be in uppercase.
-     * @param data          Arbitrary data to send as the body.
-     * @param auth          Authorization
-     * @param query         Query parameters
-     * @param form          Form fields
-     * @param files         array of file names and file content
-     * @return A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
-     */
-    _request({ uri, method, data, auth, query, form, files }) {
-        return new Promise((fulfill, reject) => {
-            const req = this._build_request({ uri, method, data, auth, query, form, files});
+	/**
+	 *
+	 * @param {String} uri           The URI to request
+	 * @param {String} method        The method used to request the URI, should be in uppercase.
+	 * @param {String} data          Arbitrary data to send as the body.
+	 * @param {Object} auth          Authorization
+	 * @param {String} query         Query parameters
+	 * @param {Object} form          Form fields
+	 * @param {Object} files         array of file names and file content
+	 * @return {Promise} A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
+	 */
+	_request({uri, method, data, auth, query, form, files}) {
+		return new Promise((fulfill, reject) => {
+			const req = this._buildRequest({uri, method, data, auth, query, form, files});
 
-            if (this.debug) {
-                this.debug(req);
-            }
+			if (this.debug) {
+				this.debug(req);
+			}
 
-            req.end((error, res) => {
-                const body = res && res.body;
-                if (error) {
-                    const statusCode = error.status;
-                    let errorDescription = `${statusCode ? 'HTTP error' : 'Network error'} ${statusCode} from ${uri}`;
-                    if (body && body.error_description) {
-                        errorDescription += ' - ' + body.error_description;
-                    }
-                    reject({ statusCode, errorDescription, error, body });
-                } else {
-                    fulfill({
-                        body: body,
-                        statusCode: res.statusCode
-                    });
-                }
-            });
-        });
-    }
+			req.end((error, res) => {
+				const body = res && res.body;
+				if (error) {
+					const statusCode = error.status;
+					let errorDescription = `${statusCode ? 'HTTP error' : 'Network error'} ${statusCode} from ${uri}`;
+					if (body && body.error_description) {
+						errorDescription += ' - ' + body.error_description;
+					}
+					reject({statusCode, errorDescription, error, body});
+				} else {
+					fulfill({
+						body: body,
+						statusCode: res.statusCode
+					});
+				}
+			});
+		});
+	}
 
-    _build_request({ uri, method, data, auth, query, form, files }) {
-        const req = request(method, uri);
-        if (this.prefix) {
-            req.use(this.prefix);
-        }
-        this._authorization_header(req, auth);
-        if (query) {
-            req.query(query);
-        }
-        if (files) {
-            for (let [name, file] of entries(myObj)) {
-                req.attach(name, file.data, file.path);
-            }
-            if (form) {
-                for (let [name, value] of entries(myObj)) {
-                    req.field(name, value);
-                }
-            }
-        } else if (form) {
-            req.type('form');
-            req.send(form);
-        } else if (data) {
-            req.send(data);
-        }
-        return req;
-    }
+	_buildRequest({uri, method, data, auth, query, form, files}) {
+		const req = request(method, uri);
+		if (this.prefix) {
+			req.use(this.prefix);
+		}
+		this._authorizationHeader(req, auth);
+		if (query) {
+			req.query(query);
+		}
+		if (files) {
+			for (let [name, file] of Object.entries(files)) {
+				req.attach(name, file.data, file.path);
+			}
+			if (form) {
+				for (let [name, value] of Object.entries(form)) {
+					req.field(name, value);
+				}
+			}
+		} else if (form) {
+			req.type('form');
+			req.send(form);
+		} else if (data) {
+			req.send(data);
+		}
+		return req;
+	}
 
-    /**
-     * Adds an authorization header.
-     * @param req       The request
-     * @param auth
-     */
-    _authorization_header(req, auth) {
-        if (auth) {
-            if (typeof auth === 'object') {
-                req.auth(auth.username, auth.password);
-            } else {
-                req.set({Authorization: `Bearer ${auth}`});
-            }
-        }
-    }
+	/**
+	 * Adds an authorization header.
+     * @param {Request} req     The request
+	 * @param {Object}  auth    The authorization. Either a string authorization token, or a username/password object.
+	 * @returns {Request} req   Th
+	 */
+	_authorizationHeader(req, auth) {
+		if (auth) {
+			if (typeof auth === 'object') {
+				req.auth(auth.username, auth.password);
+			} else {
+				req.set({Authorization: `Bearer ${auth}`});
+			}
+		}
+		return req;
+	}
 
-    _sanitize(files) {
-        let requestFiles;
-        if (files) {
-            requestFiles = {};
-            Object.keys(files).forEach((k, i) => {
-                const name = i ? `file${i + 1}` : 'file';
-                requestFiles[name] = {
-                    data: files[k],
-                    path: k
-                };
-            });
-        }
-        return requestFiles;
-    }
+	_sanitize(files) {
+		let requestFiles;
+		if (files) {
+			requestFiles = {};
+			Object.keys(files).forEach((k, i) => {
+				const name = i ? `file${i + 1}` : 'file';
+				requestFiles[name] = {
+					data: files[k],
+					path: k
+				};
+			});
+		}
+		return requestFiles;
+	}
 
 
 }

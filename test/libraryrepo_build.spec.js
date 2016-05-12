@@ -17,18 +17,17 @@
  ******************************************************************************
  */
 
-let chai = require('chai');
-let sinon = require('sinon');
-import {BuildLibraryRepository} from "../src/librepo_build";
+const chai = require('chai');
+import {BuildLibraryRepository} from '../src/librepo_build';
 chai.use(require('sinon-chai'));
 chai.use(require('chai-as-promised'));
-let expect = chai.expect;
+const expect = chai.expect;
 
 
-describe("Build Library Repo", () => {
-   it("is constructed with the endpoint url", () => {
-       let endpoint = "http://build.particle.io/libs";
-       let sut = new BuildLibraryRepository(endpoint);
-       expect(sut).has.property("endpoint").which.is.equal(endpoint)
-   });
+describe('Build Library Repo', () => {
+	it('is constructed with the endpoint url', () => {
+		let endpoint = 'http://build.particle.io/libs';
+		let sut = new BuildLibraryRepository(endpoint);
+		expect(sut).has.property('endpoint').which.is.equal(endpoint);
+	});
 });

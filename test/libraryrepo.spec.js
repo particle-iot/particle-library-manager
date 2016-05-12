@@ -17,84 +17,84 @@
  ******************************************************************************
  */
 
-import {LibraryNotFoundError, LibraryRepositoryError} from "../src/librepo";
+import {LibraryNotFoundError, LibraryRepositoryError} from '../src/librepo';
 import {LibraryRepository, Library, LibraryFile} from '../src/librepo';
 
-var chai = require('chai');
-var sinon = require('sinon');
+const chai = require('chai');
+const sinon = require('sinon');
 chai.use(require('sinon-chai'));
 chai.use(require('chai-as-promised'));
-var expect = chai.expect;
+const expect = chai.expect;
 
-describe("LibraryManager", () => {
+describe('LibraryManager', () => {
 
-    describe("Library Errors", () => {
+	describe('Library Errors', () => {
 
-        describe("LibraryRepositoryError", () => {
-            it("has repo property", () => {
-                let repo = {};
-                let sut = new LibraryRepositoryError(repo);
-                expect(sut.repo).to.equal(repo);
-            });
-        });
+		describe('LibraryRepositoryError', () => {
+			it('has repo property', () => {
+				let repo = {};
+				let sut = new LibraryRepositoryError(repo);
+				expect(sut.repo).to.equal(repo);
+			});
+		});
 
-        describe("LibraryNotFoundError", () => {
-            it("has repo and library properties", () => {
-                let repo = {};
-                let library = "uberlib";
-                let sut = new LibraryNotFoundError(repo, library);
-                expect(sut.library).to.equal(library);
-                expect(sut.repo).to.equal(repo);
-            });
+		describe('LibraryNotFoundError', () => {
+			it('has repo and library properties', () => {
+				let repo = {};
+				let library = 'uberlib';
+				let sut = new LibraryNotFoundError(repo, library);
+				expect(sut.library).to.equal(library);
+				expect(sut.repo).to.equal(repo);
+			});
 
-            it("has a message", () => {
-                let sut = new LibraryNotFoundError("uberrepo", "uberlib");
-                expect(sut.toString()).to.equal("Error: library 'uberlib' not found in repo 'uberrepo'.");
-            });
-        });
-    });
+			it('has a message', () => {
+				let sut = new LibraryNotFoundError('uberrepo', 'uberlib');
+				expect(sut.toString()).to.equal('Error: library \'uberlib\' not found in repo \'uberrepo\'.');
+			});
+		});
+	});
 
-    describe("Library", () => {
+	describe('Library', () => {
 
-        it("has a name", () => {
-            let sut = new Library("Borgian");
-            return expect(sut.name).to.equal("Borgian")
-        });
+		it('has a name', () => {
+			let sut = new Library('Borgian');
+			return expect(sut.name).to.equal('Borgian');
+		});
 
-        it("has no files", () => {
-            let sut = new Library();
-            return expect(sut.files()).to.eventually.have.length(0)
-        });
-    });
+		it('has no files', () => {
+			let sut = new Library();
+			return expect(sut.files()).to.eventually.have.length(0);
+		});
+	});
 
-    describe("LibraryFile", () => {
-        it("has a name and a type", () => {
-            let name = {};
-            let type = {};
-            let sut = new LibraryFile(name, type);
-            expect(sut.name).to.equal(name);
-            expect(sut.type).to.equal(type);
-        });
+	describe('LibraryFile', () => {
+		it('has a name and a type', () => {
+			let name = {};
+			let type = {};
+			let sut = new LibraryFile(name, type);
+			expect(sut.name).to.equal(name);
+			expect(sut.type).to.equal(type);
+		});
 
-        it("has streamable content", () => {
-            let sut = new LibraryFile("name", "type");
-            let stream = { end: sinon.spy() };
-            let p = sut.content(stream);
-            expect(stream.end).to.be.calledOnce;
-            return expect(p).to.eventually.equal(stream)
-        })
-    });
+		it('has streamable content', () => {
+			let sut = new LibraryFile('name', 'type');
+			let stream = {end: sinon.spy()};
+			let p = sut.content(stream);
+			expect(stream.end).to.be.calledOnce;
+			return expect(p).to.eventually.equal(stream);
+		});
+	});
 
-    describe("LibraryRepository", () => {
-        it("raises an error when fetching a library by name", () => {
-            let sut = new LibraryRepository();
-            return expect(sut.fetch("uberlib")).eventually.rejected.deep.equal(new LibraryNotFoundError(sut, "uberlib"));
-        });
+	describe('LibraryRepository', () => {
+		it('raises an error when fetching a library by name', () => {
+			let sut = new LibraryRepository();
+			return expect(sut.fetch('uberlib')).eventually.rejected.deep.equal(new LibraryNotFoundError(sut, 'uberlib'));
+		});
 
-        it("has no libraries", () => {
-            let sut = new LibraryRepository();
-            return expect(sut.all_names()).eventually.to.have.length(0)
-        });
-    })
+		it('has no libraries', () => {
+			let sut = new LibraryRepository();
+			return expect(sut.names()).eventually.to.have.length(0);
+		});
+	});
 
 });

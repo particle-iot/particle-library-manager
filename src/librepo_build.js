@@ -19,15 +19,41 @@
 
 import 'babel-polyfill';
 
-import {LibraryRepository} from "./librepo"
+import {LibraryRepository} from './librepo';
+import {Agent} from './agent';
+
 
 /**
  * A library repository that fetches it's content via the Build library endpoint.
  */
 export class BuildLibraryRepository extends LibraryRepository {
-    constructor(endpoint) {
-        super();
-        this.endpoint = endpoint
-    }
+
+	/**
+	 * @param {String} endpoint The root of the library API.
+	 */
+	constructor(endpoint) {
+		super();
+		this.endpoint = endpoint;
+		this.agent = new Agent(endpoint);
+	}
+
+	fetch(name) {
+
+	}
+
+	names() {
+
+	}
+
+	/**
+	 * Fetches the library index from the endpoint.
+	 * @returns {Array} of library metadata. The format is specific to the version of the library.
+	 */
+	index() {
+		return this.agent.get('libs.json').then((result)=> {
+			return result.body;
+		});
+	}
+
 }
 

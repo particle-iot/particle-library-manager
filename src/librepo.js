@@ -22,23 +22,21 @@ import 'babel-polyfill';
 /**
  * Base class of errors from a library repository.
  */
-export class LibraryRepositoryError extends Error
-{
-    constructor(repo) {
-        super();
-        this.repo = repo;
-        Error.captureStackTrace(this, this.constructor);
-    }
+export class LibraryRepositoryError extends Error {
+	constructor(repo) {
+		super();
+		this.repo = repo;
+		Error.captureStackTrace(this, this.constructor);
+	}
 }
 
 
-export class LibraryNotFoundError extends LibraryRepositoryError
-{
-    constructor(repo, library) {
-        super(repo);
-        this.library = library;
-        this.message = `library '${this.library}' not found in repo '${this.repo}'.`;
-    }
+export class LibraryNotFoundError extends LibraryRepositoryError {
+	constructor(repo, library) {
+		super(repo);
+		this.library = library;
+		this.message = `library '${this.library}' not found in repo '${this.repo}'.`;
+	}
 
 }
 
@@ -47,53 +45,56 @@ export class LibraryNotFoundError extends LibraryRepositoryError
  * Describes a library repository. A repository provides access to named libraries.
  * Each library name is unique within the repository.
  */
-export class LibraryRepository
-{
-    /**
-     *
-     * @param library_name  The name of the library to retrieve.
-     * @returns {Promise}
-     */
-    fetch(library_name) {
-        return Promise.reject(new LibraryNotFoundError(this, library_name));
-    }
+export class LibraryRepository {
+	/**
+	 *
+	 * @param {String} name  The name of the library to retrieve.
+	 * @returns {Promise.<Library>} The library corresponding to the name, or
+	 * LibraryNotFoundError if the library doesn't exist.
+	 */
+	fetch(name) {
+		return Promise.reject(new LibraryNotFoundError(this, name));
+	}
 
-    /**
-     * Retreieves a list of known library names
-     * @returns {Promise.<Array>}
-     */
-    all_names() {
-        return Promise.resolve([]);
-    }
+	/**
+	 * Retrieves a list of known library names
+	 * @returns {Promise.<Array>}   The library names in this repository.
+	 */
+	names() {
+		return Promise.resolve([]);
+	}
 }
 
 /**
  * Describes a library. The library is uniquely identified by it's name.
  */
-export class Library
-{
-    constructor(name)
-    {
-        this.name = name
-    }
+export class Library {
+	constructor(name) {
+		this.name = name;
+	}
 
-    files() {
-        return Promise.resolve([]);
-    }
+	// todo - metadata/format etc
+
+	/**
+	 * A promise of the library files available.
+	 * @returns {Promise.<Array>}   The files that make up this library.
+	 */
+	files() {
+		return Promise.resolve([]);
+	}
 }
 
-export class LibraryFile
-{
-    constructor(name, type) {
-        this.name = name;
-        this.type = type;
-    }
+export class LibraryFile {
+	constructor(name, type) {
+		this.name = name;
+		this.type = type;
+	}
 
-    content(stream) {
-        return new Promise((fulfill, reject) => {
-            stream.end();
-            fulfill(stream);
-        });
-    }
+	content(stream) {
+		return new Promise((fulfill, reject) => {
+			stream.end();
+			fulfill(stream);
+		});
+	}
 }
 

@@ -20,7 +20,6 @@
   },
   "scripts": {
     "itest": "mocha integration/ -R spec --compilers js:babel-register",
-
     "lint": "eslint src/ test/",
     "compile": "babel src -sd lib",
     "test": "mocha test/ -R spec --compilers js:babel-register",
@@ -45,7 +44,7 @@
     "coveralls": "^2.11.4",
     "doctoc": "^0.15.0",
     "eslint": "^2.3.0",
-    "eslint-config-particle": "^1.0.2",
+    "eslint-config-particle": "^1.0.5",
     "istanbul": "1.0.0-alpha.2",
     "mocha": "^2.4.5",
     "should": "^7.1.0",
