@@ -20,7 +20,7 @@
   },
   "scripts": {
     "itest": "mocha integration/ -R spec --compilers js:babel-register",
-    "lint": "eslint src/ test/",
+    "lint": "eslint -f unix src/ test/",
     "compile": "babel src -sd lib",
     "test": "mocha test/ -R spec --compilers js:babel-register",
     "cover": "babel-node node_modules/.bin/istanbul cover _mocha test/ --report html -- -R spec",

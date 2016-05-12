@@ -25,6 +25,7 @@ const sinon = require('sinon');
 chai.use(require('sinon-chai'));
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
+const Writable = require('stream').Writable;
 
 describe('LibraryManager', () => {
 
@@ -121,7 +122,7 @@ describe('LibraryManager', () => {
 		});
 	});
 
-	describe("MemoryLibraryFile", () => {
+	describe('MemoryLibraryFile', () => {
 		it('constructs', () => {
 			const sut = new MemoryLibraryFile('file', 'nice', 'ext', 'lots of content here', '123');
 			expect(sut.name).to.be.string('file');
@@ -134,9 +135,8 @@ describe('LibraryManager', () => {
 		it('straems content', () => {
 			const sut = new MemoryLibraryFile('file', 'nice', 'ext', 'lots of content here', '123');
 			let result = '';
-			const Writable = require('stream').Writable;
 			const ws = Writable();
-			ws._write = function (chunk, enc, next) {
+			ws._write = (chunk, enc, next) => {
 				result += chunk;
 				next();
 			};
@@ -145,5 +145,5 @@ describe('LibraryManager', () => {
 			});
 			sut.content(ws);
 		});
-	})
+	});
 });

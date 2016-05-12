@@ -31,7 +31,7 @@ export class BuildLibrary extends Library
 		this.repo = repo;
 		this.cache = { definition: undefined, files: undefined };
 		if (this.metadata.id.length < 1) {
-			throw LibraryNotFoundError(this.repo, this, 'no id');
+			throw new LibraryNotFoundError(this.repo, name, 'no id');
 		}
 	}
 
@@ -64,7 +64,7 @@ export class BuildLibrary extends Library
 		}
 		return files;
 	}
-	
+
 	tabToFile(tab) {
 		return new MemoryLibraryFile(tab.title, tab.kind, tab.extension, tab.content, tab.id);
 	}
