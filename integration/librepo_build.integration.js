@@ -17,28 +17,33 @@
  ******************************************************************************
  */
 
+/**
+ * Tests for real the Agent class using an external service.
+ */
+
 const chai = require('chai');
-const sinon = require('sinon');
-chai.use(require('sinon-chai'));
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
-import {BuildLibraryRepository} from '../src/librepo_build';
-import {Agent} from '../src/agent';
+import {BuildLibraryRepository} from '../src/librepo_build'
 
-describe('Build Library Repo', () => {
-	it('is constructed with the endpoint url', () => {
-		const endpoint = 'abcde';
+const endpoint = 'http://localhost:3000/';
+// const endpoint = 'http://build.particle.io/';
+
+
+describe('BuildLibraryRepository', () => {
+	it('can fetch index', () => {
 		const sut = new BuildLibraryRepository({endpoint});
-		expect(sut).has.property('endpoint').which.is.equal(endpoint);
-		expect(sut).has.property('agent').which.is.instanceOf(Agent);
+		const result = sut.index();
+		return result.then((r) => {
+			expect(r).to.have.length.greaterThan(0);
+			for (let lib of r) {
+				expect(lib).to.have.property('id');
+				expect(lib).to.have.property('title');
+				expect(lib).to.have.property('content');
+				expect(lib).to.have.property('version');
+				expect(lib).to.have.property('visibility').equal('public');
+			}
+		});
 	});
-
-	it('fetches the library index using an agent', sinon.test(() => {
-		const sut = new BuildLibraryRepository({endpoint:'abc.com/'});
-		const agent = sinon.stub(sut.agent);
-		agent.get.returns(Promise.reject('unknown function'));
-		agent.get.withArgs('abc.com/libs.json').returns(Promise.resolve({body:'123'}));
-		return expect(sut.index()).to.eventually.equal('123');
-	}));
 });

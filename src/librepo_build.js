@@ -31,10 +31,10 @@ export class BuildLibraryRepository extends LibraryRepository {
 	/**
 	 * @param {String} endpoint The root of the library API.
 	 */
-	constructor(endpoint) {
+	constructor({endpoint}) {
 		super();
 		this.endpoint = endpoint;
-		this.agent = new Agent(endpoint);
+		this.agent = new Agent();
 	}
 
 	fetch(name) {
@@ -50,9 +50,13 @@ export class BuildLibraryRepository extends LibraryRepository {
 	 * @returns {Array} of library metadata. The format is specific to the version of the library.
 	 */
 	index() {
-		return this.agent.get('libs.json').then((result)=> {
+		return this.agent.get(this.qualify('libs.json')).then((result)=> {
 			return result.body;
 		});
+	}
+
+	qualify(uri) {
+		return this.endpoint + uri;
 	}
 
 }
