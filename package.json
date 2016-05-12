@@ -19,6 +19,8 @@
     "build-url": "https://build.particle.io"
   },
   "scripts": {
+    "itest": "mocha integration/ -R spec --compilers js:babel-register",
+
     "lint": "eslint src/ test/",
     "compile": "babel src -sd lib",
     "test": "mocha test/ -R spec --compilers js:babel-register",
