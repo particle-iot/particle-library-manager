@@ -29,6 +29,25 @@ export class BuildLibrary extends Library
 		super(name);
 		this.metadata = metadata;
 		this.repo = repo;
+		this.cache = { definition: undefined, files: undefined };
+		if (this.metadata.id.length < 1) {
+			throw LibraryNotFoundError(this.repo, this, 'no id');
+		}
+	}
+
+	definition() {
+		return new Promise((fulfill,rejected) => {
+			if (!this.cache.definition) {
+				return this.repo.definition(this.metadata.id)
+					.then(desc => fulfill(desc))
+					.catch(error => rejected(error));
+			}
+			fulfill(this.cache.definition);
+		});
+	}
+
+	files() {
+
 	}
 }
 
@@ -44,10 +63,13 @@ export class BuildLibraryRepository extends LibraryRepository {
 		super();
 		this.endpoint = endpoint;
 		this.agent = new Agent();
+		this.root = 'libs';
+		this.dot_json = '.json';
+
 	}
 
 	fetch(name) {
-		return this.get('libs.json', {name}).then(lib => this._buildLibrary(name, lib));
+		return this.get(this.root+this.dot_json, {name}).then(lib => this._buildLibrary(name, lib));
 	}
 
 	_buildLibrary(name, lib) {
@@ -76,7 +98,7 @@ export class BuildLibraryRepository extends LibraryRepository {
 	 * @returns {Array} of library metadata. The format is specific to the version of the library.
 	 */
 	index() {
-		return this.get('libs.json');
+		return this.get(this.root+this.dot_json);
 	}
 
 	get(resource, args) {
@@ -87,4 +109,16 @@ export class BuildLibraryRepository extends LibraryRepository {
 		return this.endpoint + uri;
 	}
 
+	tabs(id) {
+		return this.get(`${this.root}/${id}/tabs.json`);
+	}
+
+	/**
+	 * Retrieves an object descriptor corresponding to the 'spark.json' file for the library.
+	 * @param {String} id    The library id
+	 * @returns {Promise<Object>} The library definition.
+	 */
+	definition(id) {
+		return this.get(`${this.root}/${id}/definition.json`);
+	}
 }

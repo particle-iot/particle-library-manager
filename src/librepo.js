@@ -41,6 +41,16 @@ export class LibraryNotFoundError extends LibraryRepositoryError {
 }
 
 
+export class LibraryFormatError extends LibraryRepositoryError {
+	constructor(repo, library, message) {
+		super(repo, message);
+		this.library = library;
+		this.name = 'LibraryFormatError';
+	}
+}
+
+
+
 /**
  * Describes a library repository. A repository provides access to named libraries.
  * Each library name is unique within the repository.
@@ -70,11 +80,13 @@ export class LibraryRepository {
  */
 export class Library {
 	constructor(name) {
-		this.name = name;
+		this._name = name;
 	}
 
-	// todo - metadata/format etc
-
+	get name() {
+		return this._name;
+	}
+	
 	/**
 	 * A promise of the library files available.
 	 * @returns {Promise.<Array>}   The files that make up this library.

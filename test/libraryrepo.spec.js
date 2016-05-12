@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {LibraryNotFoundError, LibraryRepositoryError} from '../src/librepo';
+import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '../src/librepo';
 import {LibraryRepository, Library, LibraryFile} from '../src/librepo';
 
 const chai = require('chai');
@@ -32,8 +32,8 @@ describe('LibraryManager', () => {
 
 		describe('LibraryRepositoryError', () => {
 			it('has repo property', () => {
-				let repo = {};
-				let sut = new LibraryRepositoryError(repo);
+				const repo = {};
+				const sut = new LibraryRepositoryError(repo);
 				expect(sut.repo).to.equal(repo);
 			});
 
@@ -48,25 +48,39 @@ describe('LibraryManager', () => {
 
 		describe('LibraryNotFoundError', () => {
 			it('has repo and library properties', () => {
-				let repo = {};
-				let library = 'uberlib';
-				let sut = new LibraryNotFoundError(repo, library);
+				const repo = {};
+				const library = 'uberlib';
+				const sut = new LibraryNotFoundError(repo, library);
 				expect(sut.library).to.equal(library);
 				expect(sut.repo).to.equal(repo);
 			});
 
 			it('has a message', () => {
-				let sut = new LibraryNotFoundError('uberrepo', 'uberlib');
+				const sut = new LibraryNotFoundError('uberrepo', 'uberlib');
 				expect(sut.toString()).to.equal('LibraryNotFoundError: library \'uberlib\' not found in repo \'uberrepo\'.');
 			});
 		});
+
+		describe('LibraryFormatError', () => {
+			it('works', () => {
+				const repo = {};
+				const library = 'uberlib';
+				const sut = new LibraryFormatError(repo, library, 'bad mojo');
+
+				expect(sut.library).to.equal(library);
+				expect(sut.repo).to.equal(repo);
+				expect(sut.message).to.equal('bad mojo');
+				expect(sut.name).to.equal('LibraryFormatError');
+			});
+		});
+
 	});
 
 	describe('Library', () => {
 
 		it('has a name', () => {
 			let sut = new Library('Borgian');
-			return expect(sut.name).to.equal('Borgian');
+			expect(sut.name).to.equal('Borgian');
 		});
 
 		it('has no files', () => {

@@ -69,8 +69,9 @@ describe('BuildLibraryRepository', () => {
 
 	it("can fetch libraries", () => {
 		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
-		const promise = sut.fetch(config.lib_names[0]).then((lib) => {
-			expect(lib)
+		const name = config.lib_names[0];
+		const promise = sut.fetch(name).then((lib) => {
+			expect(lib).has.property('name').that.is.equal(name);
 		});
 		return promise;
 	});
@@ -84,5 +85,19 @@ describe('BuildLibraryRepository', () => {
 		});
 		return promise;
 	});
+
+	it("can fetch library descriptor", () => {
+		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+		const name = config.lib_names[0];
+		const promise = sut.fetch(name)
+			.then(lib => lib.definition())
+			.then(def => {
+				expect(def).has.property('name');
+				expect(def).has.property('version');
+				expect(def).has.property('description');
+			});
+		return promise;
+	});
+
 
 });

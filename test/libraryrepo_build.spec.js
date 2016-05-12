@@ -57,7 +57,7 @@ describe('Build Library Repo', () => {
 	it('fetches known libraries', sinon.test(() => {
 		const sut = new BuildLibraryRepository({endpoint:'$$$/'});
 		const get = sinon.stub(sut, 'get');
-		const lib = {title:'uberlib'};
+		const lib = {title:'uberlib', id:'123'};
 		get.returns(Promise.reject('unknown args'));
 		get.withArgs('libs.json',{name:'uberlib'}).returns(Promise.resolve([lib]));
 		return expect(sut.fetch('uberlib')).eventually.deep.equal(new BuildLibrary('uberlib', lib, sut));
