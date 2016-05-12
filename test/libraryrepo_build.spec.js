@@ -41,4 +41,16 @@ describe('Build Library Repo', () => {
 		agent.get.withArgs('abc.com/libs.json').returns(Promise.resolve({body:'123'}));
 		return expect(sut.index()).to.eventually.equal('123');
 	}));
+
+	it('rubs the lotion on its skin or it gets the hose again', () => {
+		const sut = Promise.reject('the lotion');
+		expect(sut).eventually.reject;
+	});
+
+	it('fetches library names', sinon.test(()=>{
+		const sut = new BuildLibraryRepository({endpoint:'abc.com/'});
+		const index = sinon.stub(sut, 'index');
+		index.returns(Promise.resolve([{title:'lib1'}, {title:'lib2'}]));
+		return expect(sut.names()).eventually.deep.equal( [ 'lib1', 'lib2' ]);
+	}));
 });

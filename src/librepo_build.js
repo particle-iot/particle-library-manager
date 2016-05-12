@@ -42,7 +42,17 @@ export class BuildLibraryRepository extends LibraryRepository {
 	}
 
 	names() {
+		return this.index().then((libs)=>{
+			return this.extractNames(libs);
+		});
+	}
 
+	extractNames(libs) {
+		let result = [];
+		for (let lib of libs) {
+			result.push(lib.title);
+		}
+		return result;
 	}
 
 	/**
@@ -50,9 +60,7 @@ export class BuildLibraryRepository extends LibraryRepository {
 	 * @returns {Array} of library metadata. The format is specific to the version of the library.
 	 */
 	index() {
-		return this.agent.get(this.qualify('libs.json')).then((result)=> {
-			return result.body;
-		});
+		return this.agent.get(this.qualify('libs.json')).then(result => result.body);
 	}
 
 	qualify(uri) {

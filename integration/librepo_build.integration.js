@@ -35,9 +35,9 @@ describe('BuildLibraryRepository', () => {
 	it('can fetch index', () => {
 		const sut = new BuildLibraryRepository({endpoint});
 		const result = sut.index();
-		return result.then((r) => {
-			expect(r).to.have.length.greaterThan(0);
-			for (let lib of r) {
+		return result.then((result) => {
+			expect(result).to.have.length.greaterThan(0);
+			for (let lib of result) {
 				expect(lib).to.have.property('id');
 				expect(lib).to.have.property('title');
 				expect(lib).to.have.property('content');
@@ -45,5 +45,17 @@ describe('BuildLibraryRepository', () => {
 				expect(lib).to.have.property('visibility').equal('public');
 			}
 		});
+	});
+
+	it("can fetch names", () => {
+		const sut = new BuildLibraryRepository({endpoint});
+		const promise = sut.names().then((result) => {
+			expect(result).to.have.length.greaterThan(0);
+			expect(result).instanceOf(Array);
+			for (let title of result) {
+				expect(typeof title).to.be.equal('string');
+			}
+		});
+		return promise;
 	});
 });
