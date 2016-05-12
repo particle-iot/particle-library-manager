@@ -19,6 +19,7 @@
     "build-url": "https://build.particle.io"
   },
   "scripts": {
+    "lint": "eslint src/ test/",
     "compile": "babel src -sd lib",
     "test": "mocha test/ -R spec --compilers js:babel-register",
     "cover": "babel-node node_modules/.bin/istanbul cover _mocha test/ --report html -- -R spec",
