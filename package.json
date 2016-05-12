@@ -30,6 +30,7 @@
   "dependencies": {
     "async": "^2.0.0-rc.4",
     "babel-polyfill": "^6.5.0",
+    "es6-promisify": "^4.0.0",
     "superagent": "^1.8.3",
     "superagent-prefix": "0.0.2"
   },
@@ -48,6 +49,7 @@
     "eslint-config-particle": "^1.0.5",
     "istanbul": "1.0.0-alpha.2",
     "mocha": "^2.4.5",
+    "mock-fs": "^3.9.0",
     "should": "^7.1.0",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0"
