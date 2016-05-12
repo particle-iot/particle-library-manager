@@ -18,7 +18,7 @@
  */
 
 import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '../src/librepo';
-import {LibraryRepository, Library, LibraryFile} from '../src/librepo';
+import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile} from '../src/librepo';
 
 const chai = require('chai');
 const sinon = require('sinon');
@@ -79,29 +79,31 @@ describe('LibraryManager', () => {
 	describe('Library', () => {
 
 		it('has a name', () => {
-			let sut = new Library('Borgian');
+			const sut = new Library('Borgian');
 			expect(sut.name).to.equal('Borgian');
 		});
 
 		it('has no files', () => {
-			let sut = new Library();
+			const sut = new Library();
 			return expect(sut.files()).to.eventually.have.length(0);
 		});
 	});
 
 	describe('LibraryFile', () => {
-		it('has a name and a type', () => {
-			let name = {};
-			let type = {};
-			let sut = new LibraryFile(name, type);
+		it('constructs', () => {
+			const name = {};
+			const type = {};
+			const ext = {};
+			const sut = new LibraryFile(name, type, ext);
 			expect(sut.name).to.equal(name);
-			expect(sut.type).to.equal(type);
+			expect(sut.kind).to.equal(type);
+			expect(sut.extension).to.equal(ext);
 		});
 
 		it('has streamable content', () => {
-			let sut = new LibraryFile('name', 'type');
-			let stream = {end: sinon.spy()};
-			let p = sut.content(stream);
+			const sut = new LibraryFile('name', 'type', 'ext');
+			const stream = {end: sinon.spy()};
+			const p = sut.content(stream);
 			expect(stream.end).to.be.calledOnce;
 			return expect(p).to.eventually.equal(stream);
 		});
@@ -109,14 +111,39 @@ describe('LibraryManager', () => {
 
 	describe('LibraryRepository', () => {
 		it('raises an error when fetching a library by name', () => {
-			let sut = new LibraryRepository();
+			const sut = new LibraryRepository();
 			return expect(sut.fetch('uberlib')).eventually.rejected.deep.equal(new LibraryNotFoundError(sut, 'uberlib'));
 		});
 
 		it('has no libraries', () => {
-			let sut = new LibraryRepository();
+			const sut = new LibraryRepository();
 			return expect(sut.names()).eventually.to.have.length(0);
 		});
 	});
 
+	describe("MemoryLibraryFile", () => {
+		it('constructs', () => {
+			const sut = new MemoryLibraryFile('file', 'nice', 'ext', 'lots of content here', '123');
+			expect(sut.name).to.be.string('file');
+			expect(sut.kind).to.be.string('nice');
+			expect(sut.extension).to.be.string('ext');
+			expect(sut.string_content).to.be.string('lots of content here');
+			expect(sut.id).to.be.string('123');
+		});
+
+		it('straems content', () => {
+			const sut = new MemoryLibraryFile('file', 'nice', 'ext', 'lots of content here', '123');
+			let result = '';
+			const Writable = require('stream').Writable;
+			const ws = Writable();
+			ws._write = function (chunk, enc, next) {
+				result += chunk;
+				next();
+			};
+			ws.on('end', ()=>{
+				expect(result).to.be.equal('lots of content here');
+			});
+			sut.content(ws);
+		});
+	})
 });

@@ -19,7 +19,7 @@
 
 import 'babel-polyfill';
 
-import {LibraryRepository, Library, LibraryNotFoundError} from './librepo';
+import {LibraryRepository, Library, LibraryNotFoundError, MemoryLibraryFile} from './librepo';
 import {Agent} from './agent';
 
 
@@ -47,7 +47,26 @@ export class BuildLibrary extends Library
 	}
 
 	files() {
+		return new Promise((fulfill,rejected) => {
+			if (!this.cache.files) {
+				return this.repo.tabs(this.metadata.id)
+					.then(tabs => fulfill(this.tabsToFiles(tabs)))
+					.catch(error => rejected(error));
+			}
+			fulfill(this.cache.files);
+		});
+	}
 
+	tabsToFiles(tabs) {
+		const files = [];
+		for (let tab of tabs) {
+			files.push(this.tabToFile(tab));
+		}
+		return files;
+	}
+	
+	tabToFile(tab) {
+		return new MemoryLibraryFile(tab.title, tab.kind, tab.extension, tab.content, tab.id);
 	}
 }
 

@@ -99,5 +99,20 @@ describe('BuildLibraryRepository', () => {
 		return promise;
 	});
 
+	it("can fetch library files", () => {
+		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+		const name = config.lib_names[0];
+		const promise = sut.fetch(name)
+			.then(lib => lib.files())
+			.then(files => {
+				expect(files).has.length.greaterThan(0);
+				for (let file of files) {
+					expect(file).has.property('id');
+					expect(file).has.property('extension');
+					expect(file).has.property('kind');
+				}
+			});
+		return promise;
+	});
 
 });

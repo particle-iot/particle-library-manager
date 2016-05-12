@@ -97,9 +97,10 @@ export class Library {
 }
 
 export class LibraryFile {
-	constructor(name, type) {
+	constructor(name, kind, extension) {
 		this.name = name;
-		this.type = type;
+		this.kind = kind;
+		this.extension = extension;
 	}
 
 	content(stream) {
@@ -110,3 +111,22 @@ export class LibraryFile {
 	}
 }
 
+export class MemoryLibraryFile extends LibraryFile {
+	constructor(name, kind, extension, content, id) {
+		super(name, kind, extension);
+		this.string_content = content;
+		this.id = id;
+	}
+
+	/**
+	 *
+	 * @param {Writable} stream receives the streamed content.
+	 */
+	content(stream) {
+		const Readable = require('stream').Readable;
+		var s = new Readable;
+		s._read = () => { rs.push(this.string_content); rs.push(null); };
+		s.pipe(stream);
+	}
+	
+}
