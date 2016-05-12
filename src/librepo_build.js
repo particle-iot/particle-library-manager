@@ -19,7 +19,7 @@
 
 import 'babel-polyfill';
 
-import {LibraryRepository} from './librepo';
+import {LibraryRepository, Library, LibraryNotFoundError} from './librepo';
 import {Agent} from './agent';
 
 
@@ -38,7 +38,13 @@ export class BuildLibraryRepository extends LibraryRepository {
 	}
 
 	fetch(name) {
+		return this.get('libs.json', {name}).then(lib => this._buildLibrary(name, lib));
+	}
 
+	_buildLibrary(name, lib) {
+		if (lib.length!=1)
+			throw new LibraryNotFoundError(this, name);
+		return new BuildLibrary(name, lib, this);
 	}
 
 	names() {
@@ -60,7 +66,11 @@ export class BuildLibraryRepository extends LibraryRepository {
 	 * @returns {Array} of library metadata. The format is specific to the version of the library.
 	 */
 	index() {
-		return this.agent.get(this.qualify('libs.json')).then(result => result.body);
+		return this.get('libs.json');
+	}
+
+	get(resource, args) {
+		return this.agent.get(this.qualify(resource), undefined, args).then(result => result.body);
 	}
 
 	qualify(uri) {
@@ -69,3 +79,14 @@ export class BuildLibraryRepository extends LibraryRepository {
 
 }
 
+
+class BuildLibrary extends Library
+{
+	constructor(name, metadata, repo) {
+		super(name);
+		this.metadata = metadata;
+		this.repo = repo;
+	}
+
+
+}

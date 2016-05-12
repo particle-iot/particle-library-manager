@@ -26,14 +26,19 @@ chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
 import {BuildLibraryRepository} from '../src/librepo_build'
+import {LibraryNotFoundError} from '../src/librepo'
 
-const endpoint = 'http://localhost:3000/';
+const config = {
+	endpoint: 'http://localhost:3000/',
+	lib_names: ['swd'],
+	lib_unknown: "$$!!@@"
+}
 // const endpoint = 'http://build.particle.io/';
 
 
 describe('BuildLibraryRepository', () => {
 	it('can fetch index', () => {
-		const sut = new BuildLibraryRepository({endpoint});
+		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
 		const result = sut.index();
 		return result.then((result) => {
 			expect(result).to.have.length.greaterThan(0);
@@ -48,14 +53,36 @@ describe('BuildLibraryRepository', () => {
 	});
 
 	it("can fetch names", () => {
-		const sut = new BuildLibraryRepository({endpoint});
+		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
 		const promise = sut.names().then((result) => {
 			expect(result).to.have.length.greaterThan(0);
 			expect(result).instanceOf(Array);
 			for (let title of result) {
 				expect(typeof title).to.be.equal('string');
 			}
+			for (let name of config.lib_names) {
+				expect(result).contains(name);
+			}
 		});
 		return promise;
 	});
+
+	it("can fetch libraries", () => {
+		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+		const promise = sut.fetch(config.lib_names[0]).then((lib) => {
+			expect(lib)
+		});
+		return promise;
+	});
+
+	it("raises exception for unknown library", () => {
+		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+		const promise = sut.fetch(config.lib_unknown).then((lib) => {
+			throw Error("expected failure");
+		}).catch((error) => {
+			expect(error.name).to.be.string('LibraryNotFoundError');
+		});
+		return promise;
+	});
+
 });
