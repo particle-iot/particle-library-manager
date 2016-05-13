@@ -70,22 +70,7 @@ describe('Build', () => {
 			const get = sinon.stub(sut, 'get');
 			get.returns(Promise.reject('unknown args'));
 			get.withArgs('libs.json', {name: 'uberlib'}).returns(Promise.resolve([]));
-			return expect(sut.fetch('uberlib')).eventually.rejectedWith('LibraryNotFoundError: library \'uberlib\' not found in repo \'[object Object]\'.');
+			return expect(sut.fetch('uberlib')).eventually.rejectedWith('library \'uberlib\' not found in repo \'[object Object]\'.');
 		}));
-
 	});
-
-
-	describe('Library', () => {
-		it('throws an error if no id is provided', () => {
-			expect(() => new BuildLibrary('name', {}, {})).to.throw(TypeError);
-			expect(() => new BuildLibrary('name', { id: ''}, 'repo')).to.throw('library \'name\' not found in repo \'repo\'.');
-		});
-
-		it('constructs with an id', () => {
-			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
-			expect(sut.metadata.id).to.be.equal('123');
-		});
-	});
-
 });

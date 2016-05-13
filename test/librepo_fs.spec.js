@@ -37,7 +37,7 @@ function makeFsLib(name, metadata=true) {
 	result[`${name}.h`] = '// a header file';
 	result[`${name}.cpp`] = '// a cpp file';
 	if (metadata) {
-		result[libraryProperties] = `{ 'name':'${name}', 'id':'id_${name}' }`;
+		result[libraryProperties] = `{ "name":"${name}", "id":"id_${name}" }`;
 	}
 	return result;
 }
@@ -102,18 +102,16 @@ describe('File System', () => {
 		});
 
 		for (let [name,data] of Object.entries(libData)) {
-			if (false) {
-				it(`can fetch library '${name}' by name`, () => {
-					const sut = new FileSystemLibraryRepository('mydir');
-					if (data.lib) {
-						expect(sut.fetch(name)).has.property('name').that.is.equal(name);
-					} else {
-						expect(() => {
-							sut.fetch(name);
-						}).throws(/LibraryNotFoundError/);
-					}
-				});
-			}
+			it(`can fetch library '${name}' by name`, () => {
+				const sut = new FileSystemLibraryRepository('mydir');
+				const promiseLib = sut.fetch(name);
+				expect(promiseLib).to.be.ok;
+				if (data.lib) {
+					return expect(promiseLib).eventually.has.property('name').that.is.equal(name);
+				} else {
+					return expect(promiseLib).eventually.rejectedWith(/library '.*' not found.*/);
+				}
+			});
 		}
 	});
 });

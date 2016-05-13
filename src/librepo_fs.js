@@ -18,10 +18,12 @@
  */
 
 import 'babel-polyfill';
+import {LibraryNotFoundError} from './librepo';
+import VError from 'verror';
 const fs = require('fs');
 const promisify = require('es6-promisify');
 
-import {AbstractLibraryRepository, AbstractLibrary} from './librepo';
+import {AbstractLibraryRepository, AbstractLibrary, LibraryFormatError} from './librepo';
 
 
 export function getdirs(rootDir) {
@@ -48,8 +50,11 @@ export function getdirs(rootDir) {
 
 export const libraryProperties = 'library.properties';
 
-export class FileSystemLibrary extends AbstractLibrary {
 
+export class FileSystemLibrary extends AbstractLibrary {
+	constructor(name, metadata, repo) {
+		super(name, metadata, repo);
+	}
 }
 
 
@@ -63,24 +68,43 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	/**
 	 * Locates the folder corresponding to the library.
 	 * @param {string} name The name of the library to fetch.
-	 * @return {Library} the library found
+	 * @return {FileSystemLibrary} the library found
 	 */
 	fetch(name) {
 		const filePath = this.descriptorFile(name);
-		this.readJSON(filePath)
-			.then(descriptor => this.buildLibrary(descriptor));
+		return this.readFileJSON(name, filePath)
+			.then(descriptor => this._createLibrary(name, descriptor))
+			.catch(error => {
+				throw new LibraryNotFoundError(this, name, error);
+			});
 	}
 
+	/**
+	 * Determine the file that contains the library descriptor.
+	 * @param {string} name The library name
+	 * @returns {string}    The file path of the library descriptor for the named library.
+	 */
 	descriptorFile(name) {
 		return this.path + '/' + name + '/' + libraryProperties;
 	}
 
-	readJSON(filename) {
-		return fs.readFile(filename, 'utf8').then(JSON.parse);
+	/**
+	 * Reads a file and decodes the JSON
+	 * @param {string} name The library name. Used in error reporting.
+	 * @param {string} filename The file to decode.
+	 * @returns {Promise.<Object>} The promise to retrieve the library with the given name.
+	 */
+	readFileJSON(name, filename) {
+		const readFile = promisify(fs.readFile);
+		return readFile(filename, 'utf8')
+			.then(json => JSON.parse(json))
+			.catch(error => {
+				throw new LibraryFormatError(this, name, new VError(error, 'error parsing "%s"', filename));
+			});
 	}
 
-	buildLibrary(descriptor) {
-		return null;
+	_createLibrary(name, metadata) {
+		return new FileSystemLibrary(name, metadata, this);
 	}
 
 	/**

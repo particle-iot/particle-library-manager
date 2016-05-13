@@ -29,7 +29,7 @@ export class BuildLibrary extends AbstractLibrary
 		super(name, metadata, repo);
 	}
 
-	process_files(files) {
+	processFiles(files) {
 		return this.tabsToFiles(files);
 	}
 
@@ -64,14 +64,18 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	fetch(name) {
-		return this.get(this.root+this.dot_json, {name}).then(lib => this._buildLibrary(name, lib));
+		return this.get(this.root+this.dot_json, {name}).then(libs => this._buildLibrary(name, libs));
 	}
 
-	_buildLibrary(name, lib) {
-		if (lib.length!==1) {
+	_buildLibrary(name, libs) {
+		if (libs.length!==1) {
 			throw new LibraryNotFoundError(this, name);
 		}
-		return new BuildLibrary(name, lib[0], this);
+		return this._createLibrary(name, libs[0]);
+	}
+
+	_createLibrary(name, metadata) {
+		return new BuildLibrary(name, metadata, this);
 	}
 
 	names() {
@@ -104,16 +108,18 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		return this.endpoint + uri;
 	}
 
-	files(id) {
+	files(lib) {
+		const id = lib.metadata.id;
 		return this.get(`${this.root}/${id}/tabs.json`);
 	}
 
 	/**
 	 * Retrieves an object descriptor corresponding to the 'spark.json' file for the library.
-	 * @param {String} id    The library id
+	 * @param {AbstractLibrary} lib    The library
 	 * @returns {Promise<Object>} The library definition.
 	 */
-	definition(id) {
+	definition(lib) {
+		const id = lib.metadata.id;
 		return this.get(`${this.root}/${id}/definition.json`);
 	}
 }

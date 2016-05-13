@@ -18,7 +18,8 @@
  */
 
 import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '../src/librepo';
-import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile} from '../src/librepo';
+import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile, AbstractLibrary} from '../src/librepo';
+import VError from 'verror';
 
 const chai = require('chai');
 const sinon = require('sinon');
@@ -66,11 +67,11 @@ describe('LibraryManager', () => {
 			it('works', () => {
 				const repo = {};
 				const library = 'uberlib';
-				const sut = new LibraryFormatError(repo, library, 'bad mojo');
+				const sut = new LibraryFormatError(repo, library, new VError('bad mojo'));
 
 				expect(sut.library).to.equal(library);
 				expect(sut.repo).to.equal(repo);
-				expect(sut.message).to.equal('bad mojo');
+				expect(sut.message).to.equal(': bad mojo');
 				expect(sut.name).to.equal('LibraryFormatError');
 			});
 		});
@@ -144,6 +145,20 @@ describe('LibraryManager', () => {
 				expect(result).to.be.equal('lots of content here');
 			});
 			sut.content(ws);
+		});
+	});
+
+	describe('AbstractLibraryRepo', () => {
+		describe('Library', () => {
+			it('throws an error if no id is provided', () => {
+				expect(() => new AbstractLibrary('name', {}, {})).to.throw(TypeError);
+				expect(() => new AbstractLibrary('name', { id: ''}, 'repo')).to.throw('LibraryFormatError: no id');
+			});
+
+			it('constructs with an id', () => {
+				const sut = new AbstractLibrary('name', { id: '123'}, 'repo');
+				expect(sut.metadata.id).to.be.equal('123');
+			});
 		});
 	});
 });

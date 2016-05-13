@@ -18,32 +18,36 @@
  */
 
 import 'babel-polyfill';
+import VError from 'verror';
 
 /**
  * Base class of errors from a library repository.
  */
-export class LibraryRepositoryError extends Error {
-	constructor(repo, message) {
-		super(message);
+export class LibraryRepositoryError extends VError {
+	constructor(repo, ...others) {
+		super(...others);
 		this.repo = repo;
 		this.name = 'LibraryRepositoryError';
 	}
+
 }
 
+function notFound(repo, library) {
+	return `library '${library}' not found in repo '${repo}'.`;
+}
 
 export class LibraryNotFoundError extends LibraryRepositoryError {
-	constructor(repo, library, message) {
-		super(repo, message);
+	constructor(repo, library, ...others) {
+		super(repo, ...others, notFound(repo, library));
 		this.library = library;
-		this.message = `library '${this.library}' not found in repo '${this.repo}'.`;
 		this.name = 'LibraryNotFoundError';
 	}
 }
 
 
 export class LibraryFormatError extends LibraryRepositoryError {
-	constructor(repo, library, message) {
-		super(repo, message);
+	constructor(repo, library, ...others) {
+		super(repo, ...others);
 		this.library = library;
 		this.name = 'LibraryFormatError';
 	}
@@ -139,7 +143,7 @@ export class MemoryLibraryFile extends LibraryFile {
  * It delegates to the repo to retrieve the associated descriptor and files.
  * Calls `definition(id,name)` and `files(id,name)` on the repo to retrieve the data
  * for the library data. The results of these are then passed to template methods
- * `process_definition()` and `process_files()`.
+ * `processDefinition()` and `processFiles()`.
  */
 export class AbstractLibrary extends Library
 {
@@ -149,15 +153,15 @@ export class AbstractLibrary extends Library
 		this.repo = repo;
 		this.cache = { definition: undefined, files: undefined };
 		if (this.metadata.id.length < 1) {
-			throw new LibraryNotFoundError(this.repo, name, 'no id');
+			throw new LibraryFormatError(this.repo, name, 'no id');
 		}
 	}
 
 	definition() {
 		return new Promise((fulfill,rejected) => {
 			if (!this.cache.definition) {
-				return this.repo.definition(this.metadata.id, this.name)
-					.then(desc => fulfill(this.process_definition(desc)))
+				return this.repo.definition(this)
+					.then(desc => fulfill(this.processDefinition(desc)))
 					.catch(error => rejected(error));
 			}
 			fulfill(this.cache.definition);
@@ -167,19 +171,19 @@ export class AbstractLibrary extends Library
 	files() {
 		return new Promise((fulfill,rejected) => {
 			if (!this.cache.files) {
-				return this.repo.files(this.metadata.id, this.name)
-					.then(files => fulfill(this.process_files(files)))
+				return this.repo.files(this)
+					.then(files => fulfill(this.processFiles(files)))
 					.catch(error => rejected(error));
 			}
 			fulfill(this.cache.files);
 		});
 	}
 
-	process_definition(def) {
+	processDefinition(def) {
 		return def;
 	}
 
-	process_files(files) {
+	processFiles(files) {
 		return files;
 	}
 }
@@ -188,11 +192,21 @@ export class AbstractLibrary extends Library
  * Provides the base contract required by the AbstractLibrary.
  */
 export class AbstractLibraryRepository extends LibraryRepository {
-	files(id, name) {
+
+	/**
+	 * @param {AbstractLibrary} lib The library to retrieve files for
+	 * @returns {Array.<LibraryFile>}   The files for the library.
+	 */
+	files(lib) {
 		return [];
 	}
 
-	definition(id, name) {
-		return {id,name};
+	/**
+	 *
+	 * @param {AbstractLibrary} lib The library to retrieve the definition for.
+	 * @returns {*} The object definition.
+	 */
+	definition(lib) {
+		return {name:lib.name};
 	}
 }
