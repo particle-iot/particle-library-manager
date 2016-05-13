@@ -133,3 +133,66 @@ export class MemoryLibraryFile extends LibraryFile {
 		rs.pipe(stream);
 	}
 }
+
+/**
+ * Abstract class provides properties for the associated repo, name and metadata.
+ * It delegates to the repo to retrieve the associated descriptor and files.
+ * Calls `definition(id,name)` and `files(id,name)` on the repo to retrieve the data
+ * for the library data. The results of these are then passed to template methods
+ * `process_definition()` and `process_files()`.
+ */
+export class AbstractLibrary extends Library
+{
+	constructor(name, metadata, repo) {
+		super(name);
+		this.metadata = metadata;
+		this.repo = repo;
+		this.cache = { definition: undefined, files: undefined };
+		if (this.metadata.id.length < 1) {
+			throw new LibraryNotFoundError(this.repo, name, 'no id');
+		}
+	}
+
+	definition() {
+		return new Promise((fulfill,rejected) => {
+			if (!this.cache.definition) {
+				return this.repo.definition(this.metadata.id, this.name)
+					.then(desc => fulfill(this.process_definition(desc)))
+					.catch(error => rejected(error));
+			}
+			fulfill(this.cache.definition);
+		});
+	}
+
+	files() {
+		return new Promise((fulfill,rejected) => {
+			if (!this.cache.files) {
+				return this.repo.files(this.metadata.id, this.name)
+					.then(files => fulfill(this.process_files(files)))
+					.catch(error => rejected(error));
+			}
+			fulfill(this.cache.files);
+		});
+	}
+
+	process_definition(def) {
+		return def;
+	}
+
+	process_files(files) {
+		return files;
+	}
+}
+
+/**
+ * Provides the base contract required by the AbstractLibrary.
+ */
+export class AbstractLibraryRepository extends LibraryRepository {
+	files(id, name) {
+		return [];
+	}
+
+	definition(id, name) {
+		return {id,name};
+	}
+}

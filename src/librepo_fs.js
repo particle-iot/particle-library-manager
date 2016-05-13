@@ -21,7 +21,7 @@ import 'babel-polyfill';
 const fs = require('fs');
 const promisify = require('es6-promisify');
 
-import {LibraryRepository, Library} from './librepo';
+import {AbstractLibraryRepository, AbstractLibrary} from './librepo';
 
 
 export function getdirs(rootDir) {
@@ -48,13 +48,12 @@ export function getdirs(rootDir) {
 
 export const libraryProperties = 'library.properties';
 
-export class FileSystemLibrary extends Library
-{
+export class FileSystemLibrary extends AbstractLibrary {
 
 }
 
 
-export class FileSystemLibraryRepository extends LibraryRepository {
+export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	constructor(path) {
 		super();

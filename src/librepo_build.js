@@ -19,42 +19,18 @@
 
 import 'babel-polyfill';
 
-import {LibraryRepository, Library, LibraryNotFoundError, MemoryLibraryFile} from './librepo';
+import {AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary} from './librepo';
 import {Agent} from './agent';
 
 
-export class BuildLibrary extends Library
+export class BuildLibrary extends AbstractLibrary
 {
 	constructor(name, metadata, repo) {
-		super(name);
-		this.metadata = metadata;
-		this.repo = repo;
-		this.cache = { definition: undefined, files: undefined };
-		if (this.metadata.id.length < 1) {
-			throw new LibraryNotFoundError(this.repo, name, 'no id');
-		}
+		super(name, metadata, repo);
 	}
 
-	definition() {
-		return new Promise((fulfill,rejected) => {
-			if (!this.cache.definition) {
-				return this.repo.definition(this.metadata.id)
-					.then(desc => fulfill(desc))
-					.catch(error => rejected(error));
-			}
-			fulfill(this.cache.definition);
-		});
-	}
-
-	files() {
-		return new Promise((fulfill,rejected) => {
-			if (!this.cache.files) {
-				return this.repo.tabs(this.metadata.id)
-					.then(tabs => fulfill(this.tabsToFiles(tabs)))
-					.catch(error => rejected(error));
-			}
-			fulfill(this.cache.files);
-		});
+	process_files(files) {
+		return this.tabsToFiles(files);
 	}
 
 	tabsToFiles(tabs) {
@@ -73,7 +49,7 @@ export class BuildLibrary extends Library
 /**
  * A library repository that fetches it's content via the Build library endpoint.
  */
-export class BuildLibraryRepository extends LibraryRepository {
+export class BuildLibraryRepository extends AbstractLibraryRepository {
 
 	/**
 	 * @param {String} endpoint The root of the library API.
@@ -128,7 +104,7 @@ export class BuildLibraryRepository extends LibraryRepository {
 		return this.endpoint + uri;
 	}
 
-	tabs(id) {
+	files(id) {
 		return this.get(`${this.root}/${id}/tabs.json`);
 	}
 
