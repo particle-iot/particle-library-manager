@@ -152,9 +152,6 @@ export class AbstractLibrary extends Library
 		this.metadata = metadata;
 		this.repo = repo;
 		this.cache = { definition: undefined, files: undefined };
-		if (this.metadata.id.length < 1) {
-			throw new LibraryFormatError(this.repo, name, 'no id');
-		}
 	}
 
 	definition() {

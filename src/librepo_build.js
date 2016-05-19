@@ -21,12 +21,16 @@ import 'babel-polyfill';
 
 import {AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary} from './librepo';
 import {Agent} from './agent';
+import {LibraryFormatError} from "./librepo";
 
 
 export class BuildLibrary extends AbstractLibrary
 {
 	constructor(name, metadata, repo) {
 		super(name, metadata, repo);
+		if (this.metadata.id.length < 1) {
+			throw new LibraryFormatError(this.repo, name, 'no id');
+		}
 	}
 
 	processFiles(files) {

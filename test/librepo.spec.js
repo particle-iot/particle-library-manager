@@ -18,7 +18,7 @@
  */
 
 import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '../src/librepo';
-import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile, AbstractLibrary} from '../src/librepo';
+import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile} from '../src/librepo';
 import VError from 'verror';
 
 const chai = require('chai');
@@ -148,17 +148,4 @@ describe('LibraryManager', () => {
 		});
 	});
 
-	describe('AbstractLibraryRepo', () => {
-		describe('Library', () => {
-			it('throws an error if no id is provided', () => {
-				expect(() => new AbstractLibrary('name', {}, {})).to.throw(TypeError);
-				expect(() => new AbstractLibrary('name', { id: ''}, 'repo')).to.throw('LibraryFormatError: no id');
-			});
-
-			it('constructs with an id', () => {
-				const sut = new AbstractLibrary('name', { id: '123'}, 'repo');
-				expect(sut.metadata.id).to.be.equal('123');
-			});
-		});
-	});
 });

@@ -73,4 +73,17 @@ describe('Build', () => {
 			return expect(sut.fetch('uberlib')).eventually.rejectedWith('library \'uberlib\' not found in repo \'[object Object]\'.');
 		}));
 	});
+
+	describe('Library', () => {
+		it('throws an error if no id is provided', () => {
+			expect(() => new BuildLibrary('name', {}, {})).to.throw(TypeError);
+			expect(() => new BuildLibrary('name', { id: ''}, 'repo')).to.throw('LibraryFormatError: no id');
+		});
+
+		it('constructs with an id', () => {
+			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
+			expect(sut.metadata.id).to.be.equal('123');
+		});
+	});
+
 });
