@@ -62,7 +62,7 @@ describe('Build', () => {
 			const lib = {title: 'uberlib', id: '123'};
 			get.returns(Promise.reject('unknown args'));
 			get.withArgs('libs.json', {name: 'uberlib'}).returns(Promise.resolve([lib]));
-			return expect(sut.fetch('uberlib')).eventually.deep.equal(new BuildLibrary('uberlib', lib, sut));
+			return expect(sut.fetch('uberlib')).eventually.deep.equal(new BuildLibrary('uberlib', lib, '123', sut));
 		}));
 
 		it('throws exception for unknown libraries', sinon.test(() => {
@@ -76,8 +76,7 @@ describe('Build', () => {
 
 	describe('Library', () => {
 		it('throws an error if no id is provided', () => {
-			expect(() => new BuildLibrary('name', {}, {})).to.throw(TypeError);
-			expect(() => new BuildLibrary('name', { id: ''}, 'repo')).to.throw('LibraryFormatError: no id');
+			expect(() => new BuildLibrary('name', {}, '', 'repo')).to.throw('LibraryFormatError: no id');
 		});
 
 		it('constructs with an id', () => {

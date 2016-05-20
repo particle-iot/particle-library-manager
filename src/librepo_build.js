@@ -21,16 +21,20 @@ import 'babel-polyfill';
 
 import {AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary} from './librepo';
 import {Agent} from './agent';
-import {LibraryFormatError} from "./librepo";
+import {LibraryFormatError} from './librepo';
 
-
+/**
+ * A library retrieved from the Build repo.
+ * The metadata should include the ID
+ */
 export class BuildLibrary extends AbstractLibrary
 {
-	constructor(name, metadata, repo) {
+	constructor(name, metadata, id, repo) {
 		super(name, metadata, repo);
-		if (this.metadata.id.length < 1) {
+		if (id === undefined || id.length < 1) {
 			throw new LibraryFormatError(this.repo, name, 'no id');
 		}
+		this.id = id;
 	}
 
 	processFiles(files) {
@@ -45,6 +49,12 @@ export class BuildLibrary extends AbstractLibrary
 		return files;
 	}
 
+	/**
+	 * Creates a new LibraryFile for the given tab object.
+	 * @param {object} tab A tab from Build. Expected properties are title, kind, extension,
+	 *  content and id.
+	 * @returns {LibraryFile} the library file for the tab.
+	 */
 	tabToFile(tab) {
 		return new MemoryLibraryFile(tab.title, tab.kind, tab.extension, tab.content, tab.id);
 	}
@@ -64,7 +74,6 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		this.agent = new Agent();
 		this.root = 'libs';
 		this.dot_json = '.json';
-
 	}
 
 	fetch(name) {
@@ -75,11 +84,12 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		if (libs.length!==1) {
 			throw new LibraryNotFoundError(this, name);
 		}
-		return this._createLibrary(name, libs[0]);
+		const metadata = libs[0];
+		return this._createLibrary(name, metadata);
 	}
 
 	_createLibrary(name, metadata) {
-		return new BuildLibrary(name, metadata, this);
+		return new BuildLibrary(name, metadata, metadata.id, this);
 	}
 
 	names() {
@@ -113,7 +123,7 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	files(lib) {
-		const id = lib.metadata.id;
+		const id = this.libraryId(lib);
 		return this.get(`${this.root}/${id}/tabs.json`);
 	}
 
@@ -123,7 +133,11 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {Promise<Object>} The library definition.
 	 */
 	definition(lib) {
-		const id = lib.metadata.id;
+		const id = this.libraryId(lib);
 		return this.get(`${this.root}/${id}/definition.json`);
+	}
+
+	libraryId(lib) {
+		return lib.id;
 	}
 }

@@ -92,6 +92,14 @@ export class Library {
 	}
 
 	/**
+	 * Retrieves the definitoin (metadata) for this library.
+	 * @returns {Promise}   The metadata for this library.
+	 */
+	definition() {
+		return Promise.reject(new LibraryNotFoundError('not implemented'));
+	}
+
+	/**
 	 * A promise of the library files available.
 	 * @returns {Promise.<Array>}   The files that make up this library.
 	 */
@@ -195,7 +203,7 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	 * @returns {Array.<LibraryFile>}   The files for the library.
 	 */
 	files(lib) {
-		return [];
+		return Promise.resolve([]);
 	}
 
 	/**
@@ -204,6 +212,6 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	 * @returns {*} The object definition.
 	 */
 	definition(lib) {
-		return {name:lib.name};
+		return Promise.resolve({name:lib.name});
 	}
 }
