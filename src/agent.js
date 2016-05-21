@@ -27,12 +27,12 @@ import prefix from 'superagent-prefix';
 
 export class Agent {
 
-	constructor(baseUrl = undefined, debug = undefined) {
+	constructor(baseUrl, debug) {
 		this.prefix = prefix(baseUrl);
 		this.debug = debug;
 	}
 
-	get(uri, auth = undefined, query = undefined) {
+	get(uri, auth, query) {
 		return this.request({uri, auth, method: 'get', query: query});
 	}
 
@@ -80,13 +80,13 @@ export class Agent {
 	 * @param {Object} files         array of file names and file content
 	 * @return {Promise} A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
 	 */
-	_request({uri, method, data, auth, query, form, files}) {
+	_request({uri, method, data, auth, query, form, files, request: request}) {
 		return new Promise((fulfill, reject) => {
 			const req = this._buildRequest({uri, method, data, auth, query, form, files});
 
-			if (this.debug) {
-				this.debug(req);
-			}
+			// if (this.debug) {
+			// 	this.debug(req);
+			// }
 
 			req.end((error, res) => {
 				const body = res && res.body;
@@ -107,8 +107,8 @@ export class Agent {
 		});
 	}
 
-	_buildRequest({uri, method, data, auth, query, form, files}) {
-		const req = request(method, uri);
+	_buildRequest({uri, method, data, auth, query, form, files, makerequest=request}) {
+		const req = makerequest(method, uri);
 		if (this.prefix) {
 			req.use(this.prefix);
 		}
@@ -151,8 +151,13 @@ export class Agent {
 		return req;
 	}
 
+	/**
+	 *
+	 * @param {Array} files converts the file names to file, file1, file2.
+	 * @returns {object} the renamed files.
+	 */
 	_sanitize(files) {
-		let requestFiles;
+		let requestFiles = {};
 		if (files) {
 			requestFiles = {};
 			Object.keys(files).forEach((k, i) => {
