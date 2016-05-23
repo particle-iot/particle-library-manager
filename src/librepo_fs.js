@@ -41,8 +41,7 @@ export function mapActionDir(rootDir, mapper, action) {
 		const filePromises = files.map(file => {
 			const filePath = rootDir + file;
 			return stat(filePath)
-				.then(stat => mapper(stat, file))
-				.catch(error => error);
+				.then(stat => mapper(stat, file));
 		});
 		return Promise
 			.all(filePromises)
