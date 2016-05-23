@@ -163,10 +163,13 @@ export class AbstractLibrary extends Library
 	}
 
 	definition() {
-		return new Promise((fulfill,rejected) => {
+		return new Promise((fulfill, rejected) => {
 			if (!this.cache.definition) {
 				return this.repo.definition(this)
-					.then(desc => fulfill(this.processDefinition(desc)))
+					.then((defn) => {
+						this.cache.definition = defn;
+						fulfill(this.processDefinition(defn));
+					})
 					.catch(error => rejected(error));
 			}
 			fulfill(this.cache.definition);
@@ -177,7 +180,10 @@ export class AbstractLibrary extends Library
 		return new Promise((fulfill,rejected) => {
 			if (!this.cache.files) {
 				return this.repo.files(this)
-					.then(files => fulfill(this.processFiles(files)))
+					.then((files) => {
+						this.cache.files = files;
+						fulfill(this.processFiles(files));
+					})
 					.catch(error => rejected(error));
 			}
 			fulfill(this.cache.files);
