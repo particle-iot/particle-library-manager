@@ -72,6 +72,28 @@ describe('Build', () => {
 			get.withArgs('libs.json', {name: 'uberlib'}).returns(Promise.resolve([]));
 			return expect(sut.fetch('uberlib')).eventually.rejectedWith('library \'uberlib\' not found in repo \'[object Object]\'.');
 		}));
+
+		it('uses libraryId to fetch the library id', () => {
+			const sut = new BuildLibraryRepository({endpoint: '$$$/'});
+			expect(sut.libraryId({id:'123'})).to.equal('123');
+		});
+
+		it('retrieves files for a library via the id and a get request', () => {
+			const sut = new BuildLibraryRepository({endpoint: '/root'});
+			sut.get = sinon.stub();
+			sut.get.returns('abc');
+			expect(sut.files({id:123})).to.equal('abc');
+			expect(sut.get).calledOnce.calledWith('libs/123/tabs.json');
+		});
+
+		it('retrieves the definition for a library via the id and a get request', () => {
+			const sut = new BuildLibraryRepository({endpoint: '/root'});
+			sut.get = sinon.stub();
+			sut.get.returns('abc');
+			expect(sut.definition({id:123})).to.equal('abc');
+			expect(sut.get).calledOnce.calledWith('libs/123/definition.json');
+		});
+
 	});
 
 	describe('Library', () => {
@@ -82,6 +104,33 @@ describe('Build', () => {
 		it('constructs with an id', () => {
 			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
 			expect(sut.metadata.id).to.be.equal('123');
+		});
+
+		it('implements processFiles via tabsToFiles', () => {
+			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
+			sut.tabsToFiles = sinon.stub();
+			sut.tabsToFiles.returns('result');
+			expect(sut.processFiles(['abcd'])).to.equal('result');
+			expect(sut.tabsToFiles).calledOnce.calledWith(['abcd']);
+		});
+
+		it('can convert tabs to files', () => {
+			const tabs = [
+				{title:'title1', kind:'kind1', extension:'ext1', content:'cnt1', id:'id1'},
+				{title:'title2', kind:'kind2', extension:'ext2', content:'cnt2', id:'id2'},
+			];
+
+			const sut = new BuildLibrary('name', { id: '123'}, 'repo');
+			const files = sut.tabsToFiles(tabs);
+			expect(files).to.have.length(tabs.length);
+			files.forEach((file, index) => {
+				const tab = tabs[index];
+				expect(file.string_content).to.equal(tab.content);
+				expect(file.id).to.equal(tab.id);
+				expect(file.name).to.equal(tab.title);
+				expect(file.kind).to.equal(tab.kind);
+				expect(file.extension).to.equal(tab.extension);
+			});
 		});
 	});
 

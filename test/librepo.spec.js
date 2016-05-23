@@ -19,6 +19,7 @@
 
 import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '../src/librepo';
 import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile} from '../src/librepo';
+import {AbstractLibrary, AbstractLibraryRepository} from '../src/librepo';
 import VError from 'verror';
 
 const chai = require('chai');
@@ -89,6 +90,12 @@ describe('LibraryManager', () => {
 			const sut = new Library();
 			return expect(sut.files()).to.eventually.have.length(0);
 		});
+
+		it('has no definition', () => {
+			const sut = new Library();
+			return expect(sut.definition()).to.eventually.be.rejected;
+		});
+
 	});
 
 	describe('LibraryFile', () => {
@@ -121,6 +128,7 @@ describe('LibraryManager', () => {
 			const sut = new LibraryRepository();
 			return expect(sut.names()).eventually.to.have.length(0);
 		});
+
 	});
 
 	describe('MemoryLibraryFile', () => {
@@ -148,4 +156,93 @@ describe('LibraryManager', () => {
 		});
 	});
 
+
+	describe('AbstractLibrary', () => {
+		it('retrieves the initial definition from the repo and caches it thereafter', () => {
+			const repo = {};
+			repo.definition = sinon.stub();
+			const defn = 'definition';
+			repo.definition.returns(Promise.resolve(defn));
+
+			const sut = new AbstractLibrary('name', {}, repo);
+			sinon.spy(sut, 'processDefinition');
+			const result = sut.definition();
+
+			const promise = result.then((def) => {
+				expect(def).to.be.equal(defn);
+				expect(repo.definition).to.be.calledOnce.calledWith(sut);
+				expect(sut.processDefinition).to.be.calledOnce.calledWith(defn);
+				return def;
+			}).then(() => {
+				return sut.definition();
+			}).then((def) => {
+				expect(def).to.be.equal(defn);
+				expect(repo.definition).to.be.calledOnce;
+				return def;
+			});
+			return expect(promise).to.be.eventually.equal(defn);
+		});
+
+		it('retrieves the initial files from the repo and caches them thereafter', () => {
+			const repo = {};
+			repo.files = sinon.stub();
+			const files = 'files';
+			repo.files.returns(Promise.resolve(files));
+
+			const sut = new AbstractLibrary('name', {}, repo);
+			sinon.spy(sut, 'processFiles');
+			const result = sut.files();
+
+			const promise = result.then((f) => {
+				expect(f).to.be.equal(files);
+				expect(repo.files).to.be.calledOnce.and.calledWith(sut);
+				expect(sut.processFiles).to.be.calledOnce.and.calledWith(files);
+				return f;
+			}).then(() => {
+				return sut.files();
+			}).then((f) => {
+				expect(f).to.be.equal(files);
+				expect(repo.files).to.be.calledOnce;
+				return f;
+			});
+
+			return expect(promise).to.be.eventually.equal(files);
+		});
+
+
+		it('propagates errors when retrieving the definition', () => {
+			const repo = {};
+			repo.definition = sinon.stub();
+			repo.definition.returns(Promise.resolve().then(() => {
+				throw 'keep calm and carry on';
+			}));
+			const sut = new AbstractLibrary('name', {}, repo);
+			return expect(sut.definition()).to.be.rejectedWith('keep calm and carry on');
+
+		});
+
+		it('propagates errors when retrieving the files', () => {
+			const repo = {};
+			repo.files = sinon.stub();
+			repo.files.returns(Promise.resolve().then(() => {
+				throw 'aliens are coming';
+			}));
+			const sut = new AbstractLibrary('name', {}, repo);
+			return expect(sut.files()).to.be.rejectedWith('aliens are coming');
+		});
+
+	});
+
+	describe('AbstractLibraryRepository', () => {
+		it('returns an empty list of files', () => {
+			const sut = new AbstractLibraryRepository();
+			expect(sut.files()).to.eventually.equal([]);
+		});
+
+		it('returns a defintiion comprising just the library name', () => {
+			const sut = new AbstractLibraryRepository();
+			expect(sut.definition({name:'wombat'})).to.eventually.equal('wombat');
+		});
+
+	});
 });

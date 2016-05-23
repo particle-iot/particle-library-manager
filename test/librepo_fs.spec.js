@@ -213,11 +213,45 @@ describe('File System', () => {
 	});
 
 	describe('Library Repository', () => {
-		it('constructor adds trailing slash if missing', () => {
+		it('constructor adds trailing slash when missing', () => {
 			const dir = '';
 			const sut = new FileSystemLibraryRepository(dir);
 			expect(sut.path).to.be.equal('/');
 		});
+
+		it('constructor does not add a trailing slash when already present', () => {
+			const dir = '/';
+			const sut = new FileSystemLibraryRepository(dir);
+			expect(sut.path).to.be.equal('/');
+		});
+
+		it('nameToFs is currently a no-op', () => {
+			const sut = new FileSystemLibraryRepository('');
+			const name = 'abc$§/0\0';
+			expect(sut.nameToFs(name)).to.equal(name);
+		});
+
+		it('extension splits filename at a dot when present', () => {
+			const sut = new FileSystemLibraryRepository('');
+			const result = sut.extension('abc.txt');
+			expect(result[1]).to.equal('abc');
+			expect(result[0]).to.equal('txt');
+		});
+
+		it('extension returns basename when dot not present', () => {
+			const sut = new FileSystemLibraryRepository('');
+			const result = sut.extension('abc');
+			expect(result[1]).to.equal('abc');
+			expect(result[0]).to.equal('');
+		});
+
+		it('extension returns empty extension with dot in last position', () => {
+			const sut = new FileSystemLibraryRepository('');
+			const result = sut.extension('abc.');
+			expect(result[1]).to.equal('abc');
+			expect(result[0]).to.equal('');
+		});
+
 
 		it('can list exising libraries', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
@@ -275,7 +309,7 @@ describe('File System', () => {
 			expect(sut.libraryFileName('mylib', 'file', 'ext')).to.be.equal('mydir/mylib/file.ext');
 		});
 
-		it('can determine source code files', ()=> {
+		it('can determine source code files', () => {
 			const isSourceData = {'abcd/a.txt':false, '123/a.c': true, 'yaya/a.cpp': true, '../a.properties': false};
 
 			for (let [name,isSource] of Object.entries(isSourceData)) {
