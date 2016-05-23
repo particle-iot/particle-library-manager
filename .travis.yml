@@ -1,12 +1,23 @@
 language: node_js
+sudo: false
+
 node_js:
 - '6.1'
-sudo: false
+
+before_install:
+- npm install -g npm@2.4
+
 install:
 - npm install
 - npm prune
+
+script:
+- npm run lint
+- npm run test
+
 after_success:
 - npm run coveralls
+
 notifications:
   slack:
     secure: CdbBTUuhmYb7GD84YxsJ0mKpS8gl3SKykJaPfIcPk9Tvqx8W/KGkKYA6R7eiJKRVE4QLil2lunOeIX4iLUZoKBmWUTlLtK1PansmgDjEN/gBRhKwrau0WwvVvvaBk5TCa6joc4/L0W44aK3SAw/VxzWnjqMQ4+Sg9PzLXnkiUGJIS/ZAGuIawt/sxPV0185FOhkPxXWHqytA3VWgK17/fCNlmmS2gI55PUQ8NlkxmpVVQlZkkrfFolhiFELCshz3oEyO6ig7GwGO747Hyfq00OJHjztOhOvGiDyACfKA8qub03mrlAhu4VWakv5cbZM+3MAPHG+YcSakLSsTWwIGQRaevQzTGUtDowIPvBxwTUdJr0xm9V7aTakzJxf9hLJZdNevJm+oCNoepeKIzp8weIWGxRmfW6npdQ36Bbt90xwpMVIkFXIjLzVeccSXemTnyz9Q7Bys+6gaKEMD9oCR5SI8Bzg/UA/Lzzz6V6+c/sPdgpMmRrdTV7FrnV2FYcfhZGiFybYcl5BMXqzvwoAnEDvbb8NJQ+RPm7gPnkQaP4wiPO3PFBOP+Uck+2DtMeB8ds6qabFeIa3pLIKL/oW+LqOm9H616kHF/5pqngKIx/t48vDYJiBXu2mnu4OpdY0KLMkXfeBzq8YAimpMVckg3e6IfMslYx5Ng+d9EidVnkU=
