@@ -114,7 +114,7 @@ export class Agent {
 			if (error) {
 				const uri = request.url;
 				const statusCode = error.status;
-				let errorDescription = `${statusCode ? 'HTTP error '+statusCode : 'Network error'} from ${uri}`;
+				let errorDescription = `${statusCode ? 'HTTP error ' + statusCode : 'Network error'} from ${uri}`;
 				if (body && body.error_description) {
 					errorDescription += ' - ' + body.error_description;
 				}
@@ -157,14 +157,14 @@ export class Agent {
 
 	/**
 	 * Adds an authorization header.
-     * @param {Request} req     The request to add the authorization header to.
+	 * @param {Request} req     The request to add the authorization header to.
 	 * @param {object|string}  auth    The authorization. Either a string authorization bearer token,
 	 *  or a username/password object.
 	 * @returns {Request} req   The original request.
 	 */
 	_authorizationHeader(req, auth) {
 		if (auth) {
-			if (typeof auth === 'object') {
+			if (auth.username !== undefined) {
 				req.auth(auth.username, auth.password);
 			} else {
 				req.set({Authorization: `Bearer ${auth}`});
@@ -192,7 +192,5 @@ export class Agent {
 		}
 		return requestFiles;
 	}
-
-
 }
 
