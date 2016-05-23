@@ -65,7 +65,7 @@ export class Agent {
 	 * @return {Promise} A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
 	 */
 	request({uri, method, data = undefined, auth, query = undefined, form = undefined, files = undefined}) {
-		let requestFiles = undefined; // this._sanitize(files);
+		const requestFiles = this._sanitize(files);
 		return this._request({uri, method, data, auth, query, form, files: requestFiles});
 	}
 
@@ -80,30 +80,51 @@ export class Agent {
 	 * @param {Object} files         array of file names and file content
 	 * @return {Promise} A promise. fulfilled with {body, statusCode}, rejected with { statusCode, errorDescription, error, body }
 	 */
-	_request({uri, method, data, auth, query, form, files, request: request}) {
-		return new Promise((fulfill, reject) => {
-			const req = this._buildRequest({uri, method, data, auth, query, form, files});
+	_request({uri, method, data, auth, query, form, files}) {
+		const req = this._buildRequest({uri, method, data, auth, query, form, files});
 
-			// if (this.debug) {
-			// 	this.debug(req);
-			// }
+		// if (this.debug) {
+		// 	this.debug(req);
+		// }
 
-			req.end((error, res) => {
-				const body = res && res.body;
-				if (error) {
-					const statusCode = error.status;
-					let errorDescription = `${statusCode ? 'HTTP error' : 'Network error'} ${statusCode} from ${uri}`;
-					if (body && body.error_description) {
-						errorDescription += ' - ' + body.error_description;
-					}
-					reject({statusCode, errorDescription, error, body});
-				} else {
-					fulfill({
-						body: body,
-						statusCode: res.statusCode
-					});
+		return this._promiseResponse(req);
+	}
+
+	/**
+	 * Promises to send the request and retreive the response.
+	 * @param {Request} req The request to send
+	 * @returns {Promise}   The promise to send the request and retrieve the response.
+	 * @private
+	 */
+	_promiseResponse(req) {
+		return new Promise((fulfill, reject) => this._sendRequest(req, fulfill, reject));
+	}
+
+	/**
+	 * Sends the given request, calling the fulfill or reject methods for success/failure.
+	 * @param {object} request   The request to send
+	 * @param {function} fulfill    Called on success with the response
+	 * @param {function} reject     Called on failure with the failure reason.
+	 * @private
+	 * @returns {undefined} Nothing
+	 */
+	_sendRequest(request, fulfill, reject) {
+		request.end((error, res) => {
+			const body = res && res.body;
+			if (error) {
+				const uri = request.url;
+				const statusCode = error.status;
+				let errorDescription = `${statusCode ? 'HTTP error '+statusCode : 'Network error'} from ${uri}`;
+				if (body && body.error_description) {
+					errorDescription += ' - ' + body.error_description;
 				}
-			});
+				reject({statusCode, errorDescription, error, body});
+			} else {
+				fulfill({
+					body: body,
+					statusCode: res.statusCode
+				});
+			}
 		});
 	}
 
@@ -136,9 +157,10 @@ export class Agent {
 
 	/**
 	 * Adds an authorization header.
-     * @param {Request} req     The request
-	 * @param {Object}  auth    The authorization. Either a string authorization token, or a username/password object.
-	 * @returns {Request} req   Th
+     * @param {Request} req     The request to add the authorization header to.
+	 * @param {object|string}  auth    The authorization. Either a string authorization bearer token,
+	 *  or a username/password object.
+	 * @returns {Request} req   The original request.
 	 */
 	_authorizationHeader(req, auth) {
 		if (auth) {

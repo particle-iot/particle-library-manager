@@ -8,9 +8,9 @@ const expect = chai.expect;
 
 describe('agent', () => {
 	describe('sanitize', () => {
-		it('canitizes empty file list', () => {
+		it('can call sanitize will falsy value', () => {
 			const sut = new Agent();
-			expect(sut._sanitize({})).to.be.deep.equal({});
+			expect(sut._sanitize(undefined)).to.be.deep.equal({});
 		});
 
 		it('sanitizes file names', () => {
@@ -25,7 +25,9 @@ describe('agent', () => {
 				expect(value).to.have.property('data').equal(original[value.path]);
 			}
 		});
+	});
 
+	describe('resource operations', () => {
 		it('can get a resource', () => {
 			const sut = new Agent();
 			sut.request = sinon.stub();
@@ -70,7 +72,7 @@ describe('agent', () => {
 	describe('authorize', () => {
 		it('authorize no auth is unchanged', () => {
 			const sut = new Agent();
-			expect(sut._authorizationHeader({})).to.be.deep.equal({});
+			expect(sut._authorizationHeader(undefined)).to.be.undefined;
 		});
 
 		it('authorize with object', () => {
@@ -207,5 +209,141 @@ describe('agent', () => {
 			expect(field).to.be.calledWith('form1', 'value1');
 			expect(field).to.be.calledWith('form2', 'value2');
 		});
+	});
+
+	it('sanitizes files from a request', () => {
+		const sut = new Agent();
+		sut._sanitize = sinon.stub();
+		sut._request = sinon.stub();
+		const sanitizedFiles = {a:'a'};
+		sut._sanitize.returns(sanitizedFiles);
+		sut._request.returns('request_result');
+		const files = {};
+		const form = {};
+		const result = sut.request({uri: 'abc', method:'post', data:'123', query:'all', form:form, files:files});
+		expect(result).to.be.equal('request_result');
+		expect(sut._sanitize).calledOnce.calledWith(sinon.match.same(files));
+		expect(sut._request).calledOnce.calledWith({uri: 'abc', auth: undefined, method: 'post', data: '123', query: 'all', form:form,
+			files:sanitizedFiles});
+	});
+
+	it('uses default arguments for request', () => {
+		const sut = new Agent();
+		sut._sanitize = sinon.stub();
+		sut._request = sinon.stub();
+		sut._request.returns('123');
+		const result = sut.request({uri: 'abc', method:'post'});
+		expect(result).to.equal('123');
+		expect(sut._request).calledOnce.calledWith({uri: 'abc', method:'post',
+			auth: undefined, data: undefined, files: undefined, form: undefined, query: undefined });
+	});
+
+
+	it('builds and sends the request', () => {
+		const sut = new Agent();
+		const buildRequest = sinon.stub();
+		const promiseResponse = sinon.stub();
+		sut._buildRequest = buildRequest;
+		sut._promiseResponse = promiseResponse;
+		buildRequest.returns('arequest');
+		promiseResponse.returns('promise');
+
+		const requestArgs = {uri:'uri', method:'method', data:'data', auth:'auth', query: 'query',
+			form: 'form', files: 'files'};
+		const result = sut._request(requestArgs);
+		expect(result).to.be.equal('promise');
+		expect(buildRequest).calledWith(requestArgs);
+		expect(promiseResponse).calledWith('arequest');
+		expect(buildRequest).calledOnce;
+		expect(promiseResponse).calledOnce;
+	});
+
+	it('builds a promise to call _sendRequest from _promiseResponse', () => {
+		const sut = new Agent();
+		const req = sinon.stub();
+		const response = 'response';
+		const sendRequest = sinon.spy((req, fulfill, reject)=>{
+			fulfill(response);
+		});
+		sut._sendRequest = sendRequest;
+		const promise = sut._promiseResponse(req);
+		expect(promise).has.property('then');
+		return promise.then((response) => {
+			expect(sendRequest).calledOnce;
+			// how to verify that fulfill/reject arguments are correctly passed to the promised function?
+			//expect(sendRequest).calledWith(req, fulfill, reject);
+			expect(response).to.be.equal('response');
+		});
+	});
+
+	describe('_sendRequest', () => {
+
+		it('can retrieve a success response', () => {
+			const response = { body: 'abc', statusCode:200};
+			const fulfill = sinon.stub();
+			const reject = sinon.stub();
+
+			const request = {end: function end(callback) {
+				callback(undefined, response);
+			}};
+			const end = sinon.spy(request, 'end');
+
+			const sut = new Agent();
+			const result = sut._sendRequest(request, fulfill, reject);
+			expect(result).to.be.undefined;
+			expect(end).to.be.calledOnce;
+
+			expect(fulfill).to.be.calledOnce;
+			// not called with response directly but with an object that is equivalent
+			expect(fulfill).to.be.calledWith(response);
+			expect(reject).to.not.be.called;
+		});
+
+		const failResponseData = [
+			{name: 'error text includes body error description',
+			response: { body: {error_description: 'file not found'}},
+			error: {status: 404},
+            errorDescription: 'HTTP error 404 from 123.url - file not found'},
+
+			{name: 'error text with no body description',
+			response: { body: {}},
+			error: {status: 404},
+			errorDescription: 'HTTP error 404 from 123.url'},
+
+			{name: 'error text with no body',
+			response: { },
+			error: {status: 404},
+			errorDescription: 'HTTP error 404 from 123.url'},
+
+			{name: 'error text with no response',
+			error: {status: 404},
+			errorDescription: 'HTTP error 404 from 123.url'},
+
+			{name: 'error text with no status',
+			error: {},
+			errorDescription: 'Network error from 123.url'},
+
+		];
+		for (let failData of failResponseData) {
+			it(`can retrieve an error response - ${failData.name}`, () => {
+				const fulfill = sinon.stub();
+				const reject = sinon.stub();
+
+				const request = {
+					url: '123.url', end: function end(callback) {
+						callback(failData.error, failData.response);
+					}
+				};
+				const end = sinon.spy(request, 'end');
+
+				const sut = new Agent();
+				const result = sut._sendRequest(request, fulfill, reject);
+				expect(result).to.be.undefined;
+				expect(end).to.be.calledOnce;
+				expect(fulfill).to.not.be.called;
+				expect(reject).to.be.calledWith({statusCode: failData.error.status, errorDescription:
+					failData.errorDescription, error:failData.error, body:failData.response ? failData.response.body : undefined});
+			});
+		}
 	});
 });
