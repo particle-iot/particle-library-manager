@@ -72,7 +72,7 @@ export function getdirs(rootDir) {
 	return mapActionDir(rootDir, isDirectory, removeFailedPredicate);
 }
 
-export const libraryProperties = 'library.properties';
+export const libraryProperties = 'particle.json';
 
 export class FileSystemLibrary extends AbstractLibrary {
 	constructor(name, metadata, repo) {

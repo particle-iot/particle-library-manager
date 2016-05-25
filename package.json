@@ -1,28 +1,37 @@
 {
   "name": "particle-cli-library-manager",
   "description": "library manager work in progress",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "mat@particle.io",
   "repository": {
     "type": "git",
     "url": "https://github.com/spark/cli-library-manager"
   },
   "license": "LGPL-3.0",
+  "keywords": [
+    "particle",
+    "cli",
+    "dev",
+    "library",
+    "manager"
+  ],
   "engines": {
-    "node": ">=6.1.0"
+    "node": ">=0.10.33"
   },
   "config": {
     "build-url": "https://build.particle.io"
   },
+  "main": "./dist/index.js",
   "scripts": {
     "itest": "mocha integration/ -R spec --compilers js:babel-register",
     "lint": "eslint -f unix src/ test/",
     "compile": "babel src -sd lib/src && babel test -sd lib/test",
+    "build": "babel src -sd dist",
     "test": "mocha test/ -R spec --compilers js:babel-register",
     "cover": "babel-node node_modules/.bin/istanbul cover _mocha test/ --report html -- -R spec",
     "cover-es5": "node_modules/.bin/istanbul cover _mocha lib/test/ --report html -- -R spec",
     "coveralls": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec --compilers js:babel-register test/ && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "prepublish": "npm run compile"
+    "prepublish": "npm run build"
   },
   "dependencies": {
     "async": "^2.0.0-rc.4",
