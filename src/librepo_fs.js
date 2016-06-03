@@ -138,7 +138,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	includeLibraryFile(libraryFile) {
-		return libraryFile.kind === 'source';
+		return libraryFile.kind === 'source' ||
+				libraryFile.kind === 'header';
 	}
 
 	/**
