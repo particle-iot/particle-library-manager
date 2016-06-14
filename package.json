@@ -41,6 +41,7 @@
     "particle-api-js": "../particle-api-js",
     "fs-extra": "^0.30.0",
     "properties-parser": "^0.3.1",
+    "particle-api-js": "../particle-api-js",
     "superagent": "^1.8.3",
     "superagent-prefix": "0.0.2",
     "verror": "^1.6.1"

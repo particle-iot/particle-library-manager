@@ -293,6 +293,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		}
 	}
 
+
 	/**
 	 * Determines if a library file should be persisted. Only source files are persisted.
 	 * @param {LibraryFile} libraryFile The file to be checked.

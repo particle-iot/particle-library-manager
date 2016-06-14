@@ -14,3 +14,4 @@ function resourcesDir() {
 export {
 	resourcesDir
 };
+
