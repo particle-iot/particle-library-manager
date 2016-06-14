@@ -21,6 +21,7 @@ import 'babel-polyfill';
 import {LibraryNotFoundError} from './librepo';
 import VError from 'verror';
 const fs = require('fs');
+const path = require('path');
 const promisify = require('es6-promisify');
 
 import {AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatError} from './librepo';
@@ -132,9 +133,19 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	copyLibraryFile(libraryName, libraryFile) {
 		return Promise.resolve().then(() => {
 			const fileName = this.libraryFileName(libraryName, libraryFile.name, libraryFile.extension);
+			const dir = path.dirname(fileName);
+			this.createDirectory(dir);
 			const outputStream = fs.createWriteStream(fileName);
 			libraryFile.content(outputStream);
 		});
+	}
+
+	createDirectory(dir) {
+		if (!fs.existsSync(dir)) {
+			const parent = path.normalize(path.join(dir, '..'));
+			this.createDirectory(parent);
+			fs.mkdirSync(dir);
+		}
 	}
 
 	includeLibraryFile(libraryFile) {
@@ -151,7 +162,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const name = library.name;
 		const mkdir = promisify(fs.mkdir);
 		return Promise.resolve()
-			.then(() => mkdir(this.directory(name)))
+			.then(() => {
+				const dir = this.directory(name);
+				if (!fs.existsSync(dir))
+					return mkdir(dir);
+			})
 			.then(() => library.definition())
 			.then(definition => {
 				return this.writeDescriptor(this.descriptorFile(name), definition);

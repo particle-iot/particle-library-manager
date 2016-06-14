@@ -26,14 +26,12 @@ chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
 import {BuildLibraryRepository} from '../src/librepo_build'
-import {LibraryNotFoundError} from '../src/librepo'
 
 const config = {
 	endpoint: 'http://localhost:3000/',
 	lib_names: ['swd'],
 	lib_unknown: "$$!!@@"
-}
-// const endpoint = 'http://build.particle.io/';
+};
 
 
 describe('BuildLibraryRepository', () => {

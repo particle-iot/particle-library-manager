@@ -61,7 +61,7 @@ export class BuildLibrary extends AbstractLibrary
 }
 
 /**
- * A library repository that fetches it's content via the Build library endpoint.
+ * A library repository that fetches its content via the Build library endpoint.
  */
 export class BuildLibraryRepository extends AbstractLibraryRepository {
 

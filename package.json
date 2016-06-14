@@ -37,6 +37,7 @@
     "async": "^2.0.0-rc.4",
     "babel-polyfill": "^6.5.0",
     "es6-promisify": "^4.0.0",
+    "particle-api-js": "../particle-api-js",
     "superagent": "^1.8.3",
     "superagent-prefix": "0.0.2",
     "verror": "^1.6.1"
