@@ -502,5 +502,31 @@ describe('File System', () => {
 
 		});
 
+		describe('migrate', () => {
+			it('can migrate source file', () => {
+				const sut = new FileSystemLibraryRepository('mydir');
+				const testSource = `
+				#pragma don't change me
+				#include "mylib/mylib.h"
+				  #include 'mylib\\mylib.h'
+				  #include "mylib2/mylib2.h"
+				  // note this is perverse and beyond what reasonable code does
+				  "#include 'mylib/mylib_is_best.h'"
+				  //#include 'mylib/mylib_is_best.h'
+				`;
+				const expected = `
+				#pragma don't change me
+				#include "mylib.h"
+				  #include 'mylib.h'
+				  #include "mylib2/mylib2.h"
+				  // note this is perverse and beyond what reasonable code does
+				  "#include 'mylib_is_best.h'"
+				  //#include 'mylib_is_best.h'
+				`;
+
+				const actual = sut.migrateSource(testSource, 'mylib');
+				expect(actual).to.be.equal(expected);
+			});
+		});
 	});
 });
