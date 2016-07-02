@@ -17,8 +17,8 @@
  ******************************************************************************
  */
 
-import {FileSystemLibraryRepository, getdirs, libraryProperties} from '../src/librepo_fs';
-import {MemoryLibraryFile} from '../src/librepo';
+import {FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson} from '../src/librepo_fs';
+import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
 import mock from 'mock-fs';
 import concat from 'concat-stream';
 const chai = require('chai');
@@ -26,6 +26,8 @@ chai.use(require('sinon-chai'));
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 const promisify = require('es6-promisify');
+const fs = require('fs');
+const path = require('path');
 
 const libFileContents = { 'h': '// a header file', cpp:'// a cpp file'};
 
@@ -40,7 +42,7 @@ function makeFsLib(name, metadata=true) {
 	result[`${name}.h`] = '// a header file';
 	result[`${name}.cpp`] = '// a cpp file';
 	if (metadata) {
-		result[libraryProperties] = `{"name":"${name}","version":"1.2.3"}`;
+		result[libraryProperties] = `name: ${name}\nversion: 1.2.3`;
 	}
 	return result;
 }
@@ -143,7 +145,6 @@ function libsEqual(expected, actual) {
  */
 function checkFileSystem(path, expected) {
 	const checks = [];
-	const fs = require('fs');
 	for (let [key, value] of Object.entries(expected)) {
 		let fun;
 		let promises = [];
@@ -157,7 +158,7 @@ function checkFileSystem(path, expected) {
 		} else {
 			fun = () => {
 				const stat = promisify(fs.stat);
-				return stat.then((stat) => {
+				return stat(path+'/'+key).then((stat) => {
 					expect(stat.isDirectory()).to.be.true;
 				});
 			};
@@ -320,15 +321,19 @@ describe('File System', () => {
 			}
 		});
 
-		it('can add a library', () => {
-			const name = 'belgianblondeguzzler';
-			const sut = new FileSystemLibraryRepository('mydir');
-			const lib = makeLibrary(name, {name:name, version:'1.2.3'}, [
+		function makeTestLib(name, version) {
+			const lib = makeLibrary(name, {name, version}, [
 				new MemoryLibraryFile(name, 'source', 'cpp', '// a cpp file', 1),
 				new MemoryLibraryFile(name, 'source', 'h', '// a header file', 2),
 				new MemoryLibraryFile(name, 'example', 'ino', '// some content ino', 3)
 			]);
+			return lib;
+		}
 
+		it('can add a library', () => {
+			const name = 'belgianblondeguzzler';
+			const sut = new FileSystemLibraryRepository('mydir');
+			const lib = makeTestLib(name, '1.2.3');
 			const result = sut.add(lib)
 				.then(() => sut.fetch(name))
 				.then((fetched) => {
@@ -341,5 +346,161 @@ describe('File System', () => {
 
 			return result;
 		});
+
+
+		const desc = 'name: abcd\n' +
+			'version: 1.2.3\n' +
+			'license: dummy\n' +
+			'author: Mr Big\n' +
+			'sentence: Fixes the world';
+
+		function checkProps(desc) {
+			expect(desc.name).to.be.equal('abcd');
+			expect(desc.version).to.be.equal('1.2.3');
+			expect(desc.license).to.be.equal('dummy');
+			expect(desc.author).to.be.equal('Mr Big');
+			expect(desc.description).to.be.equal('Fixes the world');
+		}
+
+		it('can read a v2 descriptor', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			const path = 'mydir/test.propertes';
+			fs.writeFileSync(path, desc);
+			return sut.readDescriptorV2('abcd', path).then(checkProps);
+		});
+
+		it('fails to read a v2 descriptor when the name doesn\'t match', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			const path = 'mydir/test.propertes';
+			fs.writeFileSync(path, desc);
+			return expect(sut.readDescriptorV2('noname', path))
+				.eventually.be.rejected.and.deep.equal(new LibraryFormatError(sut, 'noname', 'name in descriptor does not match directory name'));
+		});
+
+		it('can build a fully populated v2 descriptor', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			const content = sut.buildV2Descriptor({
+				name: 'abcd', version: '1.2.3', license: 'dummy', author: 'Mr Big', 'description': 'Fixes the world'
+			});
+			expect(content).to.be.equal(
+				'name: abcd\n' +
+				'version: 1.2.3\n' +
+				'license: dummy\n' +
+				'author: Mr Big\n' +
+				'sentence: Fixes the world');
+		});
+
+		it('can build an empty v2 descriptor', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			const content = sut.buildV2Descriptor({
+				name: 'abcd', version: '1.2.3'
+			});
+			expect(content).to.be.equal(
+				'name: abcd\n' +
+				'version: 1.2.3');
+		});
+
+		it('can read a v1 descriptor', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			fs.writeFileSync('mydir/test.json', '{"name":"myname", "description":"desc"}');
+			expect(sut.readFileJSON('name_not_used', 'mydir/test.json'))
+				.to.eventually.deep.equal({name:'myname', description:'desc'});
+		});
+
+		it('rejects an invalid v1 descriptor', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			fs.writeFileSync('mydir/test.json', '{"name":"myname, "description":"desc"}');
+			expect(sut.readFileJSON('somename', 'mydir/test.json'))
+				.to.eventually.be.rejected.and.deep.equal(new LibraryFormatError(sut, 'somename', 'Error parsing file "mydir/test.json"'));
+		});
+
+		describe('layout', () => {
+
+			function mkdir(name) {
+				if (!fs.existsSync(name)) {
+					fs.mkdirSync(name);
+				}
+			}
+
+			it('throws exception for layout if library directory does not exist', () => {
+				const sut = new FileSystemLibraryRepository('mydir');
+				const name = 'abcd__';
+				const result = sut.getLibraryLayout(name);
+				return expect(result).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+			});
+
+			it('can detect legacy layout', () => {
+				mkdir('mydir');
+				fs.mkdirSync('mydir/legacy');
+				fs.writeFileSync('mydir/legacy/spark.json', '');
+				const sut = new FileSystemLibraryRepository('mydir');
+				return expect(sut.getLibraryLayout('legacy')).to.eventually.equal(1);
+			});
+
+			it('can detect v2 layout', () => {
+				mkdir('mydir');
+				mkdir('mydir/v2');
+				fs.writeFileSync('mydir/v2/library.properties', '');
+				const sut = new FileSystemLibraryRepository('mydir');
+				return expect(sut.getLibraryLayout('v2')).to.eventually.equal(2);
+			});
+
+			it('can detect invalid layout', () => {
+				mkdir('mydir');
+				mkdir('mydir/invalid');
+				const sut = new FileSystemLibraryRepository('mydir');
+				return expect(sut.getLibraryLayout('invalid')).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, 'invalid'));
+			});
+
+			it('can write legacy layout', () => {
+				const name = 'legacylib';
+				const lib = makeTestLib(name, '1.2.3');   // a library object in memory.
+
+				const sut = new FileSystemLibraryRepository('mydir');
+				const result = sut.add(lib, 1)
+					.then(() => sut.getLibraryLayout(name));
+				return expect(result).to.eventually.equal(1);
+			});
+
+			function buildLibDir(name='testlib') {
+				mkdir('mydir');
+				const libdir = path.join('mydir', name);
+				mkdir(libdir);
+				const sut = new FileSystemLibraryRepository('mydir');
+				return [sut, name, libdir];
+			}
+
+			it('rejects a library layout when library.properties is a directory', () => {
+				const [sut, name, libdir] = buildLibDir();
+				mkdir(path.join(libdir, libraryProperties));
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+			});
+
+			it('rejects a library layout when spark.json is a directory', () => {
+				const [sut, name, libdir] = buildLibDir();
+				mkdir(path.join(libdir, sparkDotJson));
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+			});
+
+			it('rejects a library layout when no metadata is present', () => {
+				const [sut, name] = buildLibDir();
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+			});
+
+			it('rejects a library layout when no directory is present', () => {
+				const sut = new FileSystemLibraryRepository('mydir');
+				const name = 'whatever';
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+			});
+
+			it('rejects a library layout when expected location is a file', () => {
+				const sut = new FileSystemLibraryRepository('mydir');
+				const name = 'whatever';
+				fs.writeFileSync(path.join('mydir', name, ''));
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+			});
+
+		});
+
 	});
 });
