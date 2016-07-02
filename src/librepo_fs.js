@@ -392,5 +392,21 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	setLibraryLayout(name, layout) {
 	}
+
+	/**
+	 * Migreates a C++ source file from v1 to v2 format. The include directives for files matching the pattern
+	 * #include "libname/rest/of/path" are changed to just #include "rest/of/path" to be compatible with the lib v2
+	 * layout.
+	 *
+	 * @param {string} source The source code to migrate.
+	 * @param {string} libname  The name of the library to migrate.
+	 * @returns {string} The transformed source code. 
+	 */
+	migrateSource(source, libname) {
+		const find = new RegExp(`(#include\\s+['"])${libname}[\\/\\\\]`, 'g');
+		return source.replace(find, (match, inc) => {
+			return inc;
+		});
+	}
 }
 
