@@ -22,6 +22,8 @@ import {LibraryNotFoundError} from './librepo';
 import VError from 'verror';
 const fs = require('fs');
 const promisify = require('es6-promisify');
+const path = require('path');
+const properties = require('properties-parser');
 
 import {AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatError} from './librepo';
 
@@ -72,7 +74,7 @@ export function getdirs(rootDir) {
 	return mapActionDir(rootDir, isDirectory, removeFailedPredicate);
 }
 
-export const libraryProperties = 'particle.json';
+export const libraryProperties = 'library.properties';
 
 export class FileSystemLibrary extends AbstractLibrary {
 	constructor(name, metadata, repo) {
@@ -93,7 +95,7 @@ export class FileSystemLibraryFile extends LibraryFile {
 	}
 }
 
-
+export const sparkDotJson = 'spark.json';
 export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	/**
@@ -145,16 +147,21 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * Adds a library to this repo. The descriptor and source files are written out. Example files are presently
 	 * not included.
 	 * @param {Library} library The library to add.
-	 * @return {Promise} promise to create the library
+	 * @param {Number} layout   The layout version to use. 1 means legacy v1 (with firmware directory), 2 means library v2.
+     * @return {Promise} promise to create the library.
 	 */
-	add(library) {
+	add(library, layout=2) {
 		const name = library.name;
 		const mkdir = promisify(fs.mkdir);
 		return Promise.resolve()
 			.then(() => mkdir(this.directory(name)))
 			.then(() => library.definition())
 			.then(definition => {
-				return this.writeDescriptor(this.descriptorFile(name), definition);
+				if (layout===1) {
+					return this.writeDescriptorV1(this.descriptorFileV1(name), definition);
+				} else {
+					return this.writeDescriptorV2(this.descriptorFileV2(name), definition);
+				}
 			})
 			.then(() => library.files())
 			.then((files) => {
@@ -179,10 +186,32 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return m;
 	}
 
-	writeDescriptor(toFile, metadata) {
+	writeDescriptorV1(toFile, metadata) {
 		const writeFile = promisify(fs.writeFile);
 		const m = this.removeId(metadata);
 		const content = JSON.stringify(m);
+		return writeFile(toFile, content);
+	}
+
+	buildV2Descriptor(metadata) {
+		let content = [];
+		function addProperty(target, value, name) {
+			if (value!==undefined) {
+				content.push(`${name}: ${value}`);
+			}
+		}
+
+		addProperty(content, metadata.name, 'name');
+		addProperty(content, metadata.version, 'version');
+		addProperty(content, metadata.license, 'license');
+		addProperty(content, metadata.author, 'author');
+		addProperty(content, metadata.description, 'sentence');
+		return content.join('\n');
+	}
+
+	writeDescriptorV2(toFile, metadata) {
+		const writeFile = promisify(fs.writeFile);
+		const content = this.buildV2Descriptor(metadata);
 		return writeFile(toFile, content);
 	}
 
@@ -192,11 +221,25 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @return {FileSystemLibrary} the library found
 	 */
 	fetch(name) {
-		const filePath = this.descriptorFile(name);
-		return this.readFileJSON(name, filePath)
+		const filePath = this.descriptorFileV2(name);
+		return this.readDescriptorV2(name, filePath)
 			.then(descriptor => this._createLibrary(name, descriptor))
 			.catch(error => {
 				throw new LibraryNotFoundError(this, name, error);
+			});
+	}
+
+	readDescriptorV2(name, path) {
+		const parse = promisify(properties.read);
+		return parse(path)
+			.then(props => {
+				if (props.name!==name) {
+					throw new LibraryFormatError(this, name, 'name in descriptor does not match directory name');
+				}
+				if (props.sentence!==undefined) {
+					props.description = props.sentence;
+				}
+				return props;
 			});
 	}
 
@@ -209,7 +252,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @param {string} name The library name
 	 * @returns {string}    The file path of the library descriptor for the named library.
 	 */
-	descriptorFile(name) {
+	descriptorFileV1(name) {
+		return this.directory(name) + sparkDotJson;
+	}
+
+	descriptorFileV2(name) {
 		return this.directory(name) + libraryProperties;
 	}
 
@@ -242,7 +289,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		// todo - map directory names back to the library name (if some encoding is used.)
 		return getdirs(this.path).then(dirs => {
 			const libPromises = dirs.map(dir => {
-				const filePath = this.descriptorFile(dir);
+				const filePath = this.descriptorFileV2(dir);
 				return stat(filePath)
 					.then(stat => stat.isFile())
 					.catch(error => false);
@@ -302,6 +349,48 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	createLibraryFile(libraryDir, fileName) {
 		const [extension, baseFile] = this.extension(fileName);
 		return Promise.resolve(new FileSystemLibraryFile(libraryDir+fileName, baseFile, 'source', extension));
+	}
+
+	/**
+	 * Determines the layout of the library on disk.
+	 * @param {string} name  The name of the library to check.
+	 * @return {Number} 1 for layout version 1 (legacy) or 2 for layout version 2.
+	 */
+	getLibraryLayout(name) {
+		const dir = this.directory(name);
+		const stat = promisify(fs.stat);
+		const notFound = new LibraryNotFoundError(this, name);
+		return Promise.resolve()
+			.then(() => {
+				return stat(dir).then((stat) => {
+					return stat.isDirectory();
+				});
+			})
+			.then(exists => {
+				if (exists) {
+					return stat(path.join(dir, sparkDotJson))
+						.then(stat => {
+							if (stat.isFile()) {
+								return 1;
+							}
+							throw notFound;
+						})
+						.catch(() => stat(path.join(dir, libraryProperties)).then(stat => {
+							if (stat.isFile()) {
+								return 2;
+							}
+							throw notFound;
+						}));
+				}
+				throw notFound;
+			})
+			.then()
+			.catch((err) => {
+				throw notFound;
+			});
+	}
+
+	setLibraryLayout(name, layout) {
 	}
 }
 
