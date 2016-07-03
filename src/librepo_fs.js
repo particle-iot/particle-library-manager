@@ -18,7 +18,7 @@
  */
 
 import 'babel-polyfill';
-import {LibraryNotFoundError} from './librepo';
+import {LibraryNotFoundError, LibraryRepositoryError} from './librepo';
 import VError from 'verror';
 const fs = require('fs');
 const promisify = require('es6-promisify');
@@ -30,8 +30,8 @@ import {AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatEr
 /**
  *
  * @param {string} rootDir               The directory to scan, map and action.
- * @param {function} mapper       Called with (stat,name) object for each item in the directory.
- * @param {function} action         Called with an array of actionables from the mapper function.
+ * @param {function} mapper       Called with (stat,file,filePath) for each item in the directory.
+ * @param {function} action         Called with actionables from the mapper function.
  * @returns {Promise} promise that returns an array of items returned from involking the mapper and action for each
  *  item in the directory.
  */
@@ -39,16 +39,16 @@ export function mapActionDir(rootDir, mapper, action) {
 	const stat = promisify(fs.stat);
 	const readdir = promisify(fs.readdir);
 	return readdir(rootDir)
-	.then(files => {
-		const filePromises = files.map(file => {
-			const filePath = rootDir + file;
-			return stat(filePath)
-				.then(stat => mapper(stat, file));
+		.then(files => {
+			const filePromises = files.map(file => {
+				const filePath = path.join(rootDir, file);
+				return stat(filePath)
+					.then(stat => mapper(stat, file, filePath));
+			});
+			return Promise
+				.all(filePromises)
+				.then(actionables => action(actionables, files));
 		});
-		return Promise
-			.all(filePromises)
-			.then(actionables => action(files, actionables));
-	});
 }
 
 function isDirectory(stat) {
@@ -57,11 +57,11 @@ function isDirectory(stat) {
 
 /**
  * Filters a given array and removes all with a non-truthy vale in the corresponding predicate index.
- * @param {Array} items             The items to filter.
  * @param {Array} predicates        The predicates for each item to filter.
+ * @param {Array} items             The items to filter.
  * @returns {Array<T>} The itmes array with all those that didn't satisfy the predicate removed.
  */
-function removeFailedPredicate(items, predicates) {
+function removeFailedPredicate(predicates, items) {
 	return items.filter((_,i) => predicates[i]===true);
 }
 
@@ -96,6 +96,12 @@ export class FileSystemLibraryFile extends LibraryFile {
 }
 
 export const sparkDotJson = 'spark.json';
+const firmwareDir = 'firmware';
+const examplesDir = 'examples';
+const testDir = 'test';
+const unitDir = 'unit';
+const srcDir = 'src';
+
 export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	/**
@@ -260,6 +266,10 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return this.directory(name) + libraryProperties;
 	}
 
+	readDescriptorV1(name, filename) {
+		return this.readFileJSON(name, filename);
+	}
+
 	/**
 	 * Reads a file and decodes the JSON
 	 * @param {string} name The library name. Used in error reporting.
@@ -311,6 +321,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return Promise.resolve(lib.metadata);
 	}
 
+	/**
+	 * Splits the file into its extension and the basename. The extension is given without the leading dot.
+	 * @param {string} name  the filename to split
+	 * @returns {[ext,basename]}    The extension and the baename
+	 */
 	extension(name) {
 		const idx = name.lastIndexOf('.');
 		return idx>=0 ? [name.substring(idx+1), name.substring(0,idx)] : ['', name];
@@ -334,8 +349,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const libraryDir = this.directory(lib.name);
 		// iterate over all the files and
 
-		return mapActionDir(libraryDir, (...args)=>this.isSourceFile(...args), (files, include) => {
-			const filtered = removeFailedPredicate(files, include);
+		return mapActionDir(libraryDir, (...args)=>this.isSourceFile(...args), (include, files) => {
+			const filtered = removeFailedPredicate(include, files);
 			return this.createLibraryFiles(lib, filtered);
 		});
 	}
@@ -384,29 +399,175 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 				}
 				throw notFound;
 			})
-			.then()
 			.catch((err) => {
-				throw notFound;
+				throw notFound;     // todo - swallow the error? hmmm...
 			});
 	}
 
+	mkdirIfNeeded(dir) {
+		return promisify(fs.mkdir)(dir).catch(err => {
+			// I tried using stat to check if the directory exists, but we then
+			// end up with many checks queued first, followed by many calls to
+			// mkdir, which would then fail. This is the most reliable way, if a bit smelly.
+			if (err.code !== 'EEXIST') {
+				throw err;  // ignore that it exists, throw other errors.
+			}
+		});
+	}
+
+	fileStat(filename) {
+		return promisify(fs.stat)(filename).catch(() => null);
+	}
+
 	setLibraryLayout(name, layout) {
+		return this.getLibraryLayout(name).then(currentLayout => {
+			if (currentLayout!==layout) {                                   // some change needed
+				if (layout!==2 || currentLayout!==1) {                      // support only migrate to v2 for now
+					throw new LibraryRepositoryError(this, 'the requested library migration is not supported');
+				}
+				return this.migrateV2(name);
+			}
+		});
 	}
 
 	/**
-	 * Migreates a C++ source file from v1 to v2 format. The include directives for files matching the pattern
+	 * @param {string} name      The name of the library to migrate.
+	 * @returns {Promise.<*>}
+
+	 migrate to a v2 structure
+	 - read spark.json and serialize as library.properties
+	 - change description to sentence property
+	 - for each .cpp/.ino file in firmware/examples/, create a directory named after the base filename
+	 and store the file in there, passing the file through the include fixup filter
+	 - if it exists, change the path of firmware/test/* to test/unit/*
+	 - change the path of firmware/* to src/*  (i.e. mv firmware src), and for each file fix up the include paths.
+
+	 The copy operation is done in an idempotent manner, copying files to their new locations and then
+	 destroying the old files.
+
+	 When migration is complete:
+	 - delete firmware recursively
+	 - delete spark.json
+
+	 */
+	migrateV2(name) {
+		const fse = require('fs-extra');
+		const libdir = this.directory(name);
+		const v1descriptorFile = this.descriptorFileV1(name);
+		const v2descriptorFile = this.descriptorFileV2(name);
+
+		const v1test = path.join(libdir, firmwareDir, testDir);
+		const v2test = path.join(libdir, testDir, unitDir);
+
+		return this.readDescriptorV1(name, v1descriptorFile).then((v1desc) => {
+			const v2desc = this.migrateDescriptor(v1desc);
+			return this.writeDescriptorV2(v2descriptorFile, v2desc);
+		})
+		.then(() => this.fileStat(v1test).then((stat) => {
+			if (stat) {
+				return this.mkdirIfNeeded(path.join(libdir, testDir)).then(promisify(fs.rename)(v1test, v2test));
+			}
+		}))
+		.then(() => this.migrateSources(libdir, name))
+		.then(() => this.migrateExamples(libdir, name))
+		.then(() => promisify(fse.remove)(path.join(libdir, firmwareDir)))
+		.then(() => promisify(fse.remove)(v1descriptorFile));
+	}
+
+	migrateSources(libdir, name) {
+		const v1 = path.join(libdir, firmwareDir);
+		const v2 = path.join(libdir, srcDir);
+		const self = this;
+		function mapper(stat, source, path) {
+			if (stat.isFile()) {
+				return self.migrateSource(name, source, v1, v2);
+			}
+		}
+		return mapActionDir(v1, mapper, (promises) => promises.filter(item => item));
+	}
+
+	/**
+	 * Migrates a single source file from v1 to v2.
+	 * @param {string} lib the name of the library being migrated
+	 * @param {string} source the name of the source file
+	 * @param {string} v1dir the v1 library sources directory
+	 * @param {string} v2dir the v2 library sources directory
+	 * @returns {Promise} to migrate the source file
+	 */
+	migrateSource(lib, source, v1dir, v2dir) {
+		return this.mkdirIfNeeded(v2dir)
+			.then(() => promisify(fs.readFile)(path.join(v1dir, source))
+			.then((v1source) => {
+				const v2source = this.migrateSourcecode(v1source.toString('utf-8'), lib);
+				const v2file = path.join(v2dir, source);
+				return promisify(fs.writeFile)(v2file, v2source);
+			}));
+	}
+
+	/**
+	 * Migrates a single example file into a new directory in the v2 space.
+	 * @param {string} lib       The name of the library being migrated.
+	 * @param {string} example   The name of the example source file (in the examples folder)
+	 * @param {string} v1dir     The directory containing the v1 examples
+     * @param {string} v2dir     The directory containing the v2 examples
+	 * @returns {Promise}   The promise to create the output example.
+	 */
+	migrateExample(lib, example, v1dir, v2dir) {
+		return this.mkdirIfNeeded(v2dir)
+			// read the original example file
+		.then(() => promisify(fs.readFile)(path.join(v1dir, example)))
+		.then((v1example) => {
+			const v2example = this.migrateSourcecode(v1example.toString('utf-8'), lib);
+			const basename = this.extension(example)[1];
+			const exampledir = path.join(v2dir, basename);
+			const examplefile = path.join(exampledir, example);
+			return this.mkdirIfNeeded(exampledir)
+				.then(() => promisify(fs.writeFile)(examplefile, v2example));
+		});
+	}
+
+	/**
+	 * Migrates the examples directory
+	 * @param {string} libdir    The directory containing the lib to migrate
+	 * @param {string} name      The name of the lib
+	 * @return {Promise} to migrate the examples
+	 * @private
+	 */
+	migrateExamples(libdir, name) {
+		const v1 = path.join(libdir, firmwareDir, examplesDir);
+		const v2 = path.join(libdir, examplesDir);
+		const self = this;
+		function mapper(stat, example, path) {
+			return self.migrateExample(name, example, v1, v2);
+		}
+
+		return this.fileStat(v1).then((stat) => {
+			if (stat) {
+				mapActionDir(v1, mapper, (promises) => promises);
+			}
+		});
+	}
+
+	/**
+	 * Migrates a C++ source file from v1 to v2 format. The include directives for files matching the pattern
 	 * #include "libname/rest/of/path" are changed to just #include "rest/of/path" to be compatible with the lib v2
 	 * layout.
 	 *
 	 * @param {string} source The source code to migrate.
 	 * @param {string} libname  The name of the library to migrate.
-	 * @returns {string} The transformed source code. 
+	 * @returns {string} The transformed source code.
 	 */
-	migrateSource(source, libname) {
+	migrateSourcecode(source, libname) {
 		const find = new RegExp(`(#include\\s+['"])${libname}[\\/\\\\]`, 'g');
 		return source.replace(find, (match, inc) => {
 			return inc;
 		});
 	}
+
+	migrateDescriptor(desc) {
+		// for now there's nothing to do.
+		return desc;
+	}
+
 }
 

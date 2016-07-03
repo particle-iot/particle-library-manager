@@ -37,6 +37,7 @@
     "async": "^2.0.0-rc.4",
     "babel-polyfill": "^6.5.0",
     "es6-promisify": "^4.0.0",
+    "fs-extra": "^0.30.0",
     "properties-parser": "^0.3.1",
     "superagent": "^1.8.3",
     "superagent-prefix": "0.0.2",
@@ -53,6 +54,7 @@
     "chai-as-promised": "^5.3.0",
     "concat-stream": "^1.5.1",
     "coveralls": "^2.11.4",
+    "dir-compare": "^1.0.1",
     "doctoc": "^0.15.0",
     "eslint": "^2.3.0",
     "eslint-config-particle": "^1.0.5",
@@ -62,6 +64,7 @@
     "should": "^7.1.0",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0",
-    "source-map-support": "^0.4.0"
+    "source-map-support": "^0.4.0",
+    "tmp": "0.0.28"
   }
 }
