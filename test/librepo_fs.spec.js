@@ -16,7 +16,7 @@ describe('File System', () => {
 	const dircomp = require('dir-compare');
 	tmp.setGracefulCleanup();
 
-	const testdata = path.join(__dirname, 'data');
+	const testdata = path.join(__dirname, '..', 'resources', 'libraries');
 
 	it('can detect a v1 library', () => {
 		const sut = new FileSystemLibraryRepository(testdata);
