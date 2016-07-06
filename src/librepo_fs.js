@@ -78,10 +78,116 @@ export function getdirs(rootDir) {
 export const libraryProperties = 'library.properties';
 
 export class FileSystemLibrary extends AbstractLibrary {
+	/**
+	 *
+	 * @param {string} name The name this library is identified by in the filesystem.
+	 * @param {object} metadata The library descriptor.
+	 * @param {FileSystemLibraryRepo} repo The repository this library is managed by.
+	 */
 	constructor(name, metadata, repo) {
 		super(name, metadata, repo);
 	}
 }
+
+export class NamingStrategy {
+
+	/**
+	 * Generates a filesystem safe name for a library.
+	 * @param {object} metadata The library metadata to generate a name for.
+	 * @return {string} An identifier for this library, derived from the library metadata.
+	 * @abstract
+	 */
+	toName(metadata) {}
+
+	nameToFilesystem(name) {
+		return name;
+	}
+
+	/**
+	 * Fetches all the names for a given repo.
+	 * @param {FileSystemLibraryRepo} repo The repo to fetch the names for.
+	 * @returns {Promise.<Array<string>>} The logical names of libraries available in this repo.
+	 */
+	names(repo) {
+		const stat = promisify(fs.stat);
+		return getdirs(repo.path).then(dirs => {
+			const libPromises = dirs.map(dir => {
+				const filePath = repo.descriptorFileV2(dir);
+				// todo - map directory names back to the library name (if some encoding is used.)
+				return stat(filePath)
+					.then(stat => stat.isFile())
+					.catch(error => false);
+			});
+
+			return Promise.all(libPromises).then(isLib => {
+				return dirs.filter((_, i) => isLib[i]);
+			});
+		});
+	}
+
+	/**
+	 * Determines if the given name matches the name corresponding to the descriptor.
+	 * This allows the strategy to introduce name aliases.
+	 * @param {object} descriptor The library metadata to check.
+	 * @param {string} name The library identifier to check.
+	 * @returns {boolean} true if the name matches the descriptor.
+	 */
+	matchesName(descriptor, name) {
+		return this.toName(descriptor)===name;
+	}
+}
+
+class LibraryNameStrategy extends NamingStrategy {
+	toName(library) {
+		return library.name;
+	}
+}
+
+class LibraryNameAtVersionStrategy extends NamingStrategy {
+	toName(library) {
+		return `${library.name}@${library.version}`;
+	}
+}
+
+class LibraryDirectStrategy extends NamingStrategy {
+
+	toName(library) {
+		return library.name;
+	}
+
+	/**
+	 * Library stored in the root of the repo, so all names map to ''.
+	 * @param {string} name The name of the library, as previously provided by `toName`.
+	 * @returns {string} The filesystem name of the corresponding logical library name.
+	 *
+	 */
+	nameToFilesystem(name) {
+		return '';
+	}
+
+	matchesName(descriptor, name) {
+		return name==='' ? true : super.matchesName(descriptor, name);
+	}
+
+	/**
+	 * @param {FileSystemLibraryRepo} repo The repo to use that provides the library descriptors.
+	 * @returns {Promise<Array<string>>} A list of the library names in the repo.
+	 */
+	names(repo) {
+		const filename = repo.descriptorFileV2('');
+		return repo.fileStat(filename)
+			.then((stat) => {
+				if (stat && stat.isFile()) {
+					return repo.readDescriptorV2('', filename);
+				}
+			})
+			.then(descriptor => [this.toName(descriptor)]);
+	}
+
+}
+
+
+
 
 
 export class FileSystemLibraryFile extends LibraryFile {
@@ -103,19 +209,37 @@ const testDir = 'test';
 const unitDir = 'unit';
 const srcDir = 'src';
 
+export const FileSystemNamingStrategy = {
+	BY_NAME: new LibraryNameStrategy(),
+	BY_NAME_AT_VERSION: new LibraryNameAtVersionStrategy(),
+	DIRECT: new LibraryDirectStrategy()
+};
+
+/**
+ * A library repository that retrieves and stores libraries in a file system directory.
+ * The repo has a root directory, and uses a naming strategy is used to determine how libraries are
+ * stored under that directory.
+ */
 export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	/**
-	 *
+	 * Creates a new FileSystemLibraryRepository instance.
 	 * @param {string} path The location of the file system repository. The contained
 	 * libraries are stored as subdirectories under the repo root.
+	 * @param {NamingStrategy} namingStrategy The strategy that maps library metadata to an identifying name,
+	 * and maps that name to the filesystem.
 	 */
-	constructor(path) {
+	constructor(path, namingStrategy) {
 		super();
+		if (!namingStrategy) {
+			namingStrategy = FileSystemNamingStrategy.BY_NAME;
+		}
+
 		if (!path.endsWith('/')) {
 			path += '/';
 		}
 		this.path = path;
+		this.namingStrategy = namingStrategy;
 		this.sourceExtensions = { 'c':true, 'cpp': true, 'h':true };
 	}
 
@@ -128,13 +252,25 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return name;
 	}
 
+	nameFor(library) {
+		return this.namingStrategy.toName(library.metadata);
+	}
+
+	/**
+	 * Determines the location of a library file in the filesystem.
+	 * @param {string} libraryName the identifier for a library, as provided by the strategy.
+	 * @param {string} fileName the filename of a logical file in the library
+	 * @param {string} fileExt the extension of a logical file in the library
+	 * @returns {string} The location in the filesystem of the file corresponding to the
+	 * library file.
+	 */
 	libraryFileName(libraryName, fileName, fileExt) {
-		return this.directory(libraryName) + fileName + '.' + fileExt;
+		return this.libraryDirectory(libraryName) + fileName + '.' + fileExt;
 	}
 
 	/**
 	 * Copy a given file to this library.
-	 * @param {string} libraryName the target library name
+	 * @param {string} libraryName the target library name (according to the naming strategy.)
 	 * @param {LibraryFile} libraryFile   The library file to copy to the target library.
 	 * @return {Promise} to copy the library file.
 	 */
@@ -156,6 +292,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		}
 	}
 
+	/**
+	 * Determines if a library file should be persisted. Only source files are persisted.
+	 * @param {LibraryFile} libraryFile The file to be checked.
+	 * @returns {boolean} true if the library should be persisted.
+	 */
 	includeLibraryFile(libraryFile) {
 		return libraryFile.kind === 'source';
 	}
@@ -168,14 +309,14 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
      * @return {Promise} promise to create the library.
 	 */
 	add(library, layout=2) {
-		const name = library.name;
+		const name = this.nameFor(library);
+		if (this.namingStrategy.nameToFilesystem(name)==='') {
+			return Promise.reject(new LibraryRepositoryError(this, 'repo is not writable'));
+		}
+
 		const mkdir = promisify(fs.mkdir);
 		return Promise.resolve()
-			.then(() => {
-				const dir = this.directory(name);
-				if (!fs.existsSync(dir))
-					return mkdir(dir);
-			})
+			.then(() => mkdir(this.libraryDirectory(name)))
 			.then(() => library.definition())
 			.then(definition => {
 				if (layout===1) {
@@ -207,6 +348,12 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return m;
 	}
 
+	/**
+	 * Writes the library v1 descriptor to file.
+	 * @param {string} toFile The file to write to
+	 * @param {object} metadata The library metadata
+	 * @returns {*} Promise to write the descriptor to `toFile`.
+	 */
 	writeDescriptorV1(toFile, metadata) {
 		const writeFile = promisify(fs.writeFile);
 		const m = this.removeId(metadata);
@@ -218,7 +365,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		let content = [];
 		function addProperty(target, value, name) {
 			if (value!==undefined) {
-				content.push(`${name}: ${value}`);
+				content.push(`${name}=${value}\n`);
 			}
 		}
 
@@ -227,24 +374,45 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		addProperty(content, metadata.license, 'license');
 		addProperty(content, metadata.author, 'author');
 		addProperty(content, metadata.description, 'sentence');
-		return content.join('\n');
+		return content.join('');
 	}
 
 	writeDescriptorV2(toFile, metadata) {
+		// todo - split into prepareWriteV2 and writeDescriptorV2
 		const writeFile = promisify(fs.writeFile);
 		const content = this.buildV2Descriptor(metadata);
+		if (metadata.descriptor) {
+			metadata.sentence = metadata.descriptor;
+		}
 		return writeFile(toFile, content);
 	}
 
 	/**
-	 * Locates the folder corresponding to the library.
-	 * @param {string} name The name of the library to fetch.
-	 * @return {FileSystemLibrary} the library found
+	 * Fetches a library from the repo.
+	 * @param {string} libraryIdentifier The filesystem identifier of the library to fetch,
+	 * typically derived from one of the values returned by `names()`.
+	 * @return {FileSystemLibrary} the library found.
+	 *
+	 * With the DIRECT strategy, a name of `` can be used to refer to the library at the
+	 * filesystem root.
 	 */
-	fetch(name) {
+	fetch(libraryIdentifier) {
+		// determine the real name used in the filesystem for a given library ID
+		// (e.g. this allows the DIRECT strategy to map all names to '', since it supports
+		// only one library in the root.)
+		const name = this.namingStrategy.nameToFilesystem(libraryIdentifier);
 		const filePath = this.descriptorFileV2(name);
-		return this.readDescriptorV2(name, filePath)
-			.then(descriptor => this._createLibrary(name, descriptor))
+		return this.readDescriptorV2(libraryIdentifier, filePath)
+			.then((descriptor) => {
+				// check that the library read matches the name.
+				if (!this.namingStrategy.matchesName(descriptor, name)) {
+					throw new LibraryNotFoundError(this, name);
+				}
+				// get the real name (the libraryIdentifier could be an alias.)
+				libraryIdentifier = this.namingStrategy.toName(descriptor);
+				return descriptor;
+			})
+			.then(descriptor => this._createLibrary(libraryIdentifier, descriptor))
 			.catch(error => {
 				throw new LibraryNotFoundError(this, name, error);
 			});
@@ -254,7 +422,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const parse = promisify(properties.read);
 		return parse(path)
 			.then(props => {
-				if (props.name!==name) {
+				if (!this.namingStrategy.matchesName(props,name)) {
 					throw new LibraryFormatError(this, name, 'name in descriptor does not match directory name');
 				}
 				if (props.sentence!==undefined) {
@@ -264,8 +432,23 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			});
 	}
 
+	/**
+	 * Determines the location of a named directory within the filesystem space owned
+	 * by this repo.
+	 * @param {string} name a valid filename, not including a final path separator.
+	 * @returns {string} The full path of the directory.
+	 */
 	directory(name) {
-		return this.path + name + '/';
+		return name ? this.path + name + '/' : this.path;
+	}
+
+	/**
+	 * Determines the directory where a library using the given name (from the naming strategy) is located.
+	 * @param {string} name The identifier of the library in the filesystem.
+	 * @return {string} The directory in the filesystem corresponding to the library identifier.
+	 */
+	libraryDirectory(name) {
+		return this.directory(this.namingStrategy.nameToFilesystem(name));
 	}
 
 	/**
@@ -274,11 +457,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {string}    The file path of the library descriptor for the named library.
 	 */
 	descriptorFileV1(name) {
-		return this.directory(name) + sparkDotJson;
+		return this.libraryDirectory(name) + sparkDotJson;
 	}
 
 	descriptorFileV2(name) {
-		return this.directory(name) + libraryProperties;
+		return this.libraryDirectory(name) + libraryProperties;
 	}
 
 	readDescriptorV1(name, filename) {
@@ -310,20 +493,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {Promise.<Array.<String>>} The names of libraries in this repo.
 	 */
 	names() {
-		const stat = promisify(fs.stat);
-		// todo - map directory names back to the library name (if some encoding is used.)
-		return getdirs(this.path).then(dirs => {
-			const libPromises = dirs.map(dir => {
-				const filePath = this.descriptorFileV2(dir);
-				return stat(filePath)
-					.then(stat => stat.isFile())
-					.catch(error => false);
-			});
-
-			return Promise.all(libPromises).then(isLib => {
-				return dirs.filter((_, i) => isLib[i]);
-			});
-		});
+		return this.namingStrategy.names(this);
 	}
 
 	/**
@@ -361,7 +531,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @return {Promise<Array<LibraryFile>>} the files for this library
 	 */
 	files(lib) {
-		const libraryDir = this.directory(lib.name);
+		const libraryDir = this.libraryDirectory(this.nameFor(lib));
 		// iterate over all the files and
 
 		return mapActionDir(libraryDir, (...args)=>this.isSourceFile(...args), (include, files) => {
@@ -371,7 +541,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	createLibraryFiles(lib, fileNames) {
-		const libraryDir = this.directory(lib.name);
+		const libraryDir = this.libraryDirectory(this.nameFor(lib));
 		const fileBuilders = fileNames.map((fileName) => this.createLibraryFile(libraryDir, fileName));
 		return Promise.all(fileBuilders);
 	}
@@ -387,7 +557,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @return {Number} 1 for layout version 1 (legacy) or 2 for layout version 2.
 	 */
 	getLibraryLayout(name) {
-		const dir = this.directory(name);
+		const dir = this.libraryDirectory(this.namingStrategy.nameToFilesystem(name));
 		const stat = promisify(fs.stat);
 		const notFound = new LibraryNotFoundError(this, name);
 		return Promise.resolve()
@@ -446,8 +616,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	/**
-	 * @param {string} name      The name of the library to migrate.
-	 * @returns {Promise.<*>}
+	 * @param {string} orgName      The name of the library to migrate.
+	 * @returns {Promise.<*>}    Promise to migrate the library.
+	 * @private
 
 	 migrate to a v2 structure
 	 - read spark.json and serialize as library.properties
@@ -465,16 +636,19 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 - delete spark.json
 
 	 */
-	migrateV2(name) {
+	migrateV2(orgName) {
 		const fse = require('fs-extra');
-		const libdir = this.directory(name);
-		const v1descriptorFile = this.descriptorFileV1(name);
-		const v2descriptorFile = this.descriptorFileV2(name);
+		const name = this.namingStrategy.nameToFilesystem(orgName);
+		const libdir = this.libraryDirectory(name);
+		const v1descriptorFile = this.descriptorFileV1(name, libdir);
+		const v2descriptorFile = this.descriptorFileV2(name, libdir);
 
 		const v1test = path.join(libdir, firmwareDir, testDir);
 		const v2test = path.join(libdir, testDir, unitDir);
+		let includeName;
 
-		return this.readDescriptorV1(name, v1descriptorFile).then((v1desc) => {
+		return this.readDescriptorV1(orgName, v1descriptorFile).then((v1desc) => {
+			includeName = v1desc.name;
 			const v2desc = this.migrateDescriptor(v1desc);
 			return this.writeDescriptorV2(v2descriptorFile, v2desc);
 		})
@@ -483,8 +657,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 				return this.mkdirIfNeeded(path.join(libdir, testDir)).then(promisify(fs.rename)(v1test, v2test));
 			}
 		}))
-		.then(() => this.migrateSources(libdir, name))
-		.then(() => this.migrateExamples(libdir, name))
+		.then(() => this.migrateSources(libdir, includeName))
+		.then(() => this.migrateExamples(libdir, includeName))
 		.then(() => promisify(fse.remove)(path.join(libdir, firmwareDir)))
 		.then(() => promisify(fse.remove)(v1descriptorFile));
 	}
@@ -521,7 +695,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	/**
 	 * Migrates a single example file into a new directory in the v2 space.
-	 * @param {string} lib       The name of the library being migrated.
+	 * @param {string} lib       The name of the library being migrated - used to migrate include statements.
 	 * @param {string} example   The name of the example source file (in the examples folder)
 	 * @param {string} v1dir     The directory containing the v1 examples
      * @param {string} v2dir     The directory containing the v2 examples
