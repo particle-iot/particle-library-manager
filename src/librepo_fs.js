@@ -378,13 +378,17 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	writeDescriptorV2(toFile, metadata) {
-		// todo - split into prepareWriteV2 and writeDescriptorV2
 		const writeFile = promisify(fs.writeFile);
 		const content = this.buildV2Descriptor(metadata);
-		if (metadata.descriptor) {
-			metadata.sentence = metadata.descriptor;
-		}
+		this.prepareDescriptorV2(metadata);
 		return writeFile(toFile, content);
+	}
+
+	prepareDescriptorV2(metadata) {
+		if (!metadata.sentence && metadata.description) {
+			metadata.sentence = metadata.description;
+		}
+		return metadata;
 	}
 
 	/**
@@ -404,10 +408,6 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const filePath = this.descriptorFileV2(name);
 		return this.readDescriptorV2(libraryIdentifier, filePath)
 			.then((descriptor) => {
-				// check that the library read matches the name.
-				if (!this.namingStrategy.matchesName(descriptor, name)) {
-					throw new LibraryNotFoundError(this, name);
-				}
 				// get the real name (the libraryIdentifier could be an alias.)
 				libraryIdentifier = this.namingStrategy.toName(descriptor);
 				return descriptor;
