@@ -395,7 +395,7 @@ describe('File System Mock', () => {
 		});
 
 		it('prepares v2 descriptor and doesn\'t modify an existing sentence property', () => {
-			const desc = { sentence: 'abc',  description: 'def' };
+			const desc = { sentence: 'abc', description: 'def' };
 			const sut = new FileSystemLibraryRepository('mydir');
 			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'abc', description: 'def'});
 		});
