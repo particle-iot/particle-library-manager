@@ -177,10 +177,11 @@ class LibraryDirectStrategy extends NamingStrategy {
 		return repo.fileStat(filename)
 			.then((stat) => {
 				if (stat && stat.isFile()) {
-					return repo.readDescriptorV2('', filename);
+					return repo.readDescriptorV2('', filename)
+						.then(descriptor => [this.toName(descriptor)]);
 				}
-			})
-			.then(descriptor => [this.toName(descriptor)]);
+				return [];
+			});
 	}
 
 }
@@ -482,7 +483,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {Promise.<Array.<String>>} The names of libraries in this repo.
 	 */
 	names() {
-		return this.namingStrategy.names(this);
+		const result = this.namingStrategy.names(this);
+		return result;
 	}
 
 	/**

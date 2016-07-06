@@ -639,7 +639,7 @@ describe('File System Mock', () => {
 		it('provides the name by reading the library in the directory', () => {
 			const mockRepo = {};
 			mockRepo.descriptorFileV2 = sinon.stub().returns('file');
-			mockRepo.readDescriptorV2 = sinon.stub().returns({name:'abcd'});
+			mockRepo.readDescriptorV2 = sinon.stub().returns(Promise.resolve({name:'abcd'}));
 			mockRepo.fileStat = sinon.stub().returns(Promise.resolve({isFile: () => true}));
 
 			// const filePath = this.descriptorFileV2(name);
@@ -677,6 +677,17 @@ describe('File System Mock', () => {
 			const repo = new FileSystemLibraryRepository('./mydir/lib1', sut);
 			return expect(repo.fetch('lib2')).to.eventually.reject;
 		});
+
+		it('returns no names if the directory is not a valid library', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/zzz', sut);
+			return expect(repo.names()).to.eventually.deep.equal([]);
+		});
+
+		it('throws library not found error for default name when directory is not a valid library', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/zzz', sut);
+			return expect(repo.fetch('')).to.be.rejected.and.eventually.has.property('name').equal('LibraryNotFoundError');
+		});
+
 	});
 
 
