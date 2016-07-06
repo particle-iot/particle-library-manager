@@ -394,6 +394,19 @@ describe('File System Mock', () => {
 			return sut.readDescriptorV2('abcd', path).then(checkProps);
 		});
 
+		it('prepares v2 descriptor and doesn\'t modify an existing sentence property', () => {
+			const desc = { sentence: 'abc',  description: 'def' };
+			const sut = new FileSystemLibraryRepository('mydir');
+			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'abc', description: 'def'});
+		});
+
+		it('prepares v2 descriptor by setting the sentence property if not defined', () => {
+			const desc = { description: 'def' };
+			const sut = new FileSystemLibraryRepository('mydir');
+			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'def', description: 'def'});
+		});
+
+
 		it('fails to read a v2 descriptor when the name doesn\'t match', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
 			const path = 'mydir/test.propertes';
