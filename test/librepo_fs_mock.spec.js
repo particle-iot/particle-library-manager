@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson} from '../src/librepo_fs';
+import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson} from '../src/librepo_fs';
 import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
 import concat from 'concat-stream';
 const chai = require('chai');
@@ -27,6 +27,7 @@ const expect = chai.expect;
 const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
+const sinon = require('sinon');
 
 
 const libFileContents = { 'h': '// a header file', cpp:'// a cpp file'};
@@ -42,7 +43,7 @@ function makeFsLib(name, metadata=true) {
 	result[`${name}.h`] = '// a header file';
 	result[`${name}.cpp`] = '// a cpp file';
 	if (metadata) {
-		result[libraryProperties] = `name: ${name}\nversion: 1.2.3`;
+		result[libraryProperties] = `name=${name}\nversion=1.2.3\n`;
 	}
 	return result;
 }
@@ -68,6 +69,7 @@ const libData = {
 function makeLibrary(name, definition, files) {
 	const lib = {
 		name: name,
+		metadata: definition,
 		files: function resolveFile() {
 			return Promise.resolve(files);
 		},
@@ -231,6 +233,19 @@ describe('File System Mock', () => {
 			expect(sut.path).to.be.equal('/');
 		});
 
+		it('appends a directory with a trailing slash', () => {
+			const dir = '/';
+			const sut = new FileSystemLibraryRepository(dir);
+			expect(sut.directory('abc')).to.be.equal('/abc/');
+		});
+
+		it('doesn\'t append a slash if the directory is empty', () => {
+			const dir = '/123/';
+			const sut = new FileSystemLibraryRepository(dir);
+			expect(sut.directory('')).to.be.equal('/123/');
+		});
+
+
 		it('nameToFs is currently a no-op', () => {
 			const sut = new FileSystemLibraryRepository('');
 			const name = 'abc$§/0\0';
@@ -267,6 +282,11 @@ describe('File System Mock', () => {
 				expect(names).to.not.contain('zzz');
 			});
 			return promise;
+		});
+
+		it('can fetch a single library directly, named implicitly', () => {
+			const sut = new FileSystemLibraryRepository('mydir/lib1', FileSystemNamingStrategy.DIRECT);
+			return expect(sut.fetch('')).to.eventually.be.ok;
 		});
 
 		describe('can fetch libraries by name', () => {
@@ -353,11 +373,11 @@ describe('File System Mock', () => {
 		});
 
 
-		const desc = 'name: abcd\n' +
-			'version: 1.2.3\n' +
-			'license: dummy\n' +
-			'author: Mr Big\n' +
-			'sentence: Fixes the world';
+		const desc = 'name=abcd\n' +
+			'version=1.2.3\n' +
+			'license=dummy\n' +
+			'author=Mr Big\n' +
+			'sentence=Fixes the world\n';
 
 		function checkProps(desc) {
 			expect(desc.name).to.be.equal('abcd');
@@ -374,6 +394,19 @@ describe('File System Mock', () => {
 			return sut.readDescriptorV2('abcd', path).then(checkProps);
 		});
 
+		it('prepares v2 descriptor and doesn\'t modify an existing sentence property', () => {
+			const desc = { sentence: 'abc', description: 'def' };
+			const sut = new FileSystemLibraryRepository('mydir');
+			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'abc', description: 'def'});
+		});
+
+		it('prepares v2 descriptor by setting the sentence property if not defined', () => {
+			const desc = { description: 'def' };
+			const sut = new FileSystemLibraryRepository('mydir');
+			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'def', description: 'def'});
+		});
+
+
 		it('fails to read a v2 descriptor when the name doesn\'t match', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
 			const path = 'mydir/test.propertes';
@@ -388,11 +421,11 @@ describe('File System Mock', () => {
 				name: 'abcd', version: '1.2.3', license: 'dummy', author: 'Mr Big', 'description': 'Fixes the world'
 			});
 			expect(content).to.be.equal(
-				'name: abcd\n' +
-				'version: 1.2.3\n' +
-				'license: dummy\n' +
-				'author: Mr Big\n' +
-				'sentence: Fixes the world');
+				'name=abcd\n' +
+				'version=1.2.3\n' +
+				'license=dummy\n' +
+				'author=Mr Big\n' +
+				'sentence=Fixes the world\n');
 		});
 
 		it('can build an empty v2 descriptor', () => {
@@ -401,8 +434,8 @@ describe('File System Mock', () => {
 				name: 'abcd', version: '1.2.3'
 			});
 			expect(content).to.be.equal(
-				'name: abcd\n' +
-				'version: 1.2.3');
+				'name=abcd\n' +
+				'version=1.2.3\n');
 		});
 
 		it('can read a v1 descriptor', () => {
@@ -551,5 +584,112 @@ describe('File System Mock', () => {
 			});
 		});
 	});
+
+	describe('File system naming strategies', () => {
+		describe('Name Strategy', () => {
+			const sut = FileSystemNamingStrategy.BY_NAME;
+			it('returns the library name for the library ident', () => {
+				expect(sut.toName({name:'finbarr'})).to.be.equal('finbarr');
+			});
+
+			it('returns the same name for filesystem', () => {
+				expect(sut.nameToFilesystem('abcd')).to.be.equal('abcd');
+			});
+
+			it('matches the same name', () => {
+				return expect(sut.matchesName({name:'abcd'}, 'abcd')).to.be.true;
+			});
+		});
+	});
+
+	describe('Name@Version Strategy', () => {
+		const sut = FileSystemNamingStrategy.BY_NAME_AT_VERSION;
+
+		it('returns the library name@version for the library ident', () => {
+			expect(sut.toName({name:'finbarr', version:'fnarr'})).to.be.equal('finbarr@fnarr');
+		});
+
+		it('returns the same name for filesystem', () => {
+			expect(sut.nameToFilesystem('abcd')).to.be.equal('abcd');
+		});
+
+		it('matches the same name@version', () => {
+			return expect(sut.matchesName({name:'abcd', version:'1'}, 'abcd@1')).to.be.true;
+		});
+	});
+
+	describe('Direct Strategy', () => {
+		const sut = FileSystemNamingStrategy.DIRECT;
+		it('returns the library name for the library ident', () => {
+			expect(sut.toName({name:'finbarr', version:'fnarr'})).to.be.equal('finbarr');
+		});
+
+		it('returns the empty name for filesystem', () => {
+			expect(sut.nameToFilesystem('abcd')).to.be.equal('');
+		});
+
+		it('matches the same name', () => {
+			return expect(sut.matchesName({name:'abcd', version:'1'}, 'abcd')).to.be.true;
+		});
+
+		it('matches the empty string', () => {
+			return expect(sut.matchesName({name:'abcd', version:'1'}, '')).to.be.true;
+		});
+
+		it('provides the name by reading the library in the directory', () => {
+			const mockRepo = {};
+			mockRepo.descriptorFileV2 = sinon.stub().returns('file');
+			mockRepo.readDescriptorV2 = sinon.stub().returns(Promise.resolve({name:'abcd'}));
+			mockRepo.fileStat = sinon.stub().returns(Promise.resolve({isFile: () => true}));
+
+			// const filePath = this.descriptorFileV2(name);
+			// return this.readDescriptorV2(name, filePath)
+			return sut.names(mockRepo).then((names) => {
+				expect(names).to.be.deep.equal(['abcd']);
+				expect(mockRepo.descriptorFileV2).to.have.been.calledWith('');
+				expect(mockRepo.readDescriptorV2).to.have.been.calledOnce;
+				expect(mockRepo.readDescriptorV2).to.have.been.calledWith('', 'file');
+				expect(mockRepo.fileStat).to.have.been.calledOnce;
+				expect(mockRepo.fileStat).to.have.been.calledWith('file');
+			});
+		});
+
+		it('is not writable', () => {
+			const repo = new FileSystemLibraryRepository('.', sut);
+			return expect(repo.add({metadata: {name:'test'}})).to.be.rejected.and.eventually.have.property('name').equal('LibraryRepositoryError');
+		});
+
+		it('can retrieve a library by default', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/lib1', sut);
+			return repo.fetch('').then(lib => {
+				expect(lib.name).to.be.equal('lib1');
+			});
+		});
+
+		it('can retrieve a library by name', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/lib1', sut);
+			return repo.fetch('lib1').then(lib => {
+				expect(lib.name).to.be.equal('lib1');
+			});
+		});
+
+		it('throws LibraryNotFoundError if the requested name does not match the library name', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/lib1', sut);
+			return expect(repo.fetch('lib2')).to.eventually.reject;
+		});
+
+		it('returns no names if the directory is not a valid library', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/zzz', sut);
+			return expect(repo.names()).to.eventually.deep.equal([]);
+		});
+
+		it('throws library not found error for default name when directory is not a valid library', () => {
+			const repo = new FileSystemLibraryRepository('./mydir/zzz', sut);
+			return expect(repo.fetch('')).to.be.rejected.and.eventually.has.property('name').equal('LibraryNotFoundError');
+		});
+
+	});
+
+
 });
 

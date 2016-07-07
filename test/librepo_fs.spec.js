@@ -1,4 +1,4 @@
-import {FileSystemLibraryRepository} from '../src/librepo_fs';
+import {FileSystemNamingStrategy, FileSystemLibraryRepository} from '../src/librepo_fs';
 const chai = require('chai');
 chai.use(require('sinon-chai'));
 chai.use(require('chai-as-promised'));
@@ -33,13 +33,38 @@ describe('File System', () => {
 		expect(sut.setLibraryLayout('library-v2', 1)).eventually.rejected;
 	});
 
-	it('is a no-op migrate a v2 library to v2', () => {
-		const sut = new FileSystemLibraryRepository(testdata);
+	it('is a no-op to migrate a v2 library to v2', () => {
+		const sut = new FileSystemLibraryRepository(path.join(testdata, 'library-v2'));
 		expect(sut.setLibraryLayout('library-v2', 2)).eventually.not.rejected;
 	});
 
+	describe('direct naming strategy', () => {
+		const sut = new FileSystemLibraryRepository(testdata+'/library-v2', FileSystemNamingStrategy.DIRECT);
 
-	function assertMigrate(v1, v2) {
+		it('is a no-op to migrate a v2 library to v2 with direct naming strategy, default name', ()=>{
+			return expect(sut.setLibraryLayout('', 2)).eventually.not.rejected;
+		});
+
+		it('is a no-op to migrate a v2 library to v2 with direct naming strategy, explicit name', ()=>{
+			return expect(sut.setLibraryLayout('uber-library-example', 2)).eventually.not.rejected;
+		});
+
+		it('lists the library name as the only library', () => {
+			return expect(sut.names()).to.eventually.deep.equal(['uber-library-example']);
+		});
+
+		it('fetches the library via its name', () => {
+			return expect(sut.fetch('uber-library-example'))
+				.to.eventually.have.property('name').equal('uber-library-example');
+		});
+
+		it('fetches the library via the empty name', () => {
+			return expect(sut.fetch(''))
+				.to.eventually.have.property('name').equal('uber-library-example');
+		});
+	});
+
+	function assertMigrate(v1, v2, naming) {
 		const v1data = path.join(testdata, v1);
 		const v2data = path.join(testdata, v2);
 
@@ -50,13 +75,13 @@ describe('File System', () => {
 
 		fs.mkdirSync(libdir);
 
-		fse.copySync(v1data, libdir, {compareContent: true});
-		const comp1 = dircomp.compareSync(libdir, v1data);
+		fse.copySync(v1data, libdir);
+		const comp1 = dircomp.compareSync(libdir, v1data, {compareContent:true});
 		expect(comp1.same).to.be.true;
 
-		const sut = new FileSystemLibraryRepository(dir);
+		const sut = new FileSystemLibraryRepository(dir, naming);
 		return sut.setLibraryLayout(name, 2).then(() => {
-			const comp2 = dircomp.compareSync(libdir, v2data);
+			const comp2 = dircomp.compareSync(libdir, v2data, {compareContent:true});
 			if (!comp2.same) {
 				//const unequal = comp2.diffSet.filter(item => item.state!=='equal');
 			}
