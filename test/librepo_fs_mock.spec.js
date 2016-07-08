@@ -190,13 +190,16 @@ function libFiles(lib, root) {
 	return Promise.all(checkFileSystem(path, expected));
 }
 
+/*
 function mock(...args) {
 	const mockfs = require('mock-fs');
 	mock.restore = mockfs.restore;
 	return mockfs(...args);
 }
-
+*/
 describe('File System Mock', () => {
+
+	const mock = require('mock-fs');
 
 	beforeEach(done => {
 		mock(libFS);

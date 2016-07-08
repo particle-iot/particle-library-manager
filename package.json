@@ -61,7 +61,7 @@
     "eslint-config-particle": "^1.0.5",
     "istanbul": "1.0.0-alpha.2",
     "mocha": "^2.5.1",
-    "mock-fs": "^3.9.0",
+    "mock-fs": "^3.10.0",
     "should": "^7.1.0",
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0",
