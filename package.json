@@ -42,7 +42,8 @@
     "properties-parser": "^0.3.1",
     "superagent": "^1.8.3",
     "superagent-prefix": "0.0.2",
-    "verror": "^1.6.1"
+    "verror": "^1.6.1",
+    "yeoman-generator": "^0.23.4"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
