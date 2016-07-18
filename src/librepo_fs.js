@@ -183,11 +183,7 @@ class LibraryDirectStrategy extends NamingStrategy {
 				return [];
 			});
 	}
-
 }
-
-
-
 
 
 export class FileSystemLibraryFile extends LibraryFile {
