@@ -747,3 +747,6 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 }
 
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};
+

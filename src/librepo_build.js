@@ -141,3 +141,6 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		return lib.id;
 	}
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};

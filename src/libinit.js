@@ -162,3 +162,6 @@ export class LibraryInitGenerator extends LibraryInitGeneratorMixin(Base) { // e
 	}
 
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};
