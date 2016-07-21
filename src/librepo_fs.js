@@ -183,11 +183,7 @@ class LibraryDirectStrategy extends NamingStrategy {
 				return [];
 			});
 	}
-
 }
-
-
-
 
 
 export class FileSystemLibraryFile extends LibraryFile {
@@ -750,4 +746,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};
 

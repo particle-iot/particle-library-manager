@@ -2,6 +2,7 @@
 export * from './librepo';
 export * from './librepo_build';
 export * from './librepo_fs';
+export * from './libinit';
 
 const path = require('path');
 const appRoot = require('app-root-path').toString();
@@ -11,5 +12,6 @@ function resourcesDir() {
 }
 
 export {
+	appRoot,
 	resourcesDir
 };

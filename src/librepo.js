@@ -235,3 +235,6 @@ export class AbstractLibraryRepository extends LibraryRepository {
 		return Promise.resolve({name:lib.name});
 	}
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};
