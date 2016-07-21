@@ -18,57 +18,89 @@
  */
 
 import { Base } from 'yeoman-generator';
+const path = require('path');
 
 function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 /**
- * Yeoman generator that provides library initialize
- * functionality to create a new library in the file system.
+ * Code the functionality separate from the generator so we can mock the various
+ * generator operations - having to subclass Base binds the functionality too closely
+ * to the generator.
+ *
+ * @param {class} B The base class to use for the mixin
+ * @returns {LibraryInitGeneratorMixin} The mixin class with B as the base.
  */
-export class LibraryInitGenerator extends Base {
+export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	constructor(...args) {
 		super(...args);
+	}
+
+	/**
+	 * Registers the option names.
+	 * @private
+	 * @returns {undefined} nothing
+	 */
+	_initializeOptions() {
 		this.option('name');
+		this.option('version');
+		this.option('dir');
+	}
+
+	_setOutputDir() {
+		if (this.options.dir !== undefined) {
+			this.destinationRoot(this.options.dir);
+		}
+	}
+
+	_allPrompts() {
+		let prompt = [];
+
+		if (this.options.name === undefined) {
+			prompt.push({
+				type: 'input',
+				name: 'name',
+				message: 'Enter a name for your library:',
+			});
+		}
+
+		if (this.options.version === undefined) {
+			prompt.push({
+				type: 'input',
+				name: 'version',
+				message: 'Enter a version for your library:',
+			});
+		}
+
+		if (this.options.author === undefined) {
+			prompt.push({
+				type: 'input',
+				name: 'author',
+				message: 'Who is the author of your library:',
+			});
+		}
+
+		return prompt;
+	}
+
+	_handlePrompts(data) {
+		Object.assign(this.options, data);
+		if (this.options.name) {
+			this.options.Name = capitalizeFirstLetter(this.options.name);
+		}
+	}
+
+	_prompt() {
+		this._setOutputDir();
+		const prompt = this._allPrompts();
+		return this.prompt(prompt).then((data) => this._handlePrompts(data));
 	}
 
 	get prompting() {
 		return {
-			promptVersion() {
-				let prompt = [];
-
-				if (this.options.name===undefined) {
-					prompt.push({
-						type: 'input',
-						name: 'name',
-						message: 'Enter a name for your library:',
-					});
-				}
-
-				if (this.options.version===undefined) {
-					prompt.push({
-						type: 'input',
-						name: 'version',
-						message: 'Enter a version for your library:',
-					});
-				}
-
-				if (this.options.author===undefined) {
-					prompt.push({
-						type: 'input',
-						name: 'author',
-						message: 'Who is the author of your library:',
-					});
-				}
-
-				const self = this;
-				return this.prompt(prompt).then((data) => {
-					Object.assign(self.options, data);
-					this.options.Name = capitalizeFirstLetter(this.options.name);
-				});
-			}
+			prompt : this._prompt
 		};
 	}
 
@@ -99,12 +131,34 @@ export class LibraryInitGenerator extends Base {
 					this.destinationPath('examples/doit/doit_example.cpp'),
 					this.options
 				);
-
 			}
 		};
 	}
+};
 
-	method1() {
-		console.log(`The name is ${this.options.name}`);
+
+
+/**
+ * Yeoman generator that provides library initialize
+ * functionality to create a new library in the file system.
+ *
+ */
+export class LibraryInitGenerator extends LibraryInitGeneratorMixin(Base) { // eslint-disable-line new-cap
+
+	constructor(...args) {
+		super(...args);
+		this.sourceRoot(path.join(__dirname, 'init', 'templates'));
+		this._initializeOptions();
 	}
+
+	// It looks like yeoman is expecting the getters specifically on this
+	// rather than on super.
+	get prompting() {
+		return super.prompting;
+	}
+
+	get writing() {
+		return super.writing;
+	}
+
 }

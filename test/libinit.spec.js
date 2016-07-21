@@ -19,22 +19,43 @@
 
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
-//const expect = chai.expect;
+chai.use(require('sinon-chai'));
+const expect = chai.expect;
 const fs = require('fs');
 const path = require('path');
 const helpers = require('yeoman-test');
 const assert = require('yeoman-assert');
+const sinon = require('sinon');
 const fse = require('fs-extra');
 
-import { LibraryInitGenerator } from '../src/libinit';
+
+import { LibraryInitGenerator, LibraryInitGeneratorMixin } from '../src/libinit';
 import { appRoot } from '../src/index';
 
 // http://yeoman.io/generator/module-test_helpers.html
+
+class EmptyBase {
+
+}
+
+class MockLibraryInitGenerator extends LibraryInitGeneratorMixin(EmptyBase) { // eslint-disable-line new-cap
+	constructor(...args) {
+		super(...args);
+	}
+}
+
 
 describe('library initialize', () => {
 
 	const testData = { name: 'nominative', version: '1.2.3', author: 'Borges' };
 
+	/**
+	 * Asserts that a generated (actual) file matches the expected file in the test fixture.
+	 * @param {string} expected  The name of the expected file. This is read from the `generator` folder at
+	 *  the same level as these tests.
+	 * @param {string} actual    The name of the actual file created. Assumes equal to 'expected' if not defined.
+	 * @returns {nada} nothing
+	 */
 	function assertGeneratedContent(expected, actual) {
 		if (actual===undefined) {
 			actual = expected;
@@ -43,6 +64,10 @@ describe('library initialize', () => {
 		assert.fileContent(actual, expectedContent);
 	}
 
+	/**
+	 * Validates that the library files are created that match the files in the test fixture.
+	 * @returns {undefined} nothing. nada. I exist only to pacify linting rules.
+	 */
 	function validateOutput() {
 		assertGeneratedContent('library.properties');
 		assertGeneratedContent('src/nominative.cpp');
@@ -50,12 +75,19 @@ describe('library initialize', () => {
 		assertGeneratedContent('examples/doit/doit_example.cpp');
 	}
 
+	/**
+	 * Creates a LibraryInitGenerator and makes the source content equal to the
+	 * `src/init` directory. The generator is run in a temporary directory.
+	 * @param {string} dir       The directory under the source folder that contains the generator sources
+	 * @param {function} cb      A callback that is passed the created generator.
+	 * @returns {Promise}   To run the generator.
+	 */
 	function generator(dir, cb) {
 		let result = helpers.run(LibraryInitGenerator);
 		if (dir) {
-			result = result.inTmpDir((dir) => {
-				// `dir` is the path to the new temporary directory
-				fse.copySync(path.join(appRoot, 'src/init'), dir);
+			result = result.inTmpDir((tmpdir) => {
+				// `tmpdir` is the path to the new temporary directory
+				fse.copySync(path.join(appRoot, 'src', dir), tmpdir);
 			});
 		}
 		if (cb) {
@@ -75,6 +107,59 @@ describe('library initialize', () => {
 			return generator('init', (result) => {
 				return result.withPrompts(testData);       // Mock options passed in
 			}).then(validateOutput);
+		});
+
+		it('sets the output directory from the "dir" option', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = { dir: 'abcd' };
+			sut.destinationRoot = sinon.stub();
+			sut._setOutputDir();
+			expect(sut.destinationRoot).to.have.been.calledWith('abcd');
+		});
+
+		it('does not set the output directory when the dir option is not present', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = { };
+			sut.destinationRoot = sinon.stub();
+			sut._setOutputDir();
+			expect(sut.destinationRoot).to.have.not.been.called;
+		});
+
+		it('sets the Name option to the name with first letter capitalized', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = {};
+			sut._handlePrompts({name:'abcd'});
+			expect(sut.options).to.have.property('Name').equal('Abcd');
+		});
+
+		it('does not set the Name option when name is not present', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = {};
+			sut._handlePrompts({name2:'abcd'});
+			expect(sut.options).to.not.have.property('Name');
+		});
+
+
+		it('prompting delegates to the _prompt method', () => {
+			const sut = new MockLibraryInitGenerator();
+			expect(sut.prompting).to.have.property('prompt').equal(sut._prompt);
+		});
+
+		it('the _prompt method configures and fetches options', () => {
+			const sut = new MockLibraryInitGenerator();
+			// given
+			sut._setOutputDir = sinon.stub();
+			sut._allPrompts = sinon.stub().returns('abcd');
+			sut._handlePrompts = sinon.stub().returns('handled');
+			sut.prompt = sinon.stub().returns(Promise.resolve({name:'123'}));
+			// when
+			return sut._prompt()
+			.then((result) => {
+				expect(result).to.be.equal('handled');
+				expect(sut._handlePrompts).to.have.been.calledWith({name:'123'});
+				expect(sut._allPrompts).to.have.been.calledOnce;
+				expect(sut._setOutputDir).to.have.been.calledOnce;
+			});
 		});
 	});
 });
