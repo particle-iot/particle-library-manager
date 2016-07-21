@@ -17,8 +17,6 @@
  ******************************************************************************
  */
 
-import 'babel-polyfill';
-
 const Particle = require('particle-api-js');
 
 import {AbstractLibraryRepository, MemoryLibraryFile, AbstractLibrary} from './librepo';

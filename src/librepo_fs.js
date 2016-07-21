@@ -17,13 +17,11 @@
  ******************************************************************************
  */
 
-import 'babel-polyfill';
 import {LibraryNotFoundError, LibraryRepositoryError} from './librepo';
 import VError from 'verror';
 const fs = require('fs');
 const path = require('path');
 const promisify = require('es6-promisify');
-const path = require('path');
 const properties = require('properties-parser');
 
 import {AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatError} from './librepo';
@@ -40,16 +38,16 @@ export function mapActionDir(rootDir, mapper, action) {
 	const stat = promisify(fs.stat);
 	const readdir = promisify(fs.readdir);
 	return readdir(rootDir)
-		.then(files => {
-			const filePromises = files.map(file => {
+	.then(files => {
+		const filePromises = files.map(file => {
 				const filePath = path.join(rootDir, file);
-				return stat(filePath)
+			return stat(filePath)
 					.then(stat => mapper(stat, file, filePath));
-			});
-			return Promise
-				.all(filePromises)
-				.then(actionables => action(actionables, files));
 		});
+		return Promise
+			.all(filePromises)
+				.then(actionables => action(actionables, files));
+	});
 }
 
 function isDirectory(stat) {
@@ -184,11 +182,7 @@ class LibraryDirectStrategy extends NamingStrategy {
 				return [];
 			});
 	}
-
 }
-
-
-
 
 
 export class FileSystemLibraryFile extends LibraryFile {
@@ -581,7 +575,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 						.catch(() => stat(path.join(dir, libraryProperties)).then(stat => {
 							if (stat.isFile()) {
 								return 2;
-							}
+}
 							throw notFound;
 						}));
 				}
@@ -762,4 +756,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};
 

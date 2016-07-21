@@ -31,7 +31,6 @@
  *                                               d8888P                                        d8888P
  */
 
-import 'babel-polyfill';
 import VError from 'verror';
 
 /**
@@ -235,3 +234,6 @@ export class AbstractLibraryRepository extends LibraryRepository {
 		return Promise.resolve({name:lib.name});
 	}
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};

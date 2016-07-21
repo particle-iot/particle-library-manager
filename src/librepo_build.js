@@ -17,8 +17,6 @@
  ******************************************************************************
  */
 
-import 'babel-polyfill';
-
 import {AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary} from './librepo';
 import {Agent} from './agent';
 import {LibraryFormatError} from './librepo';
@@ -141,3 +139,6 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		return lib.id;
 	}
 }
+
+// keep all branches  of the ES6 transpilled code executed
+export default () => {};
