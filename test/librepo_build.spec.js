@@ -24,7 +24,7 @@ chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
 import {BuildLibraryRepository, BuildLibrary} from '../src/librepo_build';
-import {Agent} from '../src/agent';
+import {Agent} from 'particle-api-js';
 
 describe('Build', () => {
 
