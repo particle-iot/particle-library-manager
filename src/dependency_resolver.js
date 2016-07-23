@@ -1,5 +1,5 @@
 
-const semver = require('semver');
+//const semver = require('semver');
 
 export class Dependency {
 	constructor(name, version) {
@@ -18,10 +18,6 @@ export class DependencyResolverSession {
 		this.repo = libraryRepo;
 	}
 
-	/**
-	 * Fetches all dependencies of a given dependency.
-	 * @param dependency
-	 */
 	dependencies(dependency) {
 
 	}
@@ -36,9 +32,10 @@ export class DependencyResolver {
 
 
 	/**
-	 *
-	 * @param session   The dependency resolution session
-	 * @param roots     The dependency roots.
+	 * Determines the transitive closure of dependencies from a given set of roots.
+	 * @param {object} session   The dependency resolution session
+	 * @param {Array<object>} roots     The dependency roots.
+	 * @returns {object} something to please the linter
 	 */
 	collectDependencies(session, roots) {
 		// iterate across the list of roots

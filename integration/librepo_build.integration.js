@@ -28,8 +28,8 @@ const expect = chai.expect;
 import {BuildLibraryRepository} from '../src/librepo_build'
 
 const config = {
-	endpoint: 'http://localhost:3000/',
-	lib_names: ['swd'],
+	endpoint: 'http://build.staging.particle.io/',
+	lib_names: ['neopixel'],
 	lib_unknown: "$$!!@@"
 };
 

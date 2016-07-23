@@ -17,12 +17,10 @@
  ******************************************************************************
  */
 
-const chai = require('chai');
-chai.use(require('chai-as-promised'));
-const expect = chai.expect;
+import {expect} from './test-setup';
+import { resourcesDir } from '../src/index';
 const fs = require('fs');
 const path = require('path');
-import { resourcesDir } from '../src/index';
 
 describe('resourcesDir', () => {
 	it('can fetch resources dir', () => {

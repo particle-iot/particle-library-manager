@@ -17,11 +17,7 @@
  ******************************************************************************
  */
 
-const chai = require('chai');
-const sinon = require('sinon');
-chai.use(require('sinon-chai'));
-chai.use(require('chai-as-promised'));
-const expect = chai.expect;
+import {sinon, expect} from './test-setup';
 
 import {BuildLibraryRepository, BuildLibrary} from '../src/librepo_build';
 import {Agent} from 'particle-api-js';

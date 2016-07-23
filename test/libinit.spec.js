@@ -17,17 +17,13 @@
  ******************************************************************************
  */
 
-const chai = require('chai');
-chai.use(require('chai-as-promised'));
-chai.use(require('sinon-chai'));
-const expect = chai.expect;
+import {expect, sinon} from './test-setup';
+
 const fs = require('fs');
 const path = require('path');
 const helpers = require('yeoman-test');
 const assert = require('yeoman-assert');
-const sinon = require('sinon');
 const fse = require('fs-extra');
-
 
 import { LibraryInitGenerator, LibraryInitGeneratorMixin } from '../src/libinit';
 import { appRoot } from '../src/index';

@@ -17,15 +17,6 @@
  ******************************************************************************
  */
 
-const chai = require('chai');
-const sinon = require('sinon');
-chai.use(require('sinon-chai'));
-chai.use(require('chai-as-promised'));
-const expect = chai.expect;
-const Writable = require('stream').Writable;
-
-
-
 describe('DependencyResolver', () => {
 
 

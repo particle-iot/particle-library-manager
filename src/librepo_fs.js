@@ -40,9 +40,9 @@ export function mapActionDir(rootDir, mapper, action) {
 	return readdir(rootDir)
 	.then(files => {
 		const filePromises = files.map(file => {
-				const filePath = path.join(rootDir, file);
+			const filePath = path.join(rootDir, file);
 			return stat(filePath)
-					.then(stat => mapper(stat, file, filePath));
+				.then(stat => mapper(stat, file, filePath));
 		});
 		return Promise
 			.all(filePromises)
@@ -575,7 +575,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 						.catch(() => stat(path.join(dir, libraryProperties)).then(stat => {
 							if (stat.isFile()) {
 								return 2;
-}
+							}
 							throw notFound;
 						}));
 				}

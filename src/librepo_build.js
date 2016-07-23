@@ -96,12 +96,8 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		});
 	}
 
-	extractNames(libs) {
-		let result = [];
-		for (let lib of libs) {
-			result.push(lib.title);
-		}
-		return result;
+	extractName(lib) {
+		return lib.title;
 	}
 
 	/**

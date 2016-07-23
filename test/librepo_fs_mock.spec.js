@@ -17,18 +17,15 @@
  ******************************************************************************
  */
 
-import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson} from '../src/librepo_fs';
-import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
+import {chai, expect, sinon} from './test-setup';
+chai.use(require('chai-fs'));
 import concat from 'concat-stream';
-const chai = require('chai');
-chai.use(require('sinon-chai'));
-chai.use(require('chai-as-promised'));
-const expect = chai.expect;
 const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
-const sinon = require('sinon');
 
+import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson} from '../src/librepo_fs';
+import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
 
 const libFileContents = { 'h': '// a header file', cpp:'// a cpp file'};
 
@@ -223,7 +220,7 @@ describe('File System Mock', () => {
 		});
 	});
 
-	describe('Library Repository', () => {
+	describe('Library Repository', () => {      // eslint-disable-line max-statements
 		it('constructor adds trailing slash when missing', () => {
 			const dir = '';
 			const sut = new FileSystemLibraryRepository(dir);
@@ -569,12 +566,14 @@ describe('File System Mock', () => {
 				expect(actual).to.be.equal(expected);
 			});
 		});
+
 		describe('fileStat', () => {
 			it('retrieves a null value for a non-existent file', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				return expect(sut.fileStat('$$$.@@@1')).to.eventually.be.equal(null);
 			});
 		});
+
 		describe('mkdirIfNeeded', () => {
 			it('raises no error when the directory already exists', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
@@ -585,6 +584,14 @@ describe('File System Mock', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				return expect(sut.mkdirIfNeeded('mydir/:/!|,')).to.eventually.reject;
 			});
+		});
+
+		it('createDirectory can create a nested directory', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			const dir = 'one/two/three';
+			sut.createDirectory(dir);
+			sut.createDirectory(dir);       // do it again so we exercise the already exists case.
+			expect(dir).to.be.a.directory;
 		});
 	});
 

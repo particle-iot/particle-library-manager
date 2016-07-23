@@ -24,10 +24,11 @@
 const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
-
+const mockfs = require('mock-fs');
 import {CloudLibraryRepository} from '../src/librepo_cloud'
 import {FileSystemLibraryRepository} from "../src/librepo_fs";
 
+/*
 const config = {
 	endpoint: 'http://localhost:9090',
 	// should probably fetch this from the environment
@@ -45,27 +46,106 @@ const particleApiJsConfig =
 function createRepo() {
 	return new CloudLibraryRepository({config: particleApiJsConfig, auth: config.auth});
 }
+*/
+
+const auth = 'a1756ba10078bfacd21a26d68c1a6bb2274e565a';
+
+function createRepo() {
+	return new CloudLibraryRepository({auth});
+}
 
 
 describe('CloudLibraryRepository', () => {
-	it('can fetch neopixel', () => {
 
-		const sut = createRepo();
-		const result = sut.fetch("neopixel").then(neopixel => {
-			const promises = [
-				neopixel.definition().then(definition => {
-					expect(definition.name).to.be.equal('neopixel');
-				}),
-				neopixel.files().then(files => {
-					expect(files.length).to.be.greaterThan(0);
-				}).then(() => {
-					const fs = new FileSystemLibraryRepository('./');
-					return fs.add(neopixel);
-				})
-			];
-
-			return Promise.all(promises);
+	function validate(lib, name) {
+		expect(lib).to.be.ok;
+		expect(lib).to.have.property('name').equal(name);
+		return lib.definition().then((def) => {
+			expect(def).to.have.property('author');
+			expect(def).to.have.property('version');
+			expect(def).to.have.property('sentence');
+			expect(def).to.have.property('paragraph');
 		});
-		return result;
+	}
+	
+
+	/* The cloud repo doesn't yet support fetching files individually.
+		it('can fetch neopixel', () => {
+
+			const sut = createRepo();
+			const result = sut.fetch("neopixel").then(neopixel => {
+				const promises = [
+					neopixel.definition().then(definition => {
+						expect(definition.name).to.be.equal('neopixel');
+					}),
+					neopixel.files().then(files => {
+						expect(files.length).to.be.greaterThan(0);
+					}).then(() => {
+						const fs = new FileSystemLibraryRepository('./');
+						return fs.add(neopixel);
+					})
+				];
+
+				return Promise.all(promises);
+			});
+			return result;
+		});
+	*/
+
+
+	beforeEach(function a(done) {
+		this.timeout(5000);
+		done();
+	});
+
+	it('can fetch a library', () => {
+		const sut = createRepo();
+		const fetchLib = sut.fetch('neopixel');
+		return fetchLib.then((lib) => validate(lib, 'neopixel'));
+	});
+
+	it('can list libraries', () => {
+		const sut = createRepo();
+		return sut.names().then((names) => {
+			expect(names).to.be.ok;
+			expect(names).to.contain('neopixel');
+		});
+	});
+
+	it('can download the library file', function a() {
+		this.timeout(10000);
+		const sut = createRepo();
+		return sut.fetch('neopixel').then((lib) => {
+			return lib.metadata.download();
+		}).then(file => {
+			expect(file).to.have.length.greaterThan(1000);
+		});
+	});
+
+
+	describe('filesystem', () => {
+
+		beforeEach(done => {
+			mockfs({});
+			done();
+		});
+
+		afterEach(done => {
+			mockfs.restore();
+			done();
+		});
+
+		it('can copy the library to the filesystem', () => {
+			const sut = createRepo();
+			return sut.fetch('neopixel').then((lib) => {
+				return lib.copyTo('neopixel');
+			}).then(() => {
+				expect('neopixel').to.be.a.directory;
+				expect('neopixel/LICENSE').to.be.a.file;
+				expect('neopixel/libraries.properties').to.be.a.file;
+				expect('neopixel/src/neopixel.cpp').to.be.a.file;
+				expect('neopixel/src/neopixel.h').to.be.a.file;
+			});
+		});
 	});
 });

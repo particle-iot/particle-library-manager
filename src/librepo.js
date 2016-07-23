@@ -233,6 +233,19 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	definition(lib) {
 		return Promise.resolve({name:lib.name});
 	}
+
+	extractNames(libs) {
+		let result = [];
+		for (let lib of libs) {
+			const name = this.extractName(lib);
+			result.push(name);
+		}
+		return result;
+	}
+
+	extractName(lib) {
+		return lib.name;
+	}
 }
 
 // keep all branches  of the ES6 transpilled code executed

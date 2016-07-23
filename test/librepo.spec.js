@@ -21,12 +21,7 @@ import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '
 import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile} from '../src/librepo';
 import {AbstractLibrary, AbstractLibraryRepository} from '../src/librepo';
 import VError from 'verror';
-
-const chai = require('chai');
-const sinon = require('sinon');
-chai.use(require('sinon-chai'));
-chai.use(require('chai-as-promised'));
-const expect = chai.expect;
+import {sinon, expect} from './test-setup';
 const Writable = require('stream').Writable;
 
 describe('LibraryManager', () => {
