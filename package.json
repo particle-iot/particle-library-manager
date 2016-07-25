@@ -43,7 +43,7 @@
     "fs-extra": "^0.30.0",
     "gunzip-maybe": "^1.3.1",
     "mkdirp": "^0.5.1",
-    "particle-api-js": "https://github.com/spark/particle-api-js/archive/develop.tar.gz",
+    "particle-api-js": "5.3.0-develop.1",
     "properties-parser": "^0.3.1",
     "semver": "^5.1.0",
     "superagent": "^1.8.3",
