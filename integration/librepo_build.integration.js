@@ -35,6 +35,11 @@ const config = {
 
 
 describe('BuildLibraryRepository', () => {
+	before(function upTimeout() {
+		this.timeout(10000);
+	});
+
+
 	it('can fetch index', () => {
 		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
 		const result = sut.index();
