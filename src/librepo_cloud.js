@@ -61,8 +61,9 @@ export class CloudLibrary extends AbstractLibrary
 
 
 	copyTo(dir) {
+		const self = this;
 		return promisify(mkdirp)(dir)
-			.then(this.metadata.download())
+			.then(() => this.metadata.download())
 			.then((buffer) => {
 				const Readable = require('stream').Readable;
 				const read = new Readable;
@@ -112,9 +113,8 @@ export class CloudLibrary extends AbstractLibrary
 
 					extract.on('entry', handleEntry);
 					extract.on('finish', fulfill);
-
 					read.pipe(gunzip()).pipe(extract);
-				});
+				}).then(() => self);
 			});
 	}
 }

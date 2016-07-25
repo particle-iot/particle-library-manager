@@ -98,14 +98,16 @@ describe('CloudLibraryRepository', () => {
 		lib.download = sinon.stub().returns(Promise.resolve(buffer));
 		const sut = new CloudLibrary('abcd', lib);
 
-		mockfs({});
+		mockfs({'/':{}});
 		// this isn't a pure unit test, but is simpler to code than mocking the tar.gz functionality.
-		return sut.copyTo('newlib')
-			.then(() => {
-				expect('newlib/library.properties').to.be.a.file;
-				expect('newlib/project.properties').to.not.be.a.file;
-				expect('newlib/src/neopixel.cpp').to.be.a.file;
-				expect('newlib/src/neopixel.h').to.be.a.file;
+		return sut.copyTo('/newlib')
+			.then((lib) => {
+				expect(lib).to.be.deep.equal(sut);
+				expect('/newlib/library.properties').to.be.a.file;
+				expect('/newlib/project.properties').to.not.be.a.file;
+				expect('/newlib/project.properties').to.not.be.a.file;
+				expect('/newlib/src/neopixel.cpp').to.be.a.file;
+				expect('/newlib/src/neopixel.h').to.be.a.file;
 			})
 			.finally(() => {
 				mockfs.restore();
@@ -113,6 +115,7 @@ describe('CloudLibraryRepository', () => {
 	});
 
 	it('ignores symlinks ', () => {
+		// todo - build a tar.gz containing symblinks
 
 	});
 

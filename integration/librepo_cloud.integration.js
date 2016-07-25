@@ -92,7 +92,6 @@ describe('CloudLibraryRepository', () => {
 		});
 	*/
 
-
 	beforeEach(function a(done) {
 		this.timeout(5000);
 		done();
