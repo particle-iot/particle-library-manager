@@ -284,7 +284,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {boolean} true if the library should be persisted.
 	 */
 	includeLibraryFile(libraryFile) {
-		return libraryFile.kind === 'source';
+		return libraryFile.kind === 'source' ||
+				libraryFile.kind === 'header';
 	}
 
 	/**
