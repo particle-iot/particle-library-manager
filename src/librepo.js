@@ -105,7 +105,7 @@ export class Library {
 	}
 
 	/**
-	 * Retrieves the definitoin (metadata) for this library.
+	 * Retrieves the definition (metadata) for this library.
 	 * @returns {Promise}   The metadata for this library.
 	 */
 	definition() {
