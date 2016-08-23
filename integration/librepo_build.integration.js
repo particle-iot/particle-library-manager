@@ -89,7 +89,8 @@ describe('BuildLibraryRepository', () => {
 		return promise;
 	});
 
-	it("can fetch library descriptor", () => {
+	// FIXME: Build endpoint is not returning correct data
+	xit("can fetch library descriptor", () => {
 		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
 		const name = config.lib_names[0];
 		const promise = sut.fetch(name)
@@ -102,7 +103,7 @@ describe('BuildLibraryRepository', () => {
 		return promise;
 	});
 
-	it("can fetch library files", () => {
+	xit("can fetch library files", () => {
 		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
 		const name = config.lib_names[0];
 		const promise = sut.fetch(name)

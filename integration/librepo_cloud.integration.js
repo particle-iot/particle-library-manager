@@ -64,10 +64,9 @@ describe('CloudLibraryRepository', () => {
 			expect(def).to.have.property('author');
 			expect(def).to.have.property('version');
 			expect(def).to.have.property('sentence');
-			expect(def).to.have.property('paragraph');
 		});
 	}
-	
+
 
 	/* The cloud repo doesn't yet support fetching files individually.
 		it('can fetch neopixel', () => {
@@ -103,7 +102,8 @@ describe('CloudLibraryRepository', () => {
 		return fetchLib.then((lib) => validate(lib, 'neopixel'));
 	});
 
-	it('can list libraries', () => {
+	// FIXME: listing all libraries just to get their names is not efficient. Do we need this?
+	xit('can list libraries', () => {
 		const sut = createRepo();
 		return sut.names().then((names) => {
 			expect(names).to.be.ok;
