@@ -18,7 +18,7 @@
  */
 
 import {AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary} from './librepo';
-import {Agent} from 'particle-api-js';
+import Agent from 'particle-api-js/lib/Agent';
 import {LibraryFormatError} from './librepo';
 
 /**

@@ -20,7 +20,7 @@
 import {sinon, expect} from './test-setup';
 
 import {BuildLibraryRepository, BuildLibrary} from '../src/librepo_build';
-import {Agent} from 'particle-api-js';
+import Agent from 'particle-api-js/lib/Agent';
 
 describe('Build', () => {
 

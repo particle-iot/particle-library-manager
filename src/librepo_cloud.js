@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {Client} from 'particle-api-js';
+import Particle from 'particle-api-js';
 
 import {AbstractLibraryRepository, AbstractLibrary} from './librepo';
 
@@ -128,7 +128,7 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 	/**
 	 * @param {String} endpoint The root of the library API.
 	 */
-	constructor({auth=undefined, client = new Client({auth})}) {
+	constructor({auth=undefined, client = new Particle().client({auth})}) {
 		super();
 		this.api = client.api;
 		this.client = client;
