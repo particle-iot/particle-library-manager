@@ -28,17 +28,14 @@ const expect = chai.expect;
 import {BuildLibraryRepository} from '../src/librepo_build'
 
 const config = {
-	endpoint: 'http://build.staging.particle.io/',
+	endpoint: 'http://build.particle.io/',
 	lib_names: ['neopixel'],
 	lib_unknown: "$$!!@@"
 };
 
 
-describe('BuildLibraryRepository', () => {
-	before(function upTimeout() {
-		this.timeout(10000);
-	});
-
+describe('BuildLibraryRepository', function build()  {
+	this.timeout(10000);
 
 	it('can fetch index', () => {
 		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
