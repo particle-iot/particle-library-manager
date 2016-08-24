@@ -651,7 +651,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		})
 		.then(() => this.fileStat(v1test).then((stat) => {
 			if (stat) {
-				return this.mkdirIfNeeded(path.join(libdir, testDir)).then(promisify(fs.rename)(v1test, v2test));
+				return this.mkdirIfNeeded(path.join(libdir, testDir))
+					.then(() => promisify(fs.rename)(v1test, v2test));
 			}
 		}))
 		.then(() => this.migrateSources(libdir, includeName))
