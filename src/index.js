@@ -7,7 +7,8 @@ export * from './librepo_cloud';
 export * from './validation';
 
 const path = require('path');
-const appRoot = require('app-root-path').toString();
+
+const appRoot = require('../approot').root;
 
 function resourcesDir() {
 	return path.join(appRoot, 'resources');
