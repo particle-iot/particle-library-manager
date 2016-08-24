@@ -18,7 +18,7 @@
  */
 
 import {expect} from './test-setup';
-import {validateField, validateDescriptor, validateLibrary} from '../src/validation';
+import {validateField, validateMetadata, validateLibrary} from '../src/validation';
 import {FileSystemLibraryRepository, FileSystemNamingStrategy} from '../src/librepo_fs';
 import path from 'path';
 
@@ -107,48 +107,48 @@ describe('validation', () => {
 		});
 	});
 
-	describe('validateDescriptor', () => {
+	describe('validateMetadata', () => {
 		it('returns an object', () => {
-			expect(validateDescriptor({})).to.be.ok;
+			expect(validateMetadata({})).to.be.ok;
 		});
 
-		const validDescriptor = {
+		const validMetadata = {
 			name: 'mylib',
 			author: 'Author <author@example.com>',
 			version: '1.0.0',
 			sentence: 'A library'
 		};
 
-		function expectValid(descriptor) {
-			const result = validateDescriptor(descriptor);
+		function expectValid(metadata) {
+			const result = validateMetadata(metadata);
 			expect(result.valid).to.be.true;
 		}
 
-		function expectError(descriptor, ...fields) {
-			const result = validateDescriptor(descriptor);
+		function expectError(metadata, ...fields) {
+			const result = validateMetadata(metadata);
 			expect(result.valid).to.be.false;
 			expect(result.errors).to.have.all.keys(fields);
 		}
 
-		it('returns valid for valid descriptor', () => {
-			expectValid(validDescriptor);
+		it('returns valid for valid metadata', () => {
+			expectValid(validMetadata);
 		});
 
 		it('returns an error when a field is invalid', () => {
-			const descriptor = Object.assign({}, validDescriptor, {
+			const metadata = Object.assign({}, validMetadata, {
 				name: ''
 			});
 
-			expectError(descriptor, 'name');
+			expectError(metadata, 'name');
 		});
 
 		it('returns multiple errors when multiple fields is invalid', () => {
-			const descriptor = Object.assign({}, validDescriptor, {
+			const metadata = Object.assign({}, validMetadata, {
 				name: '',
 				version: ''
 			});
 
-			expectError(descriptor, 'name', 'version');
+			expectError(metadata, 'name', 'version');
 		});
 	});
 
@@ -213,9 +213,7 @@ describe('validation', () => {
 
 			const verify = (result) => {
 				expect(result.valid).to.be.false;
-				expect(result.errors).to.have.keys('README.md', 'LICENSE');
-				//expect(result.errors).to.have.key('main source');
-				//expect(result.errors).to.have.key('main header');
+				expect(result.errors).to.have.keys('README.md', 'LICENSE', 'main source', 'main header');
 			};
 			return setup().then(execute).then(verify);
 		});

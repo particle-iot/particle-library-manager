@@ -61,7 +61,7 @@ describe('public package interface', () => {
 
 			// validation.js
 			'validateField',
-			'validateDescriptor',
+			'validateMetadata',
 			'validateLibrary',
 
 			// extra

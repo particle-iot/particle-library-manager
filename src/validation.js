@@ -17,6 +17,9 @@
  ******************************************************************************
  */
 
+import fs from 'fs-extra';
+import path from 'path';
+
 const REQUIRED_FIELDS = ['name', 'version', 'author'];
 
 const PATTERNS = {
@@ -31,13 +34,9 @@ const PATTERNS = {
 	}
 };
 
-const REQUIRED_FILES = {
-	'README.md': /^README/i,
-	'LICENSE': /^LICENSE/i,
-};
 
 /**
- * Validate one field of the library descriptor
+ * Validate one field of the library metadata
  * @param {string} field - name of the field to validate
  * @param {string} value - value of the field to validate
  * @returns {object} - key valid indicates if validation passed
@@ -71,17 +70,17 @@ export function validateField(field, value) {
 }
 
 /**
- * Validate the entire library descriptor
- * @param {object} descriptor - object with all the library fields
+ * Validate the entire library metadata
+ * @param {object} metadata - object with all the library fields
  * @returns {object} - key valid indicates if validation passed
  *                     key errors is an object with pairs of invalid field names and error messages
  */
-export function validateDescriptor(descriptor) {
+export function validateMetadata(metadata) {
 	const results = {
 		valid: true
 	};
 
-	for (const [field, value] of Object.entries(descriptor)) {
+	for (const [field, value] of Object.entries(metadata)) {
 		const fieldResults = validateField(field, value);
 
 		if (!fieldResults.valid) {
@@ -101,22 +100,17 @@ class ValidationFailed {
 }
 
 /**
- * Validate the library format, descriptor and the file structure
+ * Validate the library format, metadata and the file structure
  * @param {object} repo - the library repository that provides access to the library files
  * @param {string} libraryName - the library to validate (defaults to library at the root of the repo)
  * @returns {object} - key valid indicates if validation passed
  *                     key errors is an object with pairs of invalid field names and error messages
  */
 export function validateLibrary(repo, libraryName = '') {
-	let library;
 	// A promise chain that can return early by rejecting with ValidationFailed
 	return _validateLibraryLayout(repo, libraryName)
-		.then(() => repo.fetch(libraryName))
-		.then((_library) => {
-			library = _library;
-		})
-		.then(() => _validateLibraryMetadata(library))
-		.then(() => _validateLibraryFiles(library))
+		.then(() => _validateLibraryMetadata(repo, libraryName))
+		.then(() => _validateLibraryFiles(repo, libraryName))
 		.then(() => {
 			return {
 				valid: true
@@ -153,33 +147,80 @@ function _validateLibraryLayout(repo, libraryName) {
 	});
 }
 
-function _validateLibraryMetadata(library) {
-	return library.definition().then((descriptor) => {
-		return validateDescriptor(descriptor);
-	}).then((results) => {
-		if (!results.valid) {
-			throw new ValidationFailed(results);
-		}
+function _validateLibraryMetadata(repo, libraryName) {
+	return repo.fetch(libraryName)
+		.then((library) => library.definition())
+		.then((metadata) => validateMetadata(metadata))
+		.then((results) => {
+			if (!results.valid) {
+				throw new ValidationFailed(results);
+			}
+		});
+}
+
+/**
+ * Enumerate all files relative to the root of the library
+ * @param {string} directory - root of the library
+ * @returns {Promise} - resolves to array of relative paths
+ * @private
+ */
+function _libraryFiles(directory) {
+	return new Promise((fulfill) => {
+		const files = [];
+		fs.walk(directory)
+			.on('data', (item) => {
+				const relativePath = path.relative(directory, item.path);
+				files.push(relativePath);
+			})
+			.on('end', () => {
+				fulfill(files);
+			});
 	});
 }
 
-function _validateLibraryFiles(library) {
+function _mainSourceName(repo, libraryName) {
+	return repo.fetch(libraryName)
+		.then((library) => library.definition())
+		.then((metadata) => metadata.name);
+}
+
+/**
+ * Validate that README, LICENSE and src/lib.cpp and src/lib.h are present
+ * @param {object} repo - filesystem library repo
+ * @param {string} libraryName - name of library in the filesystem repo
+ * @returns {Promise} - object with valid and errors keys
+ * @private
+ */
+function _validateLibraryFiles(repo, libraryName) {
 	const results = {
 		valid: true
 	};
 
-	return library.files().then((files) => {
-		for (const [requiredFile, filenamePattern] of Object.entries(REQUIRED_FILES)) {
-			if (!files.find((f) => f.name.match(filenamePattern))) {
-				results.valid = false;
-				results.errors = Object.assign({}, results.errors, {
-					[requiredFile]: 'is missing'
-				});
-			}
-		}
+	const directory = repo.libraryDirectory(libraryName);
 
-		if (!results.valid) {
-			throw new ValidationFailed(results);
-		}
-	});
+	const requiredFiles = {
+		'README.md': /^README/i,
+		'LICENSE': /^LICENSE/i,
+	};
+
+	return _mainSourceName(repo, libraryName)
+		.then((mainSourceName) => {
+			requiredFiles['main source'] = new RegExp(`src/${mainSourceName}.cpp`, 'i');
+			requiredFiles['main header'] = new RegExp(`src/${mainSourceName}.h`, 'i');
+		})
+		.then(() => _libraryFiles(directory))
+		.then((files) => {
+			for (const [requiredFile, filenamePattern] of Object.entries(requiredFiles)) {
+				if (!files.find((f) => f.match(filenamePattern))) {
+					results.valid = false;
+					results.errors = Object.assign({}, results.errors, {
+						[requiredFile]: 'is missing'
+					});
+				}
+			}
+
+			if (!results.valid) {
+				throw new ValidationFailed(results);
+			}
+		});
 }
