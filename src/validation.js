@@ -31,6 +31,11 @@ const PATTERNS = {
 	}
 };
 
+const REQUIRED_FILES = {
+	'README.md': /^README/i,
+	'LICENSE': /^LICENSE/i,
+};
+
 /**
  * Validate one field of the library descriptor
  * @param {string} field - name of the field to validate
@@ -76,8 +81,8 @@ export function validateDescriptor(descriptor) {
 		valid: true
 	};
 
-	for (const field of Object.keys(descriptor)) {
-		const fieldResults = validateField(field, descriptor[field]);
+	for (const [field, value] of Object.entries(descriptor)) {
+		const fieldResults = validateField(field, value);
 
 		if (!fieldResults.valid) {
 			results.valid = false;
@@ -88,6 +93,12 @@ export function validateDescriptor(descriptor) {
 	return results;
 }
 
+class ValidationFailed {
+	constructor(validationResults) {
+		this.validationResults = validationResults;
+		this.name = 'ValidationFailedError';
+	}
+}
 
 /**
  * Validate the library format, descriptor and the file structure
@@ -97,21 +108,78 @@ export function validateDescriptor(descriptor) {
  *                     key errors is an object with pairs of invalid field names and error messages
  */
 export function validateLibrary(repo, libraryName = '') {
+	let library;
+	// A promise chain that can return early by rejecting with ValidationFailed
+	return _validateLibraryLayout(repo, libraryName)
+		.then(() => repo.fetch(libraryName))
+		.then((_library) => {
+			library = _library;
+		})
+		.then(() => _validateLibraryMetadata(library))
+		.then(() => _validateLibraryFiles(library))
+		.then(() => {
+			return {
+				valid: true
+			};
+		})
+		.catch((error) => {
+			if (error.name === 'ValidationFailedError') {
+				return error.validationResults;
+			}
+			throw error;
+		});
+}
+
+function _validateLibraryLayout(repo, libraryName) {
 	return repo.getLibraryLayout(libraryName).then((layout) => {
 		if (layout !== 2) {
-			return {
+			throw new ValidationFailed({
 				valid: false,
 				errors: {
-					library: 'must be migrated to v2 format'
+					library: 'must be migrated from v1 format'
 				}
-			};
+			});
+		}
+	}, (error) => {
+		if (error.name === 'LibraryNotFoundError') {
+			throw new ValidationFailed({
+				valid: false,
+				errors: {
+					library: 'is missing library.properties'
+				}
+			});
+		}
+		throw error;
+	});
+}
+
+function _validateLibraryMetadata(library) {
+	return library.definition().then((descriptor) => {
+		return validateDescriptor(descriptor);
+	}).then((results) => {
+		if (!results.valid) {
+			throw new ValidationFailed(results);
+		}
+	});
+}
+
+function _validateLibraryFiles(library) {
+	const results = {
+		valid: true
+	};
+
+	return library.files().then((files) => {
+		for (const [requiredFile, filenamePattern] of Object.entries(REQUIRED_FILES)) {
+			if (!files.find((f) => f.name.match(filenamePattern))) {
+				results.valid = false;
+				results.errors = Object.assign({}, results.errors, {
+					[requiredFile]: 'is missing'
+				});
+			}
 		}
 
-		return repo.fetch(libraryName).then((library) => {
-			return library.definition();
-		}).then((descriptor) => {
-			return validateDescriptor(descriptor);
-		});
+		if (!results.valid) {
+			throw new ValidationFailed(results);
+		}
 	});
-
 }

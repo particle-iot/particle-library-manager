@@ -17,8 +17,7 @@
  ******************************************************************************
  */
 
-import {chai, expect, sinon} from './test-setup';
-chai.use(require('chai-fs'));
+import {expect, sinon} from './test-setup';
 import concat from 'concat-stream';
 const promisify = require('es6-promisify');
 const fs = require('fs');

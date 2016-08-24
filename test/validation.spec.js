@@ -193,5 +193,31 @@ describe('validation', () => {
 			};
 			return setup().then(execute).then(verify);
 		});
+
+		it('returns errors for a directory that is not a library', () => {
+			const setup = () => getLibrary('not-a-library');
+
+			const execute = (repo) => validateLibrary(repo);
+
+			const verify = (result) => {
+				expect(result.valid).to.be.false;
+				expect(result.errors).to.have.key('library');
+			};
+			return setup().then(execute).then(verify);
+		});
+
+		it('returns errors for a library with missing files', () => {
+			const setup = () => getLibrary('library-v2-missing-files');
+
+			const execute = (repo) => validateLibrary(repo);
+
+			const verify = (result) => {
+				expect(result.valid).to.be.false;
+				expect(result.errors).to.have.keys('README.md', 'LICENSE');
+				//expect(result.errors).to.have.key('main source');
+				//expect(result.errors).to.have.key('main header');
+			};
+			return setup().then(execute).then(verify);
+		});
 	});
 });
