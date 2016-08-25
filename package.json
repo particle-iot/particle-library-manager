@@ -31,7 +31,9 @@
     "cover": "babel-node node_modules/.bin/istanbul cover _mocha test/ --report html -- -R spec",
     "cover-es5": "node_modules/.bin/istanbul cover _mocha lib/test/ --report html -- -R spec",
     "coveralls": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec --compilers js:babel-register test/ && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "preversion": "npm run lint && npm run test && npm run integration",
+    "version": "bash -c 'read -p \"Update CHANGELOG.md and press ENTER when done.\"' && git add CHANGELOG.md"
   },
   "dependencies": {
     "app-root-path": "^1.2.1",
