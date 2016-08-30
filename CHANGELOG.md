@@ -1,10 +1,24 @@
-# 0.0.2
+# Changelog
+
+## [Unreleased]
+
+- Add library validation
+
+## 0.0.4 - 2016-07-06
+
+- Small fixes
+
+## 0.0.3 - 2016-07-03
+
+- Add library migration
+
+## 0.0.2 - 2016-05-25
 
 - added src/index.js to re-export key library items to hide internal structure from clients
 - excluded unneeded items in .npmignore
 
 
-# 0.0.1
+## 0.0.1 - 2016-05-23
 
 - Build library repository
 - File system library repository
