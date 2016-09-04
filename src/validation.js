@@ -45,6 +45,7 @@ const PATTERNS = {
 export function validateField(field, value) {
 	if (REQUIRED_FIELDS.includes(field) && !value) {
 		return {
+			field, value,
 			valid: false,
 			errors: {
 				[field]: "can't be blank"
@@ -56,6 +57,7 @@ export function validateField(field, value) {
 	if (validator = PATTERNS[field]) {
 		if (!value.match(validator.pattern)) {
 			return {
+				field, value,
 				valid: false,
 				errors: {
 					[field]: validator.message
@@ -65,7 +67,8 @@ export function validateField(field, value) {
 	}
 
 	return {
-		valid: true
+		field, value,
+		valid: true,
 	};
 }
 

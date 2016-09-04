@@ -135,6 +135,36 @@ describe('library initialize', () => {
 			expect(sut.options).to.not.have.property('Name');
 		});
 
+		describe('validation', () => {
+			it('validates the name', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = {};
+				expect(() => sut._handlePrompts({name:'ab/cd'})).to.throw('name: must only contain letters, numbers, dashes and underscores');
+			});
+
+			it('validates the version', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = {};
+				expect(() => sut._handlePrompts({version:'ab/cd'})).to.throw('version: must be formatted like 1.0.0');
+			});
+
+			it('validates the author, which is freeform', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = {};
+				expect(() => sut._handlePrompts({author:'ab/cd'})).to.not.throw();
+			});
+
+			it('validates the prompts', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = {};
+				const prompts = sut._allPrompts();
+				expect(prompts).has.property('length').equal(3);
+
+				expect(prompts[0].validate('ab/cd')).to.equal('name: must only contain letters, numbers, dashes and underscores');
+				expect(prompts[1].validate('ab/cd')).to.equal('version: must be formatted like 1.0.0');
+				expect(prompts[2].validate('ab/cd')).to.be.true;
+			});
+		});
 
 		it('prompting delegates to the _prompt method', () => {
 			const sut = new MockLibraryInitGenerator();

@@ -29,13 +29,20 @@ describe('validation', () => {
 			expect(validateField('field', 'value')).to.be.ok;
 		});
 
+		function expectField(field, value, result) {
+			expect(result.field).to.equal(field);
+			expect(result.value).to.equal(value);
+		}
+
 		function expectValid(field, value) {
 			const result = validateField(field, value);
+			expectField(field, value, result);
 			expect(result.valid).to.be.true;
 		}
 
 		function expectError(field, value, expectedMessage) {
 			const result = validateField(field, value);
+			expectField(field, value, result);
 			expect(result.valid).to.be.false;
 			expect(result.errors[field]).to.equal(expectedMessage);
 		}

@@ -18,10 +18,32 @@
  */
 
 import { Base } from 'yeoman-generator';
+import {validateField} from './validation';
 const path = require('path');
 
 function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Formats a message from the validation error.
+ * @param {object} v    The result from a validateField call.
+ * @returns {string}    The error message string
+ */
+function validationMessage(v) {
+	return `${v.field}: ${v.errors[v.field]}`;
+}
+
+function validationError(validation) {
+	let msg = [];
+	for (let idx in validation) {
+		const v = validation[idx];
+		const m = validationMessage(v);
+		msg.push(m);
+	}
+	const error = new Error(msg);
+	error.validate = validation;
+	return error;
 }
 
 /**
@@ -55,6 +77,14 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 		}
 	}
 
+	promptValidate(field, value) {
+		const result = this.validateField(field, value);
+		if (!result || result.valid) {
+			return true;
+		}
+		return validationMessage(result);
+	}
+
 	_allPrompts() {
 		let prompt = [];
 
@@ -63,6 +93,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				type: 'input',
 				name: 'name',
 				message: 'Enter a name for your library:',
+				validate: (value) => this.promptValidate('name', value)
 			});
 		}
 
@@ -71,6 +102,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				type: 'input',
 				name: 'version',
 				message: 'Enter a version for your library:',
+				validate: (value) => this.promptValidate('version', value)
 			});
 		}
 
@@ -79,17 +111,52 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				type: 'input',
 				name: 'author',
 				message: 'Who is the author of your library:',
+				validate: (value) => this.promptValidate('author', value)
 			});
 		}
 
 		return prompt;
 	}
 
+	/**
+	 * Handle the result of prompts.
+	 * @param {object} data The result of the prompts.
+	 * @private
+	 * @returns {undefined} nothing
+	 */
 	_handlePrompts(data) {
 		Object.assign(this.options, data);
 		if (this.options.name) {
 			this.options.Name = capitalizeFirstLetter(this.options.name);
 		}
+		const result = this.validate();
+		if (result.length) {
+			throw validationError(result);
+		}
+	}
+
+	validate() {
+		const options = ['name', 'version', 'author'];
+		let result = [];
+		for (let idx in options) {
+			const check = this.validateOption(options[idx]);
+			if (check && !check.valid) {
+				result.push(check);
+			}
+		}
+		return result;
+	}
+
+	validateOption(attribute) {
+		const value = this.options[attribute];
+		if (value!==undefined) {
+			return this.validateField(attribute, value);
+		}
+		return null;
+	}
+
+	validateField(field, value) {
+		return validateField(field, value);
 	}
 
 	_prompt() {
