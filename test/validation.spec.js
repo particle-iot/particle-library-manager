@@ -225,4 +225,20 @@ describe('validation', () => {
 			return setup().then(execute).then(verify);
 		});
 	});
+
+	describe('error handling', () => {
+		const err = { msg: 'test error' };
+		const repo = { getLibraryLayout: () => Promise.reject(err) };
+
+		it('validateLibrary throws an error that is not ValidationFailedError', () => {
+			expect(validateLibrary(repo, 'testlib')).to.eventually.be.rejectedWith(err);
+		});
+
+		it('validateLibrary returns error results for ValidationFailedError', () => {
+			const err = { msg: 'test error', name: 'LibraryNotFoundError' };
+			const repo = { getLibraryLayout: () => Promise.reject(err) };
+			const results = { errors: { library: 'is missing library.properties' }, valid: false };
+			return expect(validateLibrary(repo, 'testlib')).to.eventually.deep.equal(results);
+		});
+	});
 });
