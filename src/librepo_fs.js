@@ -31,7 +31,7 @@ import {AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatEr
  * @param {string} rootDir               The directory to scan, map and action.
  * @param {function} mapper       Called with (stat,file,filePath) for each item in the directory.
  * @param {function} action         Called with actionables from the mapper function.
- * @returns {Promise} promise that returns an array of items returned from involking the mapper and action for each
+ * @returns {Promise} promise that returns an array of items returned from invoking the mapper and action for each
  *  item in the directory.
  */
 export function mapActionDir(rootDir, mapper, action) {
@@ -754,6 +754,87 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	migrateDescriptor(desc) {
 		// for now there's nothing to do.
 		return desc;
+	}
+
+	_requireV2Format(libname) {
+		return new LibraryRepositoryError(this, 'the library should be in v2 format before adapters can be added.');
+	}
+
+	_targetDirectoryDoesNotExist(dir) {
+		new LibraryRepositoryError(this, `The target directory ${dir} does not exist.`);
+	}
+
+	addAdapters(callback, libname, dir) {
+		return this.getLibraryLayout(libname)
+			.then((layout) => {
+				if (layout!==2) {
+					throw this._requireV2Format(libname);
+				}
+				return this.fileStat(dir);
+			})
+			.then(stat => {
+				if (stat===null || !stat.isDirectory()) {
+					throw this._targetDirectoryDoesNotExist(dir);
+				}
+				return this._addAdapters(callback, libname, dir);
+			});
+	}
+
+	/**
+	 * Creates files in the given directory that allow the old libname/libname.h include notation
+	 * to be used.
+	 * @param {function} callback receives notification of the current progress.
+	 * @param {string} libname  The library name/identifier. This is used with the naming scheme
+	 * to determine the library directory in the file system.
+	 * @param {string} dir the directory in the include path that the files should be copied to. if
+	 * not defined, the files are copied to the library sources.
+	 * @returns {Promise} to create the adapter header files.
+	 */
+	_addAdapters(callback, libname, dir) {
+		const name = this.namingStrategy.nameToFilesystem(libname);
+		const libdir = this.libraryDirectory(name);
+		return this.fetch(libname)
+		.then(lib => {
+			const libsrcdir = path.join(libdir, 'src');
+			const targetdir = path.join(dir, lib.name);
+			return this._addAdaptersImpl(callback, targetdir, libsrcdir);
+		});
+	}
+
+	isHeaderFile(name) {
+		const headers = ['h', 'hxx', 'hpp', 'h++'];
+		return headers.includes(this.extension(name)[0]);
+	}
+
+	/**
+	 * Recursively adds adapter header files from the given source directoyr into the given target directory.
+	 * @param {function} callback   Notification of header file creation and recursion. (Currently unused.)
+	 * @param {string} targetdir The directory the header files are created in
+	 * @param {string} srcdir    The directory containing the existing header files
+	 * @param {Array<string>} ignore    The current working list of source directories to not copy
+	 * @returns {undefined} nothing
+	 * @private
+	 */
+	_addAdaptersImpl(callback, targetdir, srcdir, ignore = [targetdir]) {
+		const self = this;
+		if (!ignore.includes(srcdir)) {
+			ignore.push(targetdir);
+			const writeFile = promisify(fs.writeFile);
+			const relative = path.relative(targetdir, srcdir);
+			function handleFile(stat, file, filePath) {
+				if (stat.isDirectory()) {
+					return self._addAdaptersImpl(callback, path.join(targetdir, file), path.join(srcdir, file), ignore);
+				} else {
+					if (stat.isFile() && self.isHeaderFile(file)) {
+						return self.mkdirIfNeeded(targetdir).then(() => writeFile(path.join(targetdir, file), `#include "${relative}/${file}";`));
+					} else {
+						return false;
+					}
+				}
+			}
+
+			return mapActionDir(srcdir, handleFile, () => {});
+		}
 	}
 
 }

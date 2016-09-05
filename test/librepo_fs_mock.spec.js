@@ -19,6 +19,7 @@
 
 import {expect, sinon} from './test-setup';
 import concat from 'concat-stream';
+import {AbstractLibrary} from '../src/librepo';
 const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
@@ -696,9 +697,128 @@ describe('File System Mock', () => {
 			const repo = new FileSystemLibraryRepository('./mydir/zzz', sut);
 			return expect(repo.fetch('')).to.be.rejected.and.eventually.has.property('name').equal('LibraryNotFoundError');
 		});
-
 	});
 
+	describe('addAdapter', () => {
+		let sut, callback;
 
+		beforeEach(() => {
+			sut = new FileSystemLibraryRepository('./mydir', FileSystemNamingStrategy.DIRECT);
+			callback = sinon.stub();
+		});
+
+		it('raises an error when the layout is not v2', () => {
+			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({isDirectory: () => true}));
+			sut._addAdapters = sinon.spy();
+			sut.getLibraryLayout = sinon.stub().returns(Promise.resolve(1));
+			// when
+			return sut.addAdapters(callback, 'abcd', 'somedir')
+				.then(() => {
+					throw Error('expected an exception');
+				})
+				.catch(error => {
+					expect(error).to.deep.equal(sut._requireV2Format('abcd'));
+				});
+		});
+
+		it('raises an error when the target directory does not exist', () => {
+			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({isDirectory: () => false}));
+			sut._addAdapters = sinon.spy();
+			sut.getLibraryLayout = sinon.stub().returns(Promise.resolve(2));
+			// when
+			return sut.addAdapters(callback, 'abcd', 'somedir')
+				.then(() => {
+					throw Error('expected an exception');
+				})
+				.catch(error => {
+					expect(error).to.deep.equal(sut._targetDirectoryDoesNotExist('somedir'));
+				});
+		});
+
+		it('calls _addAdapter when the layout is v2 and the directory exists', () => {
+			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({isDirectory: () => true}));
+			sut._addAdapters = sinon.spy();
+			sut.getLibraryLayout = sinon.stub().returns(Promise.resolve(2));
+			// when
+			return sut.addAdapters(callback, 'abcd', 'somedir')
+				.then(() => {
+					expect(sut._addAdapters).to.have.been.calledOnce;
+					expect(sut._addAdapters).to.have.been.calledWith(callback, 'abcd', 'somedir');
+				});
+		});
+
+		it('adds the library name to the target directory', () => {
+			// given
+			sut.fetch = sinon.stub().returns(Promise.resolve(new AbstractLibrary('abc')));
+			sut._addAdaptersImpl = sinon.stub().returns(Promise.resolve(123));
+			// when
+
+			return sut._addAdapters(callback, 'abc', 'mydir')
+				.then(result => {
+					expect(result).to.equal(123);
+
+					expect(sut._addAdaptersImpl).to.be.calledOne;
+					expect(sut._addAdaptersImpl).to.be.calledWith(callback, 'mydir/abc', 'mydir/src');
+				});
+		});
+
+		it('adds adapter files recursively and does not recurse into adapter directories', () => {
+			// given
+			fs.mkdirSync('mydir/lib');
+			fs.mkdirSync('mydir/headers');
+			fs.writeFileSync('mydir/header1.h');
+			fs.writeFileSync('mydir/header2.h');
+			fs.writeFileSync('mydir/lib/header1.h');
+			fs.writeFileSync('mydir/headers/lib.h');
+
+			function fileExists(name, content) {
+				expect(fs.statSync(name).isFile()).to.be.true;
+				expect(fs.readFileSync(name, 'utf-8')).to.equal(content);
+			}
+
+			function fileNotExists(name) {
+				expect(fs.existsSync(name)).to.be.false;
+			}
+
+			return sut._addAdaptersImpl(callback, 'mydir/lib', 'mydir')
+				.then(() => {
+					fileExists('mydir/lib/header1.h', '#include "../header1.h";');
+					fileExists('mydir/lib/header2.h', '#include "../header2.h";');
+					fileExists('mydir/lib/headers/lib.h', '#include "../../headers/lib.h";');
+					fileExists('mydir/lib/header2.h', '#include "../header2.h";');
+					fileNotExists('mydir/lib/lib/header1.h');
+				});
+		});
+
+		describe('isHeaderFile', () => {
+			it('.h is a valid header file', () => {
+				expect(sut.isHeaderFile('abc.h')).to.be.true;
+			});
+
+			it('.hpp is a valid header file', () => {
+				expect(sut.isHeaderFile('abc.hpp')).to.be.true;
+			});
+
+			it('.hxx is a valid header file', () => {
+				expect(sut.isHeaderFile('abc.hxx')).to.be.true;
+			});
+
+			it('.h++ is a valid header file', () => {
+				expect(sut.isHeaderFile('abc.h++')).to.be.true;
+			});
+
+			it('.cpp is not a valid header file', () => {
+				expect(sut.isHeaderFile('abc.cpp')).to.be.false;
+			});
+
+			it('.c is not a valid header file', () => {
+				expect(sut.isHeaderFile('abc.c')).to.be.false;
+			});
+
+			it('no extension is not a valid header file', () => {
+				expect(sut.isHeaderFile('abc')).to.be.false;
+			});
+		});
+	});
 });
 
