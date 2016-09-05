@@ -153,8 +153,8 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	_validateOption(attribute) {
 		const value = this.options[attribute];
-		if (value!==undefined) {
-			return this._validateField(attribute, value);
+		if (value!==undefined && value!==null) {
+			return this._validateField(attribute, value.toString());
 		}
 		return null;
 	}

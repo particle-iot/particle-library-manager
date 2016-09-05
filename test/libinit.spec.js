@@ -166,6 +166,13 @@ describe('library initialize', () => {
 				expect(() => sut._checkFields()).to.throw('version: must be formatted like 1.0.0');
 			});
 
+			it('validates the initial version value when set as a number', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = { version: 123 };
+				expect(() => sut._checkFields()).to.throw('version: must be formatted like 1.0.0');
+			});
+
+
 			it('validates the prompts', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
