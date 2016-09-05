@@ -77,8 +77,8 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 		}
 	}
 
-	promptValidate(field, value) {
-		const result = this.validateField(field, value);
+	_promptValidate(field, value) {
+		const result = this._validateField(field, value);
 		if (!result || result.valid) {
 			return true;
 		}
@@ -93,7 +93,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				type: 'input',
 				name: 'name',
 				message: 'Enter a name for your library:',
-				validate: (value) => this.promptValidate('name', value)
+				validate: (value) => this._promptValidate('name', value)
 			});
 		}
 
@@ -102,7 +102,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				type: 'input',
 				name: 'version',
 				message: 'Enter a version for your library:',
-				validate: (value) => this.promptValidate('version', value)
+				validate: (value) => this._promptValidate('version', value)
 			});
 		}
 
@@ -111,7 +111,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				type: 'input',
 				name: 'author',
 				message: 'Who is the author of your library:',
-				validate: (value) => this.promptValidate('author', value)
+				validate: (value) => this._promptValidate('author', value)
 			});
 		}
 
@@ -129,17 +129,21 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 		if (this.options.name) {
 			this.options.Name = capitalizeFirstLetter(this.options.name);
 		}
-		const result = this.validate();
+		this._checkFields();
+	}
+
+	_checkFields() {
+		const result = this._validate();
 		if (result.length) {
 			throw validationError(result);
 		}
 	}
 
-	validate() {
+	_validate() {
 		const options = ['name', 'version', 'author'];
 		let result = [];
 		for (let idx in options) {
-			const check = this.validateOption(options[idx]);
+			const check = this._validateOption(options[idx]);
 			if (check && !check.valid) {
 				result.push(check);
 			}
@@ -147,15 +151,15 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 		return result;
 	}
 
-	validateOption(attribute) {
+	_validateOption(attribute) {
 		const value = this.options[attribute];
 		if (value!==undefined) {
-			return this.validateField(attribute, value);
+			return this._validateField(attribute, value);
 		}
 		return null;
 	}
 
-	validateField(field, value) {
+	_validateField(field, value) {
 		return validateField(field, value);
 	}
 
@@ -216,6 +220,7 @@ export class LibraryInitGenerator extends LibraryInitGeneratorMixin(Base) { // e
 		super(...args);
 		this.sourceRoot(path.join(__dirname, 'init', 'templates'));
 		this._initializeOptions();
+		this._checkFields();
 	}
 
 	// It looks like yeoman is expecting the getters specifically on this

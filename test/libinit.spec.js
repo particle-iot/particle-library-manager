@@ -154,6 +154,18 @@ describe('library initialize', () => {
 				expect(() => sut._handlePrompts({author:'ab/cd'})).to.not.throw();
 			});
 
+			it('validates the initial name value', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = { name: '//' };
+				expect(() => sut._checkFields()).to.throw('name: must only contain letters, numbers, dashes and underscores');
+			});
+
+			it('validates the initial version value', () => {
+				const sut = new MockLibraryInitGenerator();
+				sut.options = { version: '//' };
+				expect(() => sut._checkFields()).to.throw('version: must be formatted like 1.0.0');
+			});
+
 			it('validates the prompts', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
