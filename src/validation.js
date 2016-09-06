@@ -35,6 +35,10 @@ const PATTERNS = {
 };
 
 
+Object.entries = x =>
+	Object.keys(x).reduce((y, z) =>
+	y.push([z, x[z]]) && y, []);
+
 /**
  * Validate one field of the library metadata
  * @param {string} field - name of the field to validate

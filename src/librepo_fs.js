@@ -19,6 +19,7 @@
 
 import {LibraryNotFoundError, LibraryRepositoryError} from './librepo';
 import VError from 'verror';
+import {LibraryPublisher} from './libpublish';
 const fs = require('fs');
 const path = require('path');
 const promisify = require('es6-promisify');
@@ -835,6 +836,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 			return mapActionDir(srcdir, handleFile, () => {});
 		}
+	}
+
+	publish(name, client, dryRun, callback) {
+		const pub = new LibraryPublisher({repo: this, client});
+		return pub.publish(callback, name, dryRun);
 	}
 
 }
