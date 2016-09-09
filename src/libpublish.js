@@ -22,20 +22,20 @@ export class LibraryPublisher {
 	 */
 	targzdir(dir) {
 		return new Promise((fulfill, reject) => {
-			// form-data in superagent in particle-api-js only support file streams so copy to a temporary file
-			const archiveFile = tmp.fileSync();
+			// WORKAROUND: form-data in superagent in particle-api-js only support file streams so copy to a temporary file
+			const archive = tmp.fileSync();
 
-			const archive = fs.createWriteStream(archiveFile.name);
+			const archiveWriter = fs.createWriteStream(archive.name);
 			const gzip = zlib.createGzip();
 			const pack = tarfs.pack(dir);
-			pack.pipe(gzip).pipe(archive);
+			pack.pipe(gzip).pipe(archiveWriter);
 
-			archive.on('finish', () => {
-				const archiveReader = fs.createReadStream(archiveFile.name);
+			archiveWriter.on('finish', () => {
+				const archiveReader = fs.createReadStream(archive.name);
 				fulfill(archiveReader);
 			});
 
-			archive.on('error', reject);
+			archiveWriter.on('error', reject);
 		});
 	}
 
