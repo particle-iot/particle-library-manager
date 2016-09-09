@@ -4,6 +4,7 @@
 
 - Add library validation
 - Add library publish
+- Make yeoman an optional dependency
 
 ## 0.0.4 - 2016-07-06
 
