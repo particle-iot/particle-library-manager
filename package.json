@@ -1,7 +1,7 @@
 {
   "name": "particle-cli-library-manager",
   "description": "library manager work in progress",
-  "version": "0.0.4-develop.3",
+  "version": "0.0.4-develop.4",
   "author": "mat@particle.io",
   "repository": {
     "type": "git",

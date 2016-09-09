@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Add library validation
+- Add library publish
 
 ## 0.0.4 - 2016-07-06
 
