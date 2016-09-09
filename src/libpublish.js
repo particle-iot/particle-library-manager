@@ -25,7 +25,7 @@ export class LibraryPublisher {
 	}
 
 	_publish(name, buffer) {
-
+		return this.client.publishLibrary(buffer);
 	}
 
 	/**
