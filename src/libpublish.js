@@ -2,6 +2,8 @@ import {validateLibrary} from './validation';
 
 import zlib from 'zlib';
 import tarfs from 'tar-fs';
+import fs from 'fs';
+import tmp from 'tmp';
 
 export class LibraryPublisher {
 
@@ -19,9 +21,22 @@ export class LibraryPublisher {
 	 * @returns {ReadableStream} a stream that can be piped to a writableStream to provide the tar.gz file.
 	 */
 	targzdir(dir) {
-		const gzip = zlib.createGzip();
-		const pack = tarfs.pack(dir);
-		return pack.pipe(gzip);
+		return new Promise((fulfill, reject) => {
+			// form-data in superagent in particle-api-js only support file streams so copy to a temporary file
+			const archiveFile = tmp.fileSync();
+
+			const archive = fs.createWriteStream(archiveFile.name);
+			const gzip = zlib.createGzip();
+			const pack = tarfs.pack(dir);
+			pack.pipe(gzip).pipe(archive);
+
+			archive.on('finish', () => {
+				const archiveReader = fs.createReadStream(archiveFile.name);
+				fulfill(archiveReader);
+			});
+
+			archive.on('error', reject);
+		});
 	}
 
 	_publish(name, buffer) {

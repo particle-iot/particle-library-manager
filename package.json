@@ -52,6 +52,7 @@
     "superagent-prefix": "0.0.2",
     "tar-fs": "^1.13.2",
     "tar-stream": "^1.5.2",
+    "tmp": "0.0.28",
     "verror": "^1.6.1",
     "yeoman-generator": "^0.24.1"
   },
@@ -82,7 +83,6 @@
     "sinon": "^1.17.4",
     "sinon-chai": "^2.8.0",
     "source-map-support": "^0.4.0",
-    "tmp": "0.0.28",
     "yeoman-assert": "^2.2.1",
     "yeoman-test": "^1.4.0"
   },
