@@ -25,7 +25,7 @@ const helpers = require('yeoman-test');
 const assert = require('yeoman-assert');
 const fse = require('fs-extra');
 
-import { LibraryInitGenerator, LibraryInitGeneratorMixin } from '../src/libinit';
+import { buildLibraryInitGeneratorClass, LibraryInitGeneratorMixin } from '../src/libinit';
 import { appRoot } from '../src/index';
 
 // http://yeoman.io/generator/module-test_helpers.html
@@ -79,7 +79,7 @@ describe('library initialize', () => {
 	 * @returns {Promise}   To run the generator.
 	 */
 	function generator(dir, cb) {
-		let result = helpers.run(LibraryInitGenerator);
+		let result = helpers.run(buildLibraryInitGeneratorClass());
 		if (dir) {
 			result = result.inTmpDir((tmpdir) => {
 				// `tmpdir` is the path to the new temporary directory

@@ -53,7 +53,7 @@ describe('public package interface', () => {
 
 			// libinit.js
 			'LibraryInitGeneratorMixin',
-			'LibraryInitGenerator',
+			'buildLibraryInitGeneratorClass',
 
 			// librepo_cloud.js
 			'CloudLibrary',

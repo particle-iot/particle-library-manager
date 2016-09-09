@@ -17,7 +17,6 @@
  ******************************************************************************
  */
 
-import { Base } from 'yeoman-generator';
 import {validateField} from './validation';
 const path = require('path');
 
@@ -207,33 +206,37 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	}
 };
 
+export function buildLibraryInitGeneratorClass() {
+	const gen = require('yeoman-generator');
 
+	/**
+	 * Yeoman generator that provides library initialize
+	 * functionality to create a new library in the file system.
+	 *
+	 */
+	class LibraryInitGenerator extends LibraryInitGeneratorMixin(gen.Base) { // eslint-disable-line new-cap
 
-/**
- * Yeoman generator that provides library initialize
- * functionality to create a new library in the file system.
- *
- */
-export class LibraryInitGenerator extends LibraryInitGeneratorMixin(Base) { // eslint-disable-line new-cap
+		constructor(...args) {
+			super(...args);
+			this.sourceRoot(path.join(__dirname, 'init', 'templates'));
+			this._initializeOptions();
+			this._checkFields();
+		}
 
-	constructor(...args) {
-		super(...args);
-		this.sourceRoot(path.join(__dirname, 'init', 'templates'));
-		this._initializeOptions();
-		this._checkFields();
+		// It looks like yeoman is expecting the getters specifically on this
+		// rather than on super.
+		get prompting() {
+			return super.prompting;
+		}
+
+		get writing() {
+			return super.writing;
+		}
 	}
 
-	// It looks like yeoman is expecting the getters specifically on this
-	// rather than on super.
-	get prompting() {
-		return super.prompting;
-	}
-
-	get writing() {
-		return super.writing;
-	}
-
+	return LibraryInitGenerator;
 }
+
 
 // keep all branches  of the ES6 transpilled code executed
 export default () => {};
