@@ -848,7 +848,7 @@ describe('File System Mock', () => {
 
 			const result = repo.add(lib, 2)
 				.then(() => sut.publish(() => {}, name));
-			return expect(result).to.be.rejected;
+			return expect(result).to.eventually.be.rejected;
 		});
 
 		it('can publish a library as a tarball', () => {
@@ -907,7 +907,6 @@ describe('File System Mock', () => {
 			const repo = new FileSystemLibraryRepository('mydir');
 			return expect(repo.publish('abcd', {}, true, () => arguments[1])).to.eventually.be.rejected;
 		});
-
 	});
 });
 

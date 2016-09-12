@@ -80,6 +80,7 @@
     "promise.prototype.finally": "^1.0.1",
     "should": "^7.1.0",
     "sinon": "^1.17.4",
+    "sinon-as-promised": "^4.0.2",
     "sinon-chai": "^2.8.0",
     "source-map-support": "^0.4.0",
     "yeoman-assert": "^2.2.1",
