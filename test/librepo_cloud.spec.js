@@ -34,7 +34,7 @@ describe('CloudLibraryRepository', () => {
 	const client = { api: {} };
 	const sut = new CloudLibraryRepository({auth:'auth', client});
 
-	it('can be instantiated', () => {
+	it('can be instantiated with auth token', () => {
 		const sut = new CloudLibraryRepository({auth:'auth'});
 		expect(sut).to.be.ok;
 		expect(sut).to.have.property('client').that.is.ok;
@@ -42,12 +42,23 @@ describe('CloudLibraryRepository', () => {
 		expect(sut).to.have.property('auth').that.is.equal('auth');
 	});
 
+	it('can be instantiated without auth token', () => {
+		const sut = new CloudLibraryRepository({});
+		expect(sut).to.be.ok;
+		expect(sut).to.have.property('client').that.is.ok;
+		expect(sut).to.have.property('api').that.is.equal(sut.client.api);
+		expect(sut).to.have.property('auth').that.is.undefined;
+	});
+
+
 	it('can be instantiated with a client', () => {
 		const sut = new CloudLibraryRepository({auth:'auth', client});
 		expect(sut).to.have.property('client').that.is.equal(client);
 		expect(sut).to.have.property('api').that.is.equal(client.api);
 		expect(sut).to.have.property('auth').that.is.equal('auth');
 	});
+
+
 
 	it('delegates getLibrary to the client', () => {
 		client.library = sinon.stub();
