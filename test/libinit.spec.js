@@ -41,8 +41,8 @@ class MockLibraryInitGenerator extends LibraryInitGeneratorMixin(EmptyBase) { //
 }
 
 
-describe('library initialize', () => {
-
+describe('library initialize', function doit() {
+	const test = this;
 	const testData = { name: 'nominative', version: '1.2.3', author: 'Borges' };
 
 	/**
@@ -93,9 +93,8 @@ describe('library initialize', () => {
 	}
 
 	describe('generator', function doit() {
-		const self = this;
 		it('interpolates library.properties', () => {
-			self.timeout(5000);
+			test.timeout(5000);
 			return generator('init', (result) => {
 				return result.withOptions(testData);       // Mock options passed in
 			}).then(validateOutput);
