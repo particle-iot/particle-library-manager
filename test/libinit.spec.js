@@ -93,11 +93,8 @@ describe('library initialize', function doit() {
 	}
 
 	describe('generator', () => {
-		beforeEach(function doit() {
+		it('interpolates library.properties', function doit() {
 			this.timeout(5000);
-		});
-
-		it('interpolates library.properties', () => {
 			return generator('init', (result) => {
 				return result.withOptions(testData);       // Mock options passed in
 			}).then(validateOutput);
