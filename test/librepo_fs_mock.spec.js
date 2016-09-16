@@ -795,10 +795,10 @@ describe('File System Mock', () => {
 
 			return sut._addAdaptersImpl(callback, 'mydir/lib', 'mydir')
 				.then(() => {
-					fileExists('mydir/lib/header1.h', '#include "../header1.h";');
-					fileExists('mydir/lib/header2.h', '#include "../header2.h";');
-					fileExists('mydir/lib/headers/lib.h', '#include "../../headers/lib.h";');
-					fileExists('mydir/lib/header2.h', '#include "../header2.h";');
+					fileExists('mydir/lib/header1.h', '#include "../header1.h"');
+					fileExists('mydir/lib/header2.h', '#include "../header2.h"');
+					fileExists('mydir/lib/headers/lib.h', '#include "../../headers/lib.h"');
+					fileExists('mydir/lib/header2.h', '#include "../header2.h"');
 					fileNotExists('mydir/lib/lib/header1.h');
 				});
 		});

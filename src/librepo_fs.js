@@ -827,7 +827,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 					return self._addAdaptersImpl(callback, path.join(targetdir, file), path.join(srcdir, file), ignore);
 				} else {
 					if (stat.isFile() && self.isHeaderFile(file)) {
-						return self.mkdirIfNeeded(targetdir).then(() => writeFile(path.join(targetdir, file), `#include "${relative}/${file}";`));
+						return self.mkdirIfNeeded(targetdir).then(() => writeFile(path.join(targetdir, file), `#include "${relative}/${file}"`));
 					} else {
 						return false;
 					}
