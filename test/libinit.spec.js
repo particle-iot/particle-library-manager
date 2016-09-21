@@ -42,7 +42,6 @@ class MockLibraryInitGenerator extends LibraryInitGeneratorMixin(EmptyBase) { //
 
 
 describe('library initialize', function doit() {
-	const test = this;
 	const testData = { name: 'nominative', version: '1.2.3', author: 'Borges' };
 
 	/**

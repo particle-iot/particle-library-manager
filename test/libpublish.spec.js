@@ -105,17 +105,32 @@ describe('LibraryPublisher', () => {
 		it('validates with a valid result', () => {
 			return expectValidateResultSuccess({valid: true});
 		});
-		it('fails with a invalid result', () => {
+		it('fails with a invalid result and no details', () => {
 			const validationResult = {valid: false};
 			const verifyError = () => {
 				throw Error('expected exception');
 			};
 			const verify = (error) => {
 				expect(error.validate).to.be.deep.equal(validationResult);
+				expect(error.message).to.be.equal('Library is not valid. ');
 			};
 			return expectValidateResultSuccess(validationResult)
 				.then(verifyError).catch(verify);
 		});
+
+		it('fails with a invalid result and validation details', () => {
+			const validationResult = {valid: false, errors: { sympathy: 'is needed'}};
+			const verifyError = () => {
+				throw Error('expected exception');
+			};
+			const verify = (error) => {
+				expect(error.validate).to.be.deep.equal(validationResult);
+				expect(error.message).to.be.equal('Library is not valid. sympathy is needed');
+			};
+			return expectValidateResultSuccess(validationResult)
+				.then(verifyError).catch(verify);
+		});
+
 	});
 
 	describe('_doPublishLibrary', () => {

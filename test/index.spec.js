@@ -63,6 +63,9 @@ describe('public package interface', () => {
 			'validateField',
 			'validateMetadata',
 			'validateLibrary',
+			'formatValidationError',
+			'formatValidationErrors',
+			'validationMessage',
 
 			// extra
 			'appRoot',

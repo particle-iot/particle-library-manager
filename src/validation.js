@@ -94,7 +94,7 @@ export function validateMetadata(metadata) {
 			results.valid = false;
 			results.errors = Object.assign({}, results.errors, fieldResults.errors);
 		}
-	};
+	}
 
 	return results;
 }
@@ -230,4 +230,22 @@ function _validateLibraryFiles(repo, libraryName) {
 				throw new ValidationFailed(results);
 			}
 		});
+}
+
+
+export function formatValidationError(key, message) {
+	return `${key} ${message}`;
+}
+
+export function formatValidationErrors(results) {
+	const errors = [];
+	for (let key in results.errors) {
+		const value = results.errors[key];
+		errors.push(formatValidationError(key, value));
+	}
+	return errors;
+}
+
+export function validationMessage(results, separator='\n') {
+	return formatValidationErrors(results).join(separator);
 }

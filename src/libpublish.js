@@ -4,6 +4,7 @@ import zlib from 'zlib';
 import tarfs from 'tar-fs';
 import fs from 'fs';
 import tmp from 'tmp';
+import {validationMessage} from './validation';
 
 export class LibraryPublisher {
 
@@ -105,7 +106,7 @@ export class LibraryPublisher {
 		return this._validateLibrary(this.repo, name)
 			.then((results) => {
 				if (results && !results.valid) {
-					const error = new Error('Library is not valid.');
+					const error = new Error('Library is not valid. '+validationMessage(results));
 					error.validate = results;
 					throw error;
 				}

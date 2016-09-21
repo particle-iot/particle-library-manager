@@ -21,6 +21,7 @@ import {expect} from './test-setup';
 import {validateField, validateMetadata, validateLibrary} from '../src/validation';
 import {FileSystemLibraryRepository, FileSystemNamingStrategy} from '../src/librepo_fs';
 import path from 'path';
+import {formatValidationErrors} from '../src/validation';
 
 describe('validation', () => {
 
@@ -239,6 +240,19 @@ describe('validation', () => {
 			const repo = { getLibraryLayout: () => Promise.reject(err) };
 			const results = { errors: { library: 'is missing library.properties' }, valid: false };
 			return expect(validateLibrary(repo, 'testlib')).to.eventually.deep.equal(results);
+		});
+	});
+
+	describe('error messaging', () => {
+		it('formats empty errors', () => {
+			const invalid = { valid: false, errors: {}};
+			expect(formatValidationErrors(invalid).join()).to.be.equal('');
+		});
+
+
+		it('formats a single validation error', () => {
+			const invalid = { valid: false, errors: { a: 'needed b'}};
+			expect(formatValidationErrors(invalid).join()).to.be.equal('a needed b');
 		});
 	});
 });
