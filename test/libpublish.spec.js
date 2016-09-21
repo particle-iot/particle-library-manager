@@ -123,12 +123,14 @@ describe('LibraryPublisher', () => {
 			const callback = sinon.stub();
 			sut._buildPublishPromise = sinon.stub().resolves();
 			sut._buildNotifyPromise = sinon.stub().resolves();
+
 			const library = { name: libraryName };
 			const dryRun = 'dryRun';
 
 			const exercise = sut._doPublishLibrary(callback, library, libraryDirectory, dryRun);
 			const validate = () => {
 				expect(sut._buildPublishPromise).to.be.calledWith(libraryDirectory, libraryName, dryRun);
+				expect(callback).to.be.calledWith('publishComplete', library);
 			};
 			return exercise.then(validate);
 		});

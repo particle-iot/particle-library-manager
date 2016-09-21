@@ -82,7 +82,7 @@ export class LibraryPublisher {
 		const publishPromise = this._buildPublishPromise(libraryDirectory, library.name, dryRun);
 		const notify = this._buildNotifyPromise(callback, 'publishingLibrary', publishPromise, library);
 		return notify
-			.then(() => callback('publishComplete', null, library));
+			.then(() => callback('publishComplete', library));
 	}
 
 	/**
