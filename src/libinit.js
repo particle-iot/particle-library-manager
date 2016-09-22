@@ -209,6 +209,10 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 export function buildLibraryInitGeneratorClass() {
 	const gen = require('yeoman-generator');
 
+	function sourceRoot() {
+		return path.join(__dirname, 'init', 'templates');
+	}
+
 	/**
 	 * Yeoman generator that provides library initialize
 	 * functionality to create a new library in the file system.
@@ -218,7 +222,7 @@ export function buildLibraryInitGeneratorClass() {
 
 		constructor(...args) {
 			super(...args);
-			this.sourceRoot(path.join(__dirname, 'init', 'templates'));
+			this.sourceRoot(sourceRoot());
 			this._initializeOptions();
 			this._checkFields();
 		}
@@ -233,6 +237,10 @@ export function buildLibraryInitGeneratorClass() {
 			return super.writing;
 		}
 	}
+
+	// provide the directory unambiguously for external tests since npm link and other
+	// packaging tricks can mean external code can end up using the wrong directory
+	LibraryInitGenerator.sources = sourceRoot();
 
 	return LibraryInitGenerator;
 }
