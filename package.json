@@ -1,11 +1,11 @@
 {
-  "name": "particle-cli-library-manager",
-  "description": "library manager work in progress",
-  "version": "0.0.4-develop.5",
+  "name": "particle-library-manager",
+  "description": "particle library management package",
+  "version": "0.0.5",
   "author": "mat@particle.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/spark/cli-library-manager"
+    "url": "https://github.com/spark/particle-library-manager"
   },
   "license": "LGPL-3.0",
   "keywords": [
