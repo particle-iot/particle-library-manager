@@ -25,7 +25,7 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
-import {BuildLibraryRepository} from '../src/librepo_build'
+import {BuildLibraryRepository} from '../src/librepo_build.js'
 
 const config = {
 	endpoint: 'http://build.particle.io/',

@@ -6,7 +6,7 @@ import fs from 'fs';
 import tmp from 'tmp';
 import {validationMessage} from './validation';
 
-export class LibraryPublisher {
+export class LibraryContributor {
 
 	/**
 	 * @param {FileSystemLibraryRepository} repo  The repo containing the library.
@@ -40,8 +40,8 @@ export class LibraryPublisher {
 		});
 	}
 
-	_publish(name, stream) {
-		return this.client.publishLibrary(stream);
+	_contribute(name, stream) {
+		return this.client.contributeLibrary(stream);
 	}
 
 	_validateLibrary(repo, name) {
@@ -49,41 +49,41 @@ export class LibraryPublisher {
 	}
 
 	/**
-	 * Publishes a library with the given name from the repo.
-	 * @param {function} callback  Called during the publishing process:
+	 * Contributees a library with the given name from the repo.
+	 * @param {function} callback  Called during the contributing process:
 	 *  callback('validatingLibrary', name)
-	 *  callback('publishingLibrary', library)
-	 *  callback('publishComplete', library)
+	 *  callback('contributingLibrary', library)
+	 *  callback('contributeComplete', library)
 	 *
-	 * @param {string} name The name of the library to publish.
-	 * @param {boolean} dryRun When true, the library is only validated, and not published.
-	 * @return {Promise} to publish the named library.
+	 * @param {string} name The name of the library to contribute.
+	 * @param {boolean} dryRun When true, the library is only validated, and not contributeed.
+	 * @return {Promise} to contribute the named library.
 	 */
-	publish(callback, name, dryRun=false) {
+	contribute(callback, name, dryRun=false) {
 		const libraryDirectory = this.repo.libraryDirectory(name);
-		return this._doPublish(callback, name, libraryDirectory, dryRun);
+		return this._doContribute(callback, name, libraryDirectory, dryRun);
 	}
 
-	_doPublish(callback, name, libraryDirectory, dryRun) {
+	_doContribute(callback, name, libraryDirectory, dryRun) {
 		const validatePromise = this._buildValidatePromise(name);
 		// mdm - not sure about allowing the site to wrap the promise since it can potentially cause parts of the command
 		// code to not execute if the returned promise doesn't chain the validatePromise.
 		return this._buildNotifyPromise(callback, 'validatingLibrary', validatePromise, libraryDirectory)
-			.then(() => this._doPublishDirect(callback, name, libraryDirectory, dryRun));
+			.then(() => this._doContributeDirect(callback, name, libraryDirectory, dryRun));
 	}
 
-	_doPublishDirect(callback, name, libraryDirectory, dryRun) {
+	_doContributeDirect(callback, name, libraryDirectory, dryRun) {
 		return this.repo.fetch(name)
 			.then((library) => {
-				return this._doPublishLibrary(callback, library, libraryDirectory, dryRun);
+				return this._doContributeLibrary(callback, library, libraryDirectory, dryRun);
 			});
 	}
 
-	_doPublishLibrary(callback, library, libraryDirectory, dryRun) {
-		const publishPromise = this._buildPublishPromise(libraryDirectory, library.name, dryRun);
-		const notify = this._buildNotifyPromise(callback, 'publishingLibrary', publishPromise, library);
+	_doContributeLibrary(callback, library, libraryDirectory, dryRun) {
+		const contributePromise = this._buildContributePromise(libraryDirectory, library.name, dryRun);
+		const notify = this._buildNotifyPromise(callback, 'contributingLibrary', contributePromise, library);
 		return notify
-			.then(() => callback('publishComplete', library));
+			.then(() => callback('contributeComplete', library));
 	}
 
 	/**
@@ -114,16 +114,16 @@ export class LibraryPublisher {
 	}
 
 	/**
-	 * Constructs a promise to perform the publishing of the library.
-	 * @param {string} libraryDirectory      The directory of the library to publish.
+	 * Constructs a promise to perform the contributing of the library.
+	 * @param {string} libraryDirectory      The directory of the library to contribute.
 	 * @param {string} libraryName           The name of the library in the repo
-	 * @param {boolean} dryRun               When true, the library is only zipped, and not published.
-	 * @returns {*|Promise.<boolean>}       Promise to publish the library.
+	 * @param {boolean} dryRun               When true, the library is only zipped, and not contributeed.
+	 * @returns {*|Promise.<boolean>}       Promise to contribute the library.
 	 * @private
 	 */
-	_buildPublishPromise(libraryDirectory, libraryName, dryRun) {
+	_buildContributePromise(libraryDirectory, libraryName, dryRun) {
 		return Promise.resolve(this.targzdir(libraryDirectory))
-			.then(pipe => dryRun ? true : this._publish(libraryName, pipe));
+			.then(pipe => dryRun ? true : this._contribute(libraryName, pipe));
 	}
 }
 

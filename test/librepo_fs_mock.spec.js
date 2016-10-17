@@ -20,7 +20,7 @@
 import {expect, sinon} from './test-setup';
 import concat from 'concat-stream';
 import {AbstractLibrary} from '../src/librepo';
-import {LibraryPublisher} from '../src/libpublish';
+import {LibraryContributor} from '../src/libcontribute';
 const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
@@ -835,38 +835,38 @@ describe('File System Mock', () => {
 	});
 
 
-	describe('LibraryPublisher', () => {
+	describe('LibraryContributor', () => {
 
 		it('fails if the library does not validate', () => {
 			const name = 'fred';
 			const client = undefined;
 			const repo = new FileSystemLibraryRepository('mydir');
 			const lib = makeTestLib(name, '1.2.3');
-			const sut = new LibraryPublisher({repo, client});
+			const sut = new LibraryContributor({repo, client});
 
-			sut._publish = sinon.stub();
+			sut._contribute = sinon.stub();
 
 			const result = repo.add(lib, 2)
-				.then(() => sut.publish(() => {}, name));
+				.then(() => sut.contribute(() => {}, name));
 			return expect(result).to.eventually.be.rejected;
 		});
 
-		it('can publish a library as a tarball', () => {
+		it('can contribute a library as a tarball', () => {
 			const name = 'fred';
 			const client = undefined;
 			const repo = new FileSystemLibraryRepository('mydir');
 			const lib = makeCompleteV2Lib(name, '1.2.3');
 
-			const sut = new LibraryPublisher({repo, client});
+			const sut = new LibraryContributor({repo, client});
 			const callback = sinon.stub();
-			sut._publish = sinon.stub();
+			sut._contribute = sinon.stub();
 
 			const result = repo.add(lib, 2)
-				.then(() => sut.publish(callback, name))
+				.then(() => sut.contribute(callback, name))
 				.then(() => {
-					expect(sut._publish).to.have.been.calledOnce;
-					expect(sut._publish).to.have.been.calledWith(name);
-					const pipe = sut._publish.firstCall.args[1];
+					expect(sut._contribute).to.have.been.calledOnce;
+					expect(sut._contribute).to.have.been.calledWith(name);
+					const pipe = sut._contribute.firstCall.args[1];
 
 					const zlib = require('zlib');
 					const tar = require('tar-stream');
@@ -891,8 +891,8 @@ describe('File System Mock', () => {
 						expect(names).include('src/fred.h');
 
 						expect(callback).to.have.been.calledWith('validatingLibrary');
-						expect(callback).to.have.been.calledWith('publishingLibrary');
-						expect(callback).to.have.been.calledWith('publishComplete');
+						expect(callback).to.have.been.calledWith('contributingLibrary');
+						expect(callback).to.have.been.calledWith('contributeComplete');
 					});
 				});
 			return result;
@@ -900,12 +900,12 @@ describe('File System Mock', () => {
 
 		it('can attempt to publish from a repo for real', () => {
 			const repo = new FileSystemLibraryRepository('mydir');
-			return expect(repo.publish('abcd', {}, false, () => {})).to.eventually.be.rejected;
+			return expect(repo.contribute('abcd', {}, false, () => {})).to.eventually.be.rejected;
 		});
 
 		it('can attempt to publish from a repo as a dry run', () => {
 			const repo = new FileSystemLibraryRepository('mydir');
-			return expect(repo.publish('abcd', {}, true, () => arguments[1])).to.eventually.be.rejected;
+			return expect(repo.contribute('abcd', {}, true, () => arguments[1])).to.eventually.be.rejected;
 		});
 	});
 });
