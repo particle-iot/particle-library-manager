@@ -19,7 +19,7 @@
 
 import {LibraryNotFoundError, LibraryRepositoryError} from './librepo';
 import VError from 'verror';
-import {LibraryPublisher} from './libpublish';
+import {LibraryContributor} from './libcontribute';
 const fs = require('fs');
 const path = require('path');
 const promisify = require('es6-promisify');
@@ -839,9 +839,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		}
 	}
 
-	publish(name, client, dryRun, callback) {
-		const pub = new LibraryPublisher({repo: this, client});
-		return pub.publish(callback, name, dryRun);
+	contribute(name, client, dryRun, callback) {
+		const pub = new LibraryContributor({repo: this, client});
+		return pub.contribute(callback, name, dryRun);
 	}
 
 }

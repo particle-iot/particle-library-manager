@@ -1,10 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## 0.1.0
 
 - Add library validation
 - Add library publish
+- Separate contribute/publish
 - Make yeoman an optional dependency
+
 
 ## 0.0.4 - 2016-07-06
 

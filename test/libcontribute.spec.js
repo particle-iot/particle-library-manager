@@ -1,9 +1,9 @@
 
 import {expect, sinon} from './test-setup';
-import {LibraryPublisher} from '../src/libpublish';
+import {LibraryContributor} from '../src/libcontribute';
 
 
-describe('LibraryPublisher', () => {
+describe('LibraryContributor', () => {
 	const libraryDirectory = 'a/b/c';
 	const libraryName = 'abcd';
 	let repo, client, sut;
@@ -11,7 +11,7 @@ describe('LibraryPublisher', () => {
 	beforeEach(() => {
 		repo = {};
 		client = {};
-		sut = new LibraryPublisher({repo, client});
+		sut = new LibraryContributor({repo, client});
 	});
 
 	it('saves the client and repo', () => {
@@ -19,38 +19,38 @@ describe('LibraryPublisher', () => {
 		expect(sut.client).to.be.deep.equal(client);
 	});
 
-	describe('_publish()', () => {
-		it('uses the client.publish() method to publish a stream', () => {
-			client.publishLibrary = sinon.stub();
+	describe('_contribute()', () => {
+		it('uses the client.contribute() method to contribute a stream', () => {
+			client.contributeLibrary = sinon.stub();
 			const stream = 'stream';
-			sut._publish(libraryName, stream);
-			expect(client.publishLibrary).to.have.been.calledWith(stream);
-			expect(client.publishLibrary).to.have.been.calledOnce;
+			sut._contribute(libraryName, stream);
+			expect(client.contributeLibrary).to.have.been.calledWith(stream);
+			expect(client.contributeLibrary).to.have.been.calledOnce;
 		});
 	});
 
-	describe('_buildPublishPromise', () => {
-		it('tars the directory but doesn\'t publish for a dry run', () => {
+	describe('_buildContributePromise', () => {
+		it('tars the directory but doesn\'t contribute for a dry run', () => {
 			sut.targzdir = sinon.stub().resolves({});
-			sut._publish = sinon.stub();
+			sut._contribute = sinon.stub();
 			const dryRun = true;
-			const exercise = sut._buildPublishPromise(libraryDirectory, libraryName, dryRun);
+			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, dryRun);
 			const validate = () => {
 				expect(sut.targzdir).to.be.calledWith(libraryDirectory);
-				expect(sut._publish).to.not.have.been.called;
+				expect(sut._contribute).to.not.have.been.called;
 			};
 			return exercise.then(validate);
 		});
 
-		it('tars the directory and publishes', () => {
+		it('tars the directory and contributees', () => {
 			const pipe = 'pipe';
 			sut.targzdir = sinon.stub().resolves(pipe);
-			sut._publish = sinon.stub();
+			sut._contribute = sinon.stub();
 			const dryRun = false;
-			const exercise = sut._buildPublishPromise(libraryDirectory, libraryName, dryRun);
+			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, dryRun);
 			const validate = () => {
 				expect(sut.targzdir).to.be.calledWith(libraryDirectory);
-				expect(sut._publish).to.have.been.calledWith(libraryName, pipe);
+				expect(sut._contribute).to.have.been.calledWith(libraryName, pipe);
 			};
 			return exercise.then(validate);
 		});
@@ -133,37 +133,37 @@ describe('LibraryPublisher', () => {
 
 	});
 
-	describe('_doPublishLibrary', () => {
-		it('calls _buildPublishPromise', () => {
+	describe('_doContributeLibrary', () => {
+		it('calls _buildContributePromise', () => {
 			const callback = sinon.stub();
-			sut._buildPublishPromise = sinon.stub().resolves();
+			sut._buildContributePromise = sinon.stub().resolves();
 			sut._buildNotifyPromise = sinon.stub().resolves();
 
 			const library = { name: libraryName };
 			const dryRun = 'dryRun';
 
-			const exercise = sut._doPublishLibrary(callback, library, libraryDirectory, dryRun);
+			const exercise = sut._doContributeLibrary(callback, library, libraryDirectory, dryRun);
 			const validate = () => {
-				expect(sut._buildPublishPromise).to.be.calledWith(libraryDirectory, libraryName, dryRun);
-				expect(callback).to.be.calledWith('publishComplete', library);
+				expect(sut._buildContributePromise).to.be.calledWith(libraryDirectory, libraryName, dryRun);
+				expect(callback).to.be.calledWith('contributeComplete', library);
 			};
 			return exercise.then(validate);
 		});
 	});
 
-	describe('publish', () => {
-		const publishResult = 'publishResult';
+	describe('contribute', () => {
+		const contributeResult = 'contributeResult';
 		beforeEach(() => {
 			repo.libraryDirectory = sinon.stub().returns(libraryDirectory);
-			sut._doPublish = sinon.stub().returns(publishResult);
+			sut._doContribute = sinon.stub().returns(contributeResult);
 		});
 
-		it('calls repo.libraryDirectory and passes that to _doPublish', () => {
+		it('calls repo.libraryDirectory and passes that to _doContribute', () => {
 			const callback = sinon.stub();
 			const dryRun = 'dryRun';
-			const result = sut.publish(callback, libraryName, dryRun);
-			expect(result).to.be.equal(publishResult);
-			expect(sut._doPublish).to.have.been.calledWith(callback, libraryName, libraryDirectory, dryRun);
+			const result = sut.contribute(callback, libraryName, dryRun);
+			expect(result).to.be.equal(contributeResult);
+			expect(sut._doContribute).to.have.been.calledWith(callback, libraryName, libraryDirectory, dryRun);
 		});
 
 		afterEach(() => {
@@ -171,7 +171,7 @@ describe('LibraryPublisher', () => {
 		});
 	});
 
-	describe('_doPublish', () => {
+	describe('_doContribute', () => {
 		const callback = sinon.stub();
 
 		it('verify happy path', () => {
@@ -180,14 +180,14 @@ describe('LibraryPublisher', () => {
 			const setup = () => {
 				sut._buildValidatePromise = sinon.stub().returns(validatePromise);
 				sut._buildNotifyPromise = sinon.stub().resolves(validatePromise);
-				sut._doPublishDirect = sinon.stub().resolves(expectedResult);
+				sut._doContributeDirect = sinon.stub().resolves(expectedResult);
 			};
 			const dryRun = false;
-			const exercise = () => sut._doPublish(callback, libraryName, libraryDirectory, dryRun);
+			const exercise = () => sut._doContribute(callback, libraryName, libraryDirectory, dryRun);
 			const verify = (result) => {
 				expect(sut._buildValidatePromise).to.have.been.calledWith(libraryName);
 				expect(sut._buildNotifyPromise).to.have.been.calledWith(callback, 'validatingLibrary', validatePromise, libraryDirectory);
-				expect(sut._doPublishDirect).to.have.been.calledWith(callback, libraryName, libraryDirectory, dryRun);
+				expect(sut._doContributeDirect).to.have.been.calledWith(callback, libraryName, libraryDirectory, dryRun);
 				expect(result).equals(expectedResult);
 			};
 
@@ -200,13 +200,13 @@ describe('LibraryPublisher', () => {
 			const setup = () => {
 				sut._buildValidatePromise = sinon.stub().returns(validatePromise);
 				sut._buildNotifyPromise = sinon.stub().resolves(validatePromise);
-				sut._doPublishDirect = sinon.stub();
+				sut._doContributeDirect = sinon.stub();
 			};
 
 			const dryRun = false;
-			const exercise = () => sut._doPublish(callback, libraryName, libraryDirectory, dryRun);
+			const exercise = () => sut._doContribute(callback, libraryName, libraryDirectory, dryRun);
 			const verify = (result) => {
-				expect(sut._doPublishDirect).to.not.have.been.called;
+				expect(sut._doContributeDirect).to.not.have.been.called;
 				expect(result).to.be.equal(validationError);
 			};
 			const verifyFail = () => {
