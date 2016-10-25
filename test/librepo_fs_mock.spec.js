@@ -578,7 +578,22 @@ describe('File System Mock', () => {
 				const actual = sut.migrateSourcecode(testSource, 'mylib');
 				expect(actual).to.be.equal(expected);
 			});
+
+			it('can migrate with special regex characters', () => {
+				const sut = new FileSystemLibraryRepository('mydir');
+
+				const testSource = `
+				#include "mylib++../mylib++...h"
+				`;
+				const expected = `
+				#include "mylib++...h"
+				`;
+				const actual = sut.migrateSourcecode(testSource, 'mylib++..');
+				expect(actual).to.eql(expected);
+			});
 		});
+
+
 
 		describe('fileStat', () => {
 			it('retrieves a null value for a non-existent file', () => {
