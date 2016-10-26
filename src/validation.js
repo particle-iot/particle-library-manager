@@ -24,8 +24,8 @@ const REQUIRED_FIELDS = ['name', 'version', 'author'];
 
 const PATTERNS = {
 	name: {
-		pattern: /^[A-Za-z0-9][A-Za-z0-9-_]+$/,
-		message: 'must only contain letters, numbers, dashes and underscores'
+		pattern: /^[A-Za-z0-9][A-Za-z0-9-_\+]+$/,
+		message: 'must only contain letters, numbers, dashes, underscores and plus signs.'
 	},
 
 	version: {

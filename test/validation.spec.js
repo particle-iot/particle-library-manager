@@ -53,8 +53,18 @@ describe('validation', () => {
 		});
 
 		describe('name', () => {
+			const errorMessage = 'must only contain letters, numbers, dashes, underscores and plus signs.';
+
 			it('returns valid for a valid name', () => {
 				expectValid('name', 'my-lib_123');
+			});
+
+			it('returns valid for a name containing plus signs', () => {
+				expectValid('name', 'my-lib_123++');
+			});
+
+			it('returns valid for a name containing plus signs at the start', () => {
+				expectError('name', '+my-lib_123++', errorMessage);
 			});
 
 			it('returns error for missing name', () => {
@@ -66,11 +76,11 @@ describe('validation', () => {
 			});
 
 			it('returns error for a name starting with a dash', () => {
-				expectError('name', '-help', 'must only contain letters, numbers, dashes and underscores');
+				expectError('name', '-help', errorMessage);
 			});
 
 			it('returns error for a name with forbidden characters', () => {
-				expectError('name', 'foo@bar', 'must only contain letters, numbers, dashes and underscores');
+				expectError('name', 'foo@bar', errorMessage);
 			});
 		});
 
