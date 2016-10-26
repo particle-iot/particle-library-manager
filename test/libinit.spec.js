@@ -135,8 +135,6 @@ describe('library initialize', function doit() {
 			expect(sut.options).to.not.have.property('Name');
 		});
 
-		
-		
 		describe('validation', () => {
 			const nameError = 'name: must only contain letters, numbers, dashes, underscores and plus signs';
 			const versionError = 'version: must be formatted like 1.0.0';
