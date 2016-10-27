@@ -20,7 +20,6 @@
 import {expect, sinon} from './test-setup';
 import concat from 'concat-stream';
 import {AbstractLibrary} from '../src/librepo';
-import {LibraryContributor} from '../src/libcontribute';
 const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
@@ -188,7 +187,7 @@ function libFiles(lib, root) {
 	return Promise.all(checkFileSystem(path, expected));
 }
 
-function makeTestLib(name, version) {
+export function makeTestLib(name, version) {
 	const lib = makeLibrary(name, {name, version}, [
 		new MemoryLibraryFile(name, 'source', 'cpp', '// a cpp file', 1),
 		new MemoryLibraryFile(name, 'source', 'h', '// a header file', 2),
@@ -198,7 +197,7 @@ function makeTestLib(name, version) {
 }
 
 
-function makeCompleteV2Lib(name, version) {
+export function makeCompleteV2Lib(name, version) {
 	const lib = makeLibrary(name, {name, version}, [
 		new MemoryLibraryFile('src/'+name, 'source', 'cpp', '// a cpp file', 1),
 		new MemoryLibraryFile('src/'+name, 'source', 'h', '// a header file', 2),
@@ -849,79 +848,5 @@ describe('File System Mock', () => {
 		});
 	});
 
-
-	describe('LibraryContributor', () => {
-
-		it('fails if the library does not validate', () => {
-			const name = 'fred';
-			const client = undefined;
-			const repo = new FileSystemLibraryRepository('mydir');
-			const lib = makeTestLib(name, '1.2.3');
-			const sut = new LibraryContributor({repo, client});
-
-			sut._contribute = sinon.stub();
-
-			const result = repo.add(lib, 2)
-				.then(() => sut.contribute(() => {}, name));
-			return expect(result).to.eventually.be.rejected;
-		});
-
-		it('can contribute a library as a tarball', () => {
-			const name = 'fred';
-			const client = undefined;
-			const repo = new FileSystemLibraryRepository('mydir');
-			const lib = makeCompleteV2Lib(name, '1.2.3');
-
-			const sut = new LibraryContributor({repo, client});
-			const callback = sinon.stub();
-			sut._contribute = sinon.stub();
-
-			const result = repo.add(lib, 2)
-				.then(() => sut.contribute(callback, name))
-				.then(() => {
-					expect(sut._contribute).to.have.been.calledOnce;
-					expect(sut._contribute).to.have.been.calledWith(name);
-					const pipe = sut._contribute.firstCall.args[1];
-
-					const zlib = require('zlib');
-					const tar = require('tar-stream');
-					const gunzip = zlib.createGunzip();
-					const extract = tar.extract();
-					const names = [];
-					extract.on('entry', (header, stream, callback) => {
-						names.push(header.name);
-						stream.on('end', () => callback());
-						stream.resume();
-					});
-					const promise = new Promise((fulfill, reject) => {
-						extract.on('finish', fulfill);
-						extract.on('error', reject);
-						pipe.pipe(gunzip).pipe(extract);
-					});
-					return promise.then(() => {
-						expect(names).to.include('README.md');
-						expect(names).include('LICENSE.');
-						expect(names).include('library.properties');
-						expect(names).include('src/fred.cpp');
-						expect(names).include('src/fred.h');
-
-						expect(callback).to.have.been.calledWith('validatingLibrary');
-						expect(callback).to.have.been.calledWith('contributingLibrary');
-						expect(callback).to.have.been.calledWith('contributeComplete');
-					});
-				});
-			return result;
-		});
-
-		it('can attempt to publish from a repo for real', () => {
-			const repo = new FileSystemLibraryRepository('mydir');
-			return expect(repo.contribute('abcd', {}, false, () => {})).to.eventually.be.rejected;
-		});
-
-		it('can attempt to publish from a repo as a dry run', () => {
-			const repo = new FileSystemLibraryRepository('mydir');
-			return expect(repo.contribute('abcd', {}, true, () => arguments[1])).to.eventually.be.rejected;
-		});
-	});
 });
 
