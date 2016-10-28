@@ -93,7 +93,7 @@ describe('library initialize', function doit() {
 
 	describe('generator', () => {
 		it('interpolates library.properties', function doit() {
-			this.timeout(20000);
+			this.timeout(30000);
 			return generator('init', (result) => {
 				return result.withOptions(testData);       // Mock options passed in
 			}).then(validateOutput);
@@ -136,16 +136,18 @@ describe('library initialize', function doit() {
 		});
 
 		describe('validation', () => {
+			const nameError = 'name: must only contain letters, numbers, dashes, underscores and plus signs';
+			const versionError = 'version: must be formatted like 1.0.0';
 			it('validates the name', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
-				expect(() => sut._handlePrompts({name:'ab/cd'})).to.throw('name: must only contain letters, numbers, dashes and underscores');
+				expect(() => sut._handlePrompts({name:'ab/cd'})).to.throw(nameError);
 			});
 
 			it('validates the version', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
-				expect(() => sut._handlePrompts({version:'ab/cd'})).to.throw('version: must be formatted like 1.0.0');
+				expect(() => sut._handlePrompts({version:'ab/cd'})).to.throw(versionError);
 			});
 
 			it('validates the author, which is freeform', () => {
@@ -157,19 +159,19 @@ describe('library initialize', function doit() {
 			it('validates the initial name value', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = { name: '//' };
-				expect(() => sut._checkFields()).to.throw('name: must only contain letters, numbers, dashes and underscores');
+				expect(() => sut._checkFields()).to.throw(nameError);
 			});
 
 			it('validates the initial version value', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = { version: '//' };
-				expect(() => sut._checkFields()).to.throw('version: must be formatted like 1.0.0');
+				expect(() => sut._checkFields()).to.throw(versionError);
 			});
 
 			it('validates the initial version value when set as a number', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = { version: 123 };
-				expect(() => sut._checkFields()).to.throw('version: must be formatted like 1.0.0');
+				expect(() => sut._checkFields()).to.throw(versionError);
 			});
 
 
@@ -179,8 +181,8 @@ describe('library initialize', function doit() {
 				const prompts = sut._allPrompts();
 				expect(prompts).has.property('length').equal(3);
 
-				expect(prompts[0].validate('ab/cd')).to.equal('name: must only contain letters, numbers, dashes and underscores');
-				expect(prompts[1].validate('ab/cd')).to.equal('version: must be formatted like 1.0.0');
+				expect(prompts[0].validate('ab/cd')).to.equal(nameError+'.');
+				expect(prompts[1].validate('ab/cd')).to.equal(versionError);
 				expect(prompts[2].validate('ab/cd')).to.be.true;
 			});
 		});

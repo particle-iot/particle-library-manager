@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Allow 'special' characters in the library name (such as +)
+
 ## 0.1.0
 
 - Add library validation
