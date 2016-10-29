@@ -216,4 +216,68 @@ describe('LibraryContributor', () => {
 			return Promise.resolve().then(setup).then(exercise).then(verifyFail).catch(verify);
 		});
 	});
+
+	describe('targzdir', () => {
+		let tmpdirobj;
+		const path = require('path');
+		const fs = require('fs');
+
+		beforeEach(() => {
+			const tmp = require('tmp');
+			tmp.setGracefulCleanup();
+			tmpdirobj = tmp.dirSync();
+		});
+
+		afterEach(() => {
+			//require('tmp').removeCallback();
+		});
+
+		const files = {
+			'src/file.cpp':'void f() { return 42;}',
+			'.gitignore':'me',
+			'.git/blah':'stuff'
+		};
+
+		function createFile(tmpdir, name, content) {
+			const dir = path.join(tmpdir, path.dirname(name));
+			if (!fs.existsSync(dir)) {
+				fs.mkdirSync(dir);
+			}
+			fs.writeFileSync(path.join(tmpdir, name), content);
+		}
+
+		function verifyFile(tmpdir, name, content) {
+			const file = path.join(tmpdir, name);
+			if (name.startsWith('.git/')) {
+				expect(fs.existsSync(file), `file ${file} should not exist`).to.eql(false);
+			} else {
+				expect(fs.existsSync(file), `file ${file} should exist`).to.eql(true);
+				expect(fs.readFileSync(file, 'utf-8'), `expected file ${file} content`).to.eql(content);
+			}
+		}
+
+		it('makes a targz file that does not include the .git directory', () => {
+			// given
+			const tmpdir = tmpdirobj.name;
+			Object.keys(files).forEach((key) => createFile(tmpdir, key, files[key]));
+			const sut = new LibraryContributor({}, {});
+			return sut.targzdir(tmpdir)
+			.then((stream) => {
+				const resultdir = path.join(tmpdir, 'result');
+				fs.mkdirSync(resultdir);
+
+				const tarfs = require('tar-fs');
+				const gunzip = require('gunzip-maybe');
+				return new Promise((fulfill, reject) => {
+					const extract = tarfs.extract(resultdir);
+					extract.on('finish', fulfill);
+					extract.on('error', reject);
+					stream.pipe(gunzip()).pipe(extract);
+				})
+				.then(() => {
+					Object.keys(files).forEach((key) => verifyFile(resultdir, key, files[key]));
+				});
+			});
+		});
+	});
 });
