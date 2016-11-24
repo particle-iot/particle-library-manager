@@ -4,6 +4,8 @@
 
 - bump mock-fs dependency version to fix babel-polyfill problems running the test
 - Add support for the architectures multi-value property
+- Pass the version number when installing a library
+
 ## 0.1.1
 
 - Allow 'special' characters in the library name (such as +)
