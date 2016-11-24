@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.2
+
+- bump mock-fs dependency version to fix babel-polyfill problems running the test
 ## 0.1.1
 
 - Allow 'special' characters in the library name (such as +)
