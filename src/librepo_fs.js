@@ -372,6 +372,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		addProperty(content, metadata.license, 'license');
 		addProperty(content, metadata.author, 'author');
 		addProperty(content, metadata.description, 'sentence');
+		addProperty(content, metadata.architectures && metadata.architectures.join(','), 'architectures');
 		return content.join('');
 	}
 
@@ -425,6 +426,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 				}
 				if (props.sentence!==undefined) {
 					props.description = props.sentence;
+				}
+				if (props.architectures) {
+					props.architectures = props.architectures.split(',');
 				}
 				return props;
 			});

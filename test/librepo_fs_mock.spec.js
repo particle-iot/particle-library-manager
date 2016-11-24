@@ -389,7 +389,9 @@ describe('File System Mock', () => {
 			'version=1.2.3\n' +
 			'license=dummy\n' +
 			'author=Mr Big\n' +
-			'sentence=Fixes the world\n';
+			'sentence=Fixes the world\n' +
+			'architectures=avr,particle-photon,spark-core\n' +
+			'dot.notation=supported';
 
 		function checkProps(desc) {
 			expect(desc.name).to.be.equal('abcd');
@@ -397,6 +399,9 @@ describe('File System Mock', () => {
 			expect(desc.license).to.be.equal('dummy');
 			expect(desc.author).to.be.equal('Mr Big');
 			expect(desc.description).to.be.equal('Fixes the world');
+			expect(desc.architectures).to.be.eql(['avr', 'particle-photon', 'spark-core']);
+			//expect(desc['dot']).to.equal({notation:'supported'});
+			expect(desc['dot.notation']).to.equal('supported');
 		}
 
 		it('can read a v2 descriptor', () => {
@@ -430,14 +435,16 @@ describe('File System Mock', () => {
 		it('can build a fully populated v2 descriptor', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
 			const content = sut.buildV2Descriptor({
-				name: 'abcd', version: '1.2.3', license: 'dummy', author: 'Mr Big', 'description': 'Fixes the world'
+				name: 'abcd', version: '1.2.3', license: 'dummy', author: 'Mr Big', 'description': 'Fixes the world',
+				architectures: ['particle-photon', 'particle-p1']
 			});
 			expect(content).to.be.equal(
 				'name=abcd\n' +
 				'version=1.2.3\n' +
 				'license=dummy\n' +
 				'author=Mr Big\n' +
-				'sentence=Fixes the world\n');
+				'sentence=Fixes the world\n' +
+				'architectures=particle-photon,particle-p1\n');
 		});
 
 		it('can build an empty v2 descriptor', () => {
