@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/spark/cli-library-manager.svg?branch=master)](https://travis-ci.org/spark/cli-library-manager)
-[![Coverage Status](https://coveralls.io/repos/github/spark/cli-library-manager/badge.svg?branch=master)](https://coveralls.io/github/spark/cli-library-manager?branch=master)
+[![Build Status](https://travis-ci.org/spark/particle-library-manager.svg?branch=master)](https://travis-ci.org/spark/particle-library-manager)
+[![Coverage Status](https://coveralls.io/repos/github/spark/particle-library-manager/badge.svg?branch=master)](https://coveralls.io/github/spark/particle-library-manager?branch=master)
 
-# CLI Library Manager
+# Particle Library Manager
 
 This is a node module for managing repositories of firmware libraries. It supports two types of repositories:
 
@@ -29,6 +29,3 @@ The module provides library management:
 
 When changing the code please adhere to test-first principles - first change the unit tests and integration tests to
 fail without your intended change, and then make the change, tweaking code/tests until green is seen.
-
-
-

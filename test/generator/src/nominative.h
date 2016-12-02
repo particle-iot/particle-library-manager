@@ -7,15 +7,17 @@
 class NominativeClass
 {
 private:
-    // private stuff - no peeking!
+  /**
+   * Private methods
+   */
 public:
-   /**
-    * Constructor.
-    */
-    NominativeClass();
+  /**
+   * Constructor
+   */
+  NominativeClass();
 
-    /**
-     * Example method.
-     */
-    void doit();
+  /**
+   * Example method
+   */
+  void doit();
 };

@@ -2,11 +2,16 @@
 
 #include "<%=name%>.h"
 
-// Constructor
+/**
+ * Constructor.
+ */
 <%=Name%>Class::<%=Name%>Class()
 {
 }
 
+/**
+ * Example method.
+ */
 void <%=Name%>Class::doit()
 {
     Serial.println("called 'doit'");

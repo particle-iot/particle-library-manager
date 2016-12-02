@@ -2,11 +2,16 @@
 
 #include "nominative.h"
 
-// Constructor
+/**
+ * Constructor.
+ */
 NominativeClass::NominativeClass()
 {
 }
 
+/**
+ * Example method.
+ */
 void NominativeClass::doit()
 {
     Serial.println("called 'doit'");
