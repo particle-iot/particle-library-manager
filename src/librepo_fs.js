@@ -851,6 +851,41 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 }
 
+
+function isLibraryV2(directory) {
+	return new FileSystemLibraryRepository(directory, FileSystemNamingStrategy.DIRECT)
+		.getLibraryLayout().
+		then(layout => layout===2);
+}
+
+/**
+ *
+ * @param {String} file The name of the file
+ * @returns {*} a falsey value if it is not an example in a v2 library.
+ *  otherwise returns {libraryDirectory, example} with both directories relative to the cwd
+ */
+export function isLibraryExample(file) {
+	const stat = promisify(fs.stat);
+	return stat(file)
+		.then(stat => {
+			const directory = (stat.isDirectory()) ? file : path.resolve(file, '..');
+			const examplesDirectory = path.resolve(directory, '..');
+			const libraryDirectory = path.resolve(examplesDirectory, '..');
+			const examplesSingleDir = path.sep+examplesDir;
+			// todo - case insensitive comparison on file systems that are case insensitive?
+			let isExample = examplesDirectory.endsWith(examplesSingleDir);
+			isExample = isExample && isLibraryV2(libraryDirectory).
+				then((isV2) => {
+					if (isV2) {
+						return {libraryDirectory:path.relative('', libraryDirectory),
+							example:path.relative('', file)};
+					}
+				});
+			return isExample;
+		});
+}
+
+
 // keep all branches  of the ES6 transpilled code executed
 export default () => {};
 
