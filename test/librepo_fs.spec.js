@@ -105,7 +105,6 @@ describe('File System', () => {
 			}
 			expect(comp2.same).to.be.true;
 		});
-
 	}
 
 	it('can migrate a full v1 library to v2 format', () => {
@@ -205,13 +204,14 @@ describe('File System', () => {
 			let example;
 			let cwd;
 			let files;
+			const libname = 'library-v2-adapters';
 			/**
 			 * Make the current directory the test data
 			 */
 			beforeEach(() => {
 				cwd = process.cwd();
 				process.chdir(testdata);
-				const examplePromise = isLibraryExample(path.join('library-v2', 'examples', 'blink-an-led'));
+				const examplePromise = isLibraryExample(path.join(libname, 'examples', 'blink-an-led'));
 
 				return examplePromise.then((ex) => {
 					example = ex;
@@ -228,8 +228,8 @@ describe('File System', () => {
 
 			it('recognizes it as an example', () => {
 				expect(example).to.have.property('basePath').equal(path.resolve(testdata));
-				expect(example).to.have.property('libraryPath').equal('library-v2');
-				expect(example).to.have.property('example').equal(path.join('library-v2','examples','blink-an-led')+path.sep);
+				expect(example).to.have.property('libraryPath').equal(libname);
+				expect(example).to.have.property('example').equal(path.join(libname,'examples','blink-an-led')+path.sep);
 				expect(files).to.have.property('map').that.is.ok;
 				expect(files).to.have.property('basePath').that.is.equal(testdata);
 			});
@@ -237,7 +237,7 @@ describe('File System', () => {
 
 			function expectHasMapping(src, target=src) {
 				// src is relative to the library
-				src = path.join('library-v2', src);
+				src = path.join(libname, src);
 				expect(files.map).has.property(target).equal(src);
 			}
 

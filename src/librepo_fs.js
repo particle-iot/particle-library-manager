@@ -942,7 +942,7 @@ class LibraryExample {
 			const destinationPath = path.join(destination, traversePath);   // the path to the destination file
 			if (stat.isDirectory()) {
 				// recurse
-				return this._addFiles(files, source, destination, traversePath);
+				return this._addDirectory(files, source, destination, traversePath);
 			} else {
 				// add the file - todo should this filter out files like the CLI does?
 				this._addFileMapping(files, sourcePath, destinationPath);
