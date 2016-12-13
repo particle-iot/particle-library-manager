@@ -883,25 +883,29 @@ describe('File System Mock', () => {
 
 		it('can successfully detect a relative example file', () => {
 			const base = buildV2Library('mylib');
-			process.chdir(base+'examples/huzzah');
-			return expect(isLibraryExample('code.ino')).to.eventually.eql({libraryDirectory:'../..', example:'code.ino'});
+			const basePath = base+'examples/huzzah';
+			process.chdir(basePath);
+			return expect(isLibraryExample('code.ino')).to.eventually.eql({basePath:path.resolve(), libraryPath:'../..', example:'code.ino'});
 		});
 
 		it('can successfully detect an example directory from the root of the library', () => {
 			const base = buildV2Library('mylib');
-			process.chdir(base);
-			return expect(isLibraryExample('examples/huzzah')).to.eventually.eql({libraryDirectory:'', example:'examples/huzzah'});
+			const basePath = base;
+			process.chdir(basePath);
+			return expect(isLibraryExample('examples/huzzah')).to.eventually.eql({basePath:path.resolve(), libraryPath:'', example:'examples/huzzah/'});
 		});
 
 		it('can successfully detect an example directory as the current folder', () => {
 			const base = buildV2Library('mylib');
-			process.chdir(base+'examples/huzzah');
-			return expect(isLibraryExample('.')).to.eventually.eql({libraryDirectory:'../..', example:''});
+			const basePath = base+'examples/huzzah';
+			process.chdir(basePath);
+			return expect(isLibraryExample('.')).to.eventually.eql({basePath:path.resolve(), libraryPath:'../..', example:'./'});
 		});
 
 		it('can successfully detect an example file given the full path from the current folder', () => {
 			const base = buildV2Library('mylib');
-			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({libraryDirectory:base.slice(0,-1), example:base+'examples/huzzah'});
+			const basePath = cwd;
+			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({basePath, libraryPath:base.slice(0,-1), example:base+'examples/huzzah/'});
 		});
 
 
