@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Polish library template for init
+- Generate project to compile example on the fly
+
 ## 0.1.2
 
 - bump mock-fs dependency version to fix babel-polyfill problems running the test
