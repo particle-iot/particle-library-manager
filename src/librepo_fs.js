@@ -848,8 +848,189 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const pub = new LibraryContributor({repo: this, client});
 		return pub.contribute(callback, name, dryRun);
 	}
-
 }
+
+
+function isLibraryV2(directory) {
+	return new FileSystemLibraryRepository(directory, FileSystemNamingStrategy.DIRECT)
+		.getLibraryLayout().
+		then(layout => layout===2);
+}
+
+/**
+ * This computes a mapping between 2 namespaces:
+ * - the files as they really exist in the file system (the library v2 format)
+ * - the project structure required by the compiler service to build the project.
+ *
+ * The original namespace is represented by the data members, basePath, libraryPath and example,
+ * with libraryPath and example relative to basePath.
+ */
+class LibraryExample {
+	/**
+	 * The paths are either absolute or relative to basePath
+	 * @param {string} basePath         The relative directory for all other paths
+	 * @param {string} libraryPath      The library path relative to the base path
+	 * @param {string} example          The example path relative to the base path
+	 */
+	constructor({basePath, libraryPath, example}) {
+		Object.assign(this, {basePath, libraryPath, example});
+	}
+
+	/**
+	 *
+	 * @param {Object} files `list` - the actual filenames to send, `alias` the filenames as seen by the user, maps each
+	 *  index to the corresponding file in `list`, `map`. `baseDir` the root directory relative to the filenames in `list`.
+	 * @returns {Promise} to build the file mapping
+	 *
+	 * The library directory is assumed to be the common parent and this is made the base directory.
+	 *
+	 */
+	buildFiles(files) {
+		// the physical location of files is what is shown in error messages so that they are consistent from the
+		// user's working directory
+		// The target namespace moves the library.properties into the root as project.properties
+		files.list = [];
+		files.map = {};
+		files.basePath = this.basePath;
+		const srcDirectory = this._asDirectory('src');
+		const libDirectory = this._asDirectory('lib');
+
+		return Promise.all([
+			// add the example file, or the contents of the example directory to 'src' in the target
+			this._addFiles(files, this.example, srcDirectory),
+
+			// rename the library to project files
+			this._addFiles(files, path.join(this.libraryPath, 'library.properties'), 'project.properties'),
+
+			// copy the library sources into src (potential name-clash with example sources?)
+			this._addFiles(files, path.join(this.libraryPath, srcDirectory), srcDirectory, false),
+			this._addFiles(files, path.join(this.libraryPath, libDirectory), libDirectory, false)
+		]);
+	}
+
+	_asDirectory(p) {
+		return this._isFile(p) ? p + path.sep : p;
+	}
+
+	/**
+	 * Adds a mapping. The mapping is from the target file to the source file - that is, the mapping shows all files in the
+	 * target project, and the corresponding source files where the content can be obtained from.
+	 * @param {Object} files the file mapping object with a `map` property and `basePath` for defining the logical namespace.
+	 * @param {String} source The source file relative to `this.basePath`
+	 * @param {String} target The target file relative to `files.basePath` (the target namespace)
+	 * @returns {undefined} nothing
+	 * @private
+	 */
+	_addFileMapping(files, source, target) {
+		// given a target file, retrieve the physical file where it lives, relative to this.basePath
+		files.map[target] = source;
+	}
+
+	/**
+	 * Adds all the files under the given directory to a mapping recursively.
+	 * @param {Object} files     The structure to populate. It is updated by calling `_addFileMapping` for each file added.
+	 * @param {string} source  The path of the files to copy - this part of the path is not featured in the destination path
+	 * @param {string} destination The path of the destination.
+	 * @param {string} subdir   The current recursion point below the source folder
+	 * @returns {Promise} to add a mapping from all files in the source directory to the destination directory
+	 * @private
+	 */
+	_addDirectory(files, source, destination, subdir='') {
+		function mapper(stat, file, filePath) {
+			const traversePath = path.join(subdir, file);
+			const sourcePath = path.join(source, traversePath);             // the path to the source file
+			const destinationPath = path.join(destination, traversePath);   // the path to the destination file
+			if (stat.isDirectory()) {
+				// recurse
+				return this._addDirectory(files, source, destination, traversePath);
+			} else {
+				// add the file - todo should this filter out files like the CLI does?
+				this._addFileMapping(files, sourcePath, destinationPath);
+			}
+		}
+		const directory = path.resolve(path.join(files.basePath, source, subdir));
+		return mapActionDir(directory, mapper.bind(this), () => {});
+	}
+
+	/**
+	 * Adds files to the file mappings. Directories are indicated by ending with a trailing slash.
+	 * @param {Files} files     The object that holds the mappings. `basePath` defies the root for the files
+	 * @param {String} source    The source file or directory, relative to `files.basePath` If it is a file, the file is copied to the destination.
+	 *  If it is a directory, the directory path is not part of the destination name, only files and subdirectories
+	 *  under the directory are mapped to the destination path.
+	 * @param {String} destination   The destination path relative to the target filesystem.
+	 * @param {boolean} mandatory   When `false` silently returns when the source does not exist
+	 * @returns {Promise} to add the files to the `files` mapping
+	 * @private
+	 */
+	_addFiles(files, source, destination, mandatory=true) {
+		const destinationFile = this._isFile(destination);
+
+		const stat = promisify(fs.stat);
+
+		let promise = stat(path.join(this.basePath, source)).then((stat) => {
+			const sourceFile = stat.isFile();
+			// if the source is a file, and the target a directory, compute the full target path.
+			if (sourceFile) {
+				if (!destinationFile) {
+					destination = path.join(destination, source);
+				}
+				this._addFileMapping(files, source, destination);
+			} else {
+				// assume destination is a directory, since copying a source directory to a file
+				// makes little sense here.
+				return this._addDirectory(files, source, destination);
+			}
+		});
+
+		if (!mandatory) {
+			// chomp chomp
+			promise = promise.catch(error => 0);
+		}
+		return promise;
+	}
+
+	_isFile(p) {
+		return !p.endsWith(path.sep);
+	}
+}
+
+/**
+ * Determines if the file represents a library example, and returns a `LibraryExample` instance if it is.
+ * @param {String} file The name of the example file or example directory
+ * @param {String} cwd The path that `file` is relative to.
+ * @returns {*} a falsey value if it is not an example in a v2 library.
+ *  otherwise returns a LibraryExample instance.
+ */
+export function isLibraryExample(file, cwd=process.cwd()) {
+	const stat = promisify(fs.stat);
+	// the directory containing the example
+	const examplePath = path.resolve(cwd, file);
+	return stat(examplePath)
+		.then(stat => {
+			const directory = (stat.isDirectory()) ? examplePath : path.resolve(examplePath, '..');
+			// the examples directory
+			const examplesDirectory = path.resolve(directory, '..');
+			// the library directory
+			const libraryDirectory = path.resolve(examplesDirectory, '..');
+			// `/examples`
+			const examplesSingleDir = path.sep+examplesDir;
+			// todo - case insensitive comparison on file systems that are case insensitive?
+			let isExample = examplesDirectory.endsWith(examplesSingleDir);
+			isExample = isExample && isLibraryV2(libraryDirectory).
+				then((isV2) => {
+					if (isV2) {
+						return new LibraryExample({
+							basePath: cwd,
+							libraryPath: path.relative(cwd, libraryDirectory),
+							example: file + (stat.isDirectory() ? path.sep : '')
+						});
+					}
+				});
+			return isExample;
+		});
+}
+
 
 // keep all branches  of the ES6 transpilled code executed
 export default () => {};

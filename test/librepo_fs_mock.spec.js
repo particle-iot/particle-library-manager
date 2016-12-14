@@ -24,7 +24,7 @@ const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
 
-import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson} from '../src/librepo_fs';
+import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson, isLibraryExample} from '../src/librepo_fs';
 import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
 
 const libFileContents = { 'h': '// a header file', cpp:'// a cpp file'};
@@ -216,6 +216,12 @@ function mock(...args) {
 }
 */
 describe('File System Mock', () => {
+
+	function mkdir(name) {
+		if (!fs.existsSync(name)) {
+			fs.mkdirSync(name);
+		}
+	}
 
 	const mock = require('mock-fs');
 
@@ -465,12 +471,6 @@ describe('File System Mock', () => {
 		});
 
 		describe('layout', () => {
-
-			function mkdir(name) {
-				if (!fs.existsSync(name)) {
-					fs.mkdirSync(name);
-				}
-			}
 
 			it('throws exception for layout if library directory does not exist', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
@@ -846,6 +846,69 @@ describe('File System Mock', () => {
 				expect(sut.isHeaderFile('abc')).to.be.false;
 			});
 		});
+	});
+
+	describe('isLibraryExample', () => {
+		let cwd;
+		beforeEach(() => {
+			cwd = process.cwd();
+		});
+
+		afterEach(() => {
+			process.chdir(cwd);
+		});
+
+		function buildV2Library(name) {
+			mkdir('mydir');
+			mkdir('mydir/v2');
+			const base = 'mydir/v2/'+name+'/';
+			mkdir(base);
+			fs.writeFileSync(base+'library.properties', '');
+			mkdir(base+'examples');
+			mkdir(base+'examples/huzzah');
+			fs.writeFileSync(base+'examples/huzzah/code.ino', '');
+			return base;
+		}
+
+		it('throws an exception when the file does not exist', () => {
+			const promise = isLibraryExample('somedir');
+			return promise.
+				then(() => {
+					throw Error('expected stat error');
+				})
+				.catch(error => {
+					expect(error).has.property('code').equal('ENOENT');
+				});
+		});
+
+		it('can successfully detect a relative example file', () => {
+			const base = buildV2Library('mylib');
+			const basePath = base+'examples/huzzah';
+			process.chdir(basePath);
+			return expect(isLibraryExample('code.ino')).to.eventually.eql({basePath:path.resolve(), libraryPath:'../..', example:'code.ino'});
+		});
+
+		it('can successfully detect an example directory from the root of the library', () => {
+			const base = buildV2Library('mylib');
+			const basePath = base;
+			process.chdir(basePath);
+			return expect(isLibraryExample('examples/huzzah')).to.eventually.eql({basePath:path.resolve(), libraryPath:'', example:'examples/huzzah/'});
+		});
+
+		it('can successfully detect an example directory as the current folder', () => {
+			const base = buildV2Library('mylib');
+			const basePath = base+'examples/huzzah';
+			process.chdir(basePath);
+			return expect(isLibraryExample('.')).to.eventually.eql({basePath:path.resolve(), libraryPath:'../..', example:'./'});
+		});
+
+		it('can successfully detect an example file given the full path from the current folder', () => {
+			const base = buildV2Library('mylib');
+			const basePath = cwd;
+			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({basePath, libraryPath:base.slice(0,-1), example:base+'examples/huzzah/'});
+		});
+
+
 	});
 
 });
