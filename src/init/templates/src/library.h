@@ -1,23 +1,33 @@
 #pragma once
 
-// <%=name%> library by <%=author%>.
+/* <%- name_code %> library by <%- author %>
+ */
 
+// This will load the definition for common Particle variable types
 #include "Particle.h"
 
-class <%=Name%>Class
+// This is your main class that users will import into their application
+class <%-Name_code%>
 {
-private:
-  /**
-   * Private methods
-   */
 public:
   /**
    * Constructor
    */
-  <%=Name%>Class();
+  <%-Name_code%>();
 
   /**
    * Example method
+   */
+  void begin();
+
+  /**
+   * Example method
+   */
+  void process();
+
+private:
+  /**
+   * Example private method
    */
   void doit();
 };

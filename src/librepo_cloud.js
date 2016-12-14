@@ -137,7 +137,8 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	_getLibrary(name, version) {
-		return this.client.library(name, {version});
+		const query = version ? {version} : undefined;
+		return this.client.library(name, query);
 	}
 
 	fetch(name, version) {

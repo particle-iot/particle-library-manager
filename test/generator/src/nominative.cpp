@@ -1,18 +1,39 @@
-// nominative library by Borges.
+/* nominative library by Borges <borges@example.com>
+ */
 
 #include "nominative.h"
 
 /**
  * Constructor.
  */
-NominativeClass::NominativeClass()
+Nominative::Nominative()
 {
+  // be sure not to call anything that requires hardware be initialized here, put those in begin()
 }
 
 /**
  * Example method.
  */
-void NominativeClass::doit()
+void Nominative::begin()
 {
-    Serial.println("called 'doit'");
+    // initialize hardware
+    Serial.println("called begin");
+}
+
+/**
+ * Example method.
+ */
+void Nominative::process()
+{
+    // do something useful
+    Serial.println("called process");
+    doit();
+}
+
+/**
+* Example private method
+*/
+void Nominative::doit()
+{
+    Serial.println("called doit");
 }

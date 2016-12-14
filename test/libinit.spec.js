@@ -24,6 +24,8 @@ const path = require('path');
 const helpers = require('yeoman-test');
 const assert = require('yeoman-assert');
 const fse = require('fs-extra');
+const timekeeper = require('timekeeper');
+
 
 import { buildLibraryInitGeneratorClass, LibraryInitGeneratorMixin } from '../src/libinit';
 import { appRoot } from '../src/index';
@@ -42,7 +44,15 @@ class MockLibraryInitGenerator extends LibraryInitGeneratorMixin(EmptyBase) { //
 
 
 describe('library initialize', function doit() {
-	const testData = { name: 'nominative', version: '1.2.3', author: 'Borges' };
+	const testData = { name: 'nominative', version: '1.2.3', author: 'Borges <borges@example.com>' };
+
+	before(function freezeTime() {
+		timekeeper.freeze(Date.parse('2015-12-15'));
+	});
+
+	after(function releaseTime() {
+		timekeeper.reset();
+	});
 
 	/**
 	 * Asserts that a generated (actual) file matches the expected file in the test fixture.
@@ -66,9 +76,10 @@ describe('library initialize', function doit() {
 	function validateOutput() {
 		assertGeneratedContent('library.properties');
 		assertGeneratedContent('README.md');
+		assertGeneratedContent('LICENSE');
 		assertGeneratedContent('src/nominative.cpp');
 		assertGeneratedContent('src/nominative.h');
-		assertGeneratedContent('examples/doit/doit_example.cpp');
+		assertGeneratedContent('examples/usage/usage.ino');
 	}
 
 	/**
@@ -93,7 +104,7 @@ describe('library initialize', function doit() {
 	}
 
 	describe('generator', () => {
-		it('interpolates library.properties', function doit() {
+		it('interpolates all template files', function doit() {
 			this.timeout(30000);
 			return generator('init', (result) => {
 				return result.withOptions(testData);       // Mock options passed in
@@ -122,18 +133,25 @@ describe('library initialize', function doit() {
 			expect(sut.destinationRoot).to.have.not.been.called;
 		});
 
-		it('sets the Name option to the name with first letter capitalized', () => {
+		it('sets the name_code option to the code-safe name with the first letter lowercased', () => {
 			const sut = new MockLibraryInitGenerator();
 			sut.options = {};
-			sut._handlePrompts({name:'abcd'});
-			expect(sut.options).to.have.property('Name').equal('Abcd');
+			sut._handlePrompts({name:'SparkLib++'});
+			expect(sut.options).to.have.property('name_code').equal('sparkLib');
 		});
 
-		it('does not set the Name option when name is not present', () => {
+		it('sets the Name_code option to the code-safe name with first letter capitalized', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = {};
+			sut._handlePrompts({name:'my-lib++'});
+			expect(sut.options).to.have.property('Name_code').equal('Mylib');
+		});
+
+		it('does not set the Name_code option when name is not present', () => {
 			const sut = new MockLibraryInitGenerator();
 			sut.options = {};
 			sut._handlePrompts({name2:'abcd'});
-			expect(sut.options).to.not.have.property('Name');
+			expect(sut.options).to.not.have.property('Name_code');
 		});
 
 		describe('validation', () => {
@@ -196,6 +214,7 @@ describe('library initialize', function doit() {
 		it('the _prompt method configures and fetches options', () => {
 			const sut = new MockLibraryInitGenerator();
 			// given
+			sut._setYear = sinon.stub();
 			sut._setOutputDir = sinon.stub();
 			sut._allPrompts = sinon.stub().returns('abcd');
 			sut._handlePrompts = sinon.stub().returns('handled');

@@ -18,13 +18,12 @@
  */
 
 import {expect, sinon} from './test-setup';
-import {FileSystemNamingStrategy, FileSystemLibraryRepository} from '../src/librepo_fs';
+import {FileSystemNamingStrategy, FileSystemLibraryRepository, isLibraryExample} from '../src/librepo_fs';
 import {LibraryContributor} from '../src/libcontribute';
 import {makeCompleteV2Lib} from './librepo_fs_mock.spec';
 import {makeTestLib} from './librepo_fs_mock.spec';
 const fs = require('fs');
 const path = require('path');
-
 
 describe('File System', () => {
 	// this is an integration test, but since everything needed is available locally
@@ -106,7 +105,6 @@ describe('File System', () => {
 			}
 			expect(comp2.same).to.be.true;
 		});
-
 	}
 
 	it('can migrate a full v1 library to v2 format', () => {
@@ -198,6 +196,75 @@ describe('File System', () => {
 		it('can attempt to publish from a repo as a dry run', () => {
 			const repo = new FileSystemLibraryRepository('mydir');
 			return expect(repo.contribute('abcd', {}, true, () => arguments[1])).to.eventually.be.rejected;
+		});
+	});
+
+	describe('library examples', () => {
+		describe('given an example via a relative path', () => {
+			let example;
+			let cwd;
+			let files;
+			const libname = 'library-v2-adapters';
+			/**
+			 * Make the current directory the test data
+			 */
+			beforeEach(() => {
+				cwd = process.cwd();
+				process.chdir(testdata);
+				const examplePromise = isLibraryExample(path.join(libname, 'examples', 'blink-an-led'));
+
+				return examplePromise.then((ex) => {
+					example = ex;
+					expect(example).to.be.ok;
+				}).then(() => {
+					files = {};
+					return example.buildFiles(files);
+				});
+			});
+
+			afterEach(() => {
+				process.chdir(cwd);
+			});
+
+			it('recognizes it as an example', () => {
+				expect(example).to.have.property('basePath').equal(path.resolve(testdata));
+				expect(example).to.have.property('libraryPath').equal(libname);
+				expect(example).to.have.property('example').equal(path.join(libname,'examples','blink-an-led')+path.sep);
+				expect(files).to.have.property('map').that.is.ok;
+				expect(files).to.have.property('basePath').that.is.equal(testdata);
+			});
+
+
+			function expectHasMapping(src, target=src) {
+				// src is relative to the library
+				src = path.join(libname, src);
+				expect(files.map).has.property(target).equal(src);
+			}
+
+			it('moves library.properties to project.properties', () => {
+				expectHasMapping('library.properties', 'project.properties');
+			});
+
+			it('moves the example sources to the sources of the project', () => {
+				expectHasMapping(path.join('examples', 'blink-an-led', 'blink-an-led.cpp'), path.join('src', 'blink-an-led.cpp'));
+			});
+
+			it('moves the library sources to the sources directory', () => {
+				expectHasMapping(path.join('src', 'uber-library-example.cpp'));
+				expectHasMapping(path.join('src', 'uber-library-example.h'));
+				expectHasMapping(path.join('src', 'a-c-example.c'));
+			});
+
+			describe('LibraryExample class', () => {
+				it('_isFile returns true when the filename does not end with a slash', () => {
+					expect(example._isFile('/abcd')).to.be.true;
+				});
+
+				it('_isFile returns false when the filename does end with a slash', () => {
+					expect(example._isFile('abcd/')).to.be.false;
+				});
+			});
+
 		});
 	});
 

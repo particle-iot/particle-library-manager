@@ -20,6 +20,10 @@
 import {validateField} from './validation';
 const path = require('path');
 
+function lowercaseFirstLetter(string) {
+	return string.charAt(0).toLowerCase() + string.slice(1);
+}
+
 function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -67,7 +71,14 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	_initializeOptions() {
 		this.option('name');
 		this.option('version');
+		this.option('year');
 		this.option('dir');
+	}
+
+	_setYear() {
+		if (this.options.year === undefined) {
+			this.options.year = new Date().getFullYear();
+		}
 	}
 
 	_setOutputDir() {
@@ -126,7 +137,8 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	_handlePrompts(data) {
 		Object.assign(this.options, data);
 		if (this.options.name) {
-			this.options.Name = capitalizeFirstLetter(this.options.name);
+			this.options.name_code = lowercaseFirstLetter(this.options.name.replace(/[^a-zA-Z0-9_]/g, ''));
+			this.options.Name_code = capitalizeFirstLetter(this.options.name_code);
 		}
 		this._checkFields();
 	}
@@ -163,6 +175,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	}
 
 	_prompt() {
+		this._setYear();
 		this._setOutputDir();
 		const prompt = this._allPrompts();
 		return this.prompt(prompt).then((data) => this._handlePrompts(data));
@@ -189,6 +202,12 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 					this.options
 				);
 
+				this.fs.copyTpl(
+					this.templatePath('LICENSE'),
+					this.destinationPath('LICENSE'),
+					this.options
+				);
+
 				const filename = `src/${this.options.name}.cpp`;
 				this.fs.copyTpl(
 					this.templatePath('src/library.cpp'),
@@ -203,8 +222,8 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 				);
 
 				this.fs.copyTpl(
-					this.templatePath('examples/doit/doit_example.cpp'),
-					this.destinationPath('examples/doit/doit_example.cpp'),
+					this.templatePath('examples/usage/usage.ino'),
+					this.destinationPath('examples/usage/usage.ino'),
 					this.options
 				);
 			}

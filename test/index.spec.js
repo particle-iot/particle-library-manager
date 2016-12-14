@@ -50,6 +50,7 @@ describe('public package interface', () => {
 			'FileSystemLibraryRepository',
 			'mapActionDir',
 			'getdirs',
+			'isLibraryExample',
 
 			// libinit.js
 			'LibraryInitGeneratorMixin',
