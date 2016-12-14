@@ -196,6 +196,18 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 					this.options
 				);
 
+				this.fs.copyTpl(
+					this.templatePath('README.md'),
+					this.destinationPath('README.md'),
+					this.options
+				);
+
+				this.fs.copyTpl(
+					this.templatePath('LICENSE'),
+					this.destinationPath('LICENSE'),
+					this.options
+				);
+
 				const filename = `src/${this.options.name}.cpp`;
 				this.fs.copyTpl(
 					this.templatePath('src/library.cpp'),

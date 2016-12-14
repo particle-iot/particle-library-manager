@@ -75,6 +75,8 @@ describe('library initialize', function doit() {
 	 */
 	function validateOutput() {
 		assertGeneratedContent('library.properties');
+		assertGeneratedContent('README.md');
+		assertGeneratedContent('LICENSE');
 		assertGeneratedContent('src/nominative.cpp');
 		assertGeneratedContent('src/nominative.h');
 		assertGeneratedContent('examples/usage/usage.ino');
