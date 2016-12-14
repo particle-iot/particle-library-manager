@@ -1,21 +1,33 @@
 #pragma once
 
-// nominative library by Borges.
+/* <%- name_code %> library by <%- author %>
+ */
 
+// This will load the definition for common Particle variable types
 #include "Particle.h"
 
-class NominativeClass
+// This is your main class that users will import into their application
+class <%-Name_code%>
 {
-private:
-    // private stuff - no peeking!
 public:
-   /**
-    * Constructor.
-    */
-    NominativeClass();
+  /**
+   * Constructor
+   */
+  <%-Name_code%>();
 
-    /**
-     * Example method.
-     */
-    void doit();
+  /**
+   * Example method
+   */
+  void begin();
+
+  /**
+   * Example method
+   */
+  void process();
+
+private:
+  /**
+   * Example private method
+   */
+  void doit();
 };
