@@ -136,12 +136,13 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 		this.api.debug = console.log;
 	}
 
-	_getLibrary(name) {
-		return this.client.library(name);
+	_getLibrary(name, version) {
+		const query = version ? {version} : undefined;
+		return this.client.library(name, query);
 	}
 
-	fetch(name) {
-		return this._getLibrary(name).then((lib) => {
+	fetch(name, version) {
+		return this._getLibrary(name, version).then((lib) => {
 			return this._createLibrary(name, lib);
 		});
 	}
