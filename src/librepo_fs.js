@@ -968,7 +968,7 @@ class LibraryExample {
 
 		const stat = promisify(fs.stat);
 
-		let promise = stat(source).then((stat) => {
+		let promise = stat(path.join(this.basePath, source)).then((stat) => {
 			const sourceFile = stat.isFile();
 			// if the source is a file, and the target a directory, compute the full target path.
 			if (sourceFile) {
