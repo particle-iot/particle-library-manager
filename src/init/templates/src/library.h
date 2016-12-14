@@ -1,21 +1,23 @@
 #pragma once
 
-// nominative library by Borges.
+// <%=name%> library by <%=author%>.
 
 #include "Particle.h"
 
-class NominativeClass
+class <%=Name%>Class
 {
 private:
-    // private stuff - no peeking!
+  /**
+   * Private methods
+   */
 public:
-   /**
-    * Constructor.
-    */
-    NominativeClass();
+  /**
+   * Constructor
+   */
+  <%=Name%>Class();
 
-    /**
-     * Example method.
-     */
-    void doit();
+  /**
+   * Example method
+   */
+  void doit();
 };

@@ -3,6 +3,7 @@ import {validateLibrary} from './validation';
 import zlib from 'zlib';
 import tarfs from 'tar-fs';
 import fs from 'fs';
+import path from 'path';
 import tmp from 'tmp';
 import {validationMessage} from './validation';
 
@@ -28,7 +29,13 @@ export class LibraryContributor {
 
 			const archiveWriter = fs.createWriteStream(archive.name);
 			const gzip = zlib.createGzip();
-			const pack = tarfs.pack(dir);
+
+			const pack = tarfs.pack(dir, {
+				ignore: (name) => {
+					const dirs = path.dirname(path.relative(dir, name)).split(path.sep);
+					return dirs.length && dirs[0]==='.git';
+				}
+			});
 			pack.pipe(gzip).pipe(archiveWriter);
 
 			archiveWriter.on('finish', () => {

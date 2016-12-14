@@ -58,12 +58,10 @@ describe('CloudLibraryRepository', () => {
 		expect(sut).to.have.property('auth').that.is.equal('auth');
 	});
 
-
-
 	it('delegates getLibrary to the client', () => {
 		client.library = sinon.stub();
-		sut._getLibrary('somelib');
-		expect(client.library).to.be.calledWith('somelib');
+		sut._getLibrary('somelib', '1.2.3');
+		expect(client.library).to.be.calledWith('somelib', {version:'1.2.3'});
 	});
 
 	it('can create a new library', () => {
