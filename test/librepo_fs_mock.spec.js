@@ -24,7 +24,7 @@ const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
 
-import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson, isLibraryExample} from '../src/librepo_fs';
+import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson, isLibraryExample, pathsCommonPrefix} from '../src/librepo_fs';
 import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
 
 const libFileContents = { 'h': '// a header file', cpp:'// a cpp file'};
@@ -221,6 +221,14 @@ describe('File System Mock', () => {
 		if (!fs.existsSync(name)) {
 			fs.mkdirSync(name);
 		}
+	}
+
+	function mkdirp(name) {
+		const parent = path.dirname(name);
+		if (parent && parent!=='/') {
+			mkdirp(parent);
+		}
+		mkdir(name);
 	}
 
 	const mock = require('mock-fs');
@@ -914,9 +922,85 @@ describe('File System Mock', () => {
 			const basePath = cwd;
 			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({basePath, libraryPath:base.slice(0,-1), example:base+'examples/huzzah/'});
 		});
-
-
 	});
+
+	describe('pathsCommonPrefix', () => {
+		it('the longest common prefix of an empty array is the empty string', () => {
+			expect(pathsCommonPrefix([])).to.equal('');
+		});
+
+		it('the longest common prefix of a single absolute file is the directory the file is in', () => {
+			mkdir('/mydir');
+			mkdir('/mydir/dir2');
+			fs.writeFileSync(path.join('/mydir', 'dir2', 'file.txt'), '');
+			const result = pathsCommonPrefix(['/mydir/dir2/file.txt']);
+			expect(result).to.equal('/mydir/dir2');
+		});
+
+		it('the longest common prefix of a relative file is the absolute directory the file is in', () => {
+			mkdir('/mydir');
+			mkdir('/mydir/dir2');
+			fs.writeFileSync(path.join('/mydir', 'dir2', 'file.txt'), '');
+			const result = pathsCommonPrefix(['/mydir/dir2/file.txt'], undefined, '/mydir');
+			expect(result).to.equal('/mydir/dir2');
+		});
+
+		function createFilesAndComputePrefix(paths, relative, cwd) {
+			for (let p of paths) {
+				mkdirp(path.dirname(p));
+				fs.writeFileSync(p, '');
+			}
+			const result = pathsCommonPrefix(paths, relative, cwd);
+			return result;
+		}
+
+		it('computes the longest common prefix of several files and directories where filenames have a common prefix', () => {
+			const paths = [
+				path.join('/mydir', 'dir2', 'src', 'file.txt'),
+				path.join('/mydir', 'dir2', 'src', 'file2.txt'),
+				path.join('/mydir', 'dir2', 'src', 'fi', 'file2.txt')
+			];
+			expect(createFilesAndComputePrefix(paths)).to.equal('/mydir/dir2/src');
+		});
+
+		it('computes the longest common prefix with disjoint subtrees', () => {
+			const paths = [
+				path.join('/mydir', 'dir2', 'lib', 'file.txt'),
+				path.join('/mydir', 'dir2', 'src', 'file2.txt'),
+				path.join('/mydir', 'dir2', 'src', 'fi', 'file2.txt')
+			];
+			expect(createFilesAndComputePrefix(paths)).to.equal('/mydir/dir2');
+		});
+
+		it('computes the longest common prefix with disjoint subtrees', () => {
+			const paths = [
+				path.join('/mydir', 'dir2', 'lib', 'file.txt'),
+				path.join('/mydir', 'dir2', 'src', 'file2.txt')
+			];
+			for (let p of paths) {
+				mkdirp(path.dirname(p));
+				fs.writeFileSync(p, '');
+			}
+			const result = pathsCommonPrefix(['dir2/lib/file.txt', 'dir2/src/file2.txt'], undefined, '/mydir');
+			expect(result).to.equal('/mydir/dir2');
+		});
+
+		it('when the 2nd parameter is given, then it computes the relative path of each file to the common prefix', () => {
+			const paths = [
+				path.join('/mydir', 'dir2', 'lib', 'file.txt'),
+				path.join('/mydir', 'dir2', 'src', 'file2.txt')
+			];
+			for (let p of paths) {
+				mkdirp(path.dirname(p));
+				fs.writeFileSync(p, '');
+			}
+			const relative = [];
+			const result = pathsCommonPrefix(['dir2/lib/file.txt', 'dir2/src/file2.txt'], relative, '/mydir');
+			expect(result).to.equal('/mydir/dir2');
+			expect(relative).to.eql(['lib/file.txt', 'src/file2.txt']);
+		});
+	});
+
 
 });
 
