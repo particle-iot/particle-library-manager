@@ -23,10 +23,10 @@
   },
   "main": "./dist/index.js",
   "scripts": {
+    "babel-watch": "babel src -d dist --watch --source-maps",
     "integration": "mocha integration/ -R spec --compilers js:babel-register",
     "lint": "eslint -f unix src/ test/",
-    "compile": "babel src -sd lib/src && babel test -sd lib/test",
-    "build": "babel src --out-dir dist --copy-files",
+    "compile": "babel src --out-dir dist --copy-files",
     "test": "mocha test/ -R spec --compilers js:babel-register",
     "cover": "babel-node node_modules/.bin/istanbul cover _mocha test/ --report html -- -R spec",
     "cover-es5": "node_modules/.bin/istanbul cover _mocha lib/test/ --report html -- -R spec",
