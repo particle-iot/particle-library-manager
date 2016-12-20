@@ -861,6 +861,66 @@ function isLibraryV2(directory) {
 		then(layout => layout===2);
 }
 
+function normalizeAndSplitPath(p, cwd, absPaths) {
+	let abs = path.resolve(cwd, p).toLowerCase();  // this might be a bit heavy handed on POSIX...
+	absPaths.push(abs);
+	const stat = fs.statSync(abs);
+	if (!stat.isDirectory()) {
+		abs = path.dirname(abs);
+	}
+	const split = abs.split(path.sep);
+	return split;
+}
+
+function longestArrayCommonPrefix(current, next) {
+	if (!current) {
+		return next;
+	}
+
+	const upper = Math.min(current.length, next.length);
+	let i = 0;
+	while (i<upper && current[i]===next[i]) {
+		i++;
+	}
+	const prefix = current.slice(0, i);
+	return prefix;
+}
+
+/**
+ * Computes the common prefix of a list of files. Files that are not absolute are made absolute
+ * relative to cwd.
+ * @param {Array<String>} files the files to find the common prefix of
+ * @param {Array<String>} relative optional array that receives the paths relative to the common prefix
+ * @param {string} cwd   The directory that relative paths are assumed relative to
+ * @return {string} the longest common path prefix
+ * If there is no common prefix, the empty string is returned. This can be the case on OSs without
+ * a unified filesystem namespace and files are on disjoint paths of the filesystem (e.g. different drives in Windows.)
+ *
+ * <DANGER: for expediency we are using sync fs functions here. This should only be used
+ * from client code: REGNAD>
+ */
+export function pathsCommonPrefix(files, relative=undefined, cwd=process.cwd()) {
+
+	let result = '';
+	if (files.length) {
+		let longest;
+		const absFiles = [];
+		for (let file of files) {
+			const split = normalizeAndSplitPath(file, cwd, absFiles);
+			longest = longestArrayCommonPrefix(longest, split);
+		}
+
+		result = longest.join(path.sep);
+		if (relative) {
+			for (let file of absFiles) {
+				relative.push(path.relative(result, file));
+			}
+		}
+	}
+	return result;
+}
+
+
 /**
  * This computes a mapping between 2 namespaces:
  * - the files as they really exist in the file system (the library v2 format)
@@ -998,6 +1058,7 @@ class LibraryExample {
 		return !p.endsWith(path.sep);
 	}
 }
+
 
 /**
  * Determines if the file represents a library example, and returns a `LibraryExample` instance if it is.
