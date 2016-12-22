@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- adds longest common directory prefix calculation for a list of filenames. 
+
 ## 0.1.3
 
 - Polish library template for init
