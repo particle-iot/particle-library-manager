@@ -862,7 +862,7 @@ function isLibraryV2(directory) {
 }
 
 function normalizeAndSplitPath(p, cwd, absPaths) {
-	let abs = path.resolve(cwd, p).toLowerCase();  // this might be a bit heavy handed on POSIX...
+	let abs = path.resolve(cwd, p);
 	absPaths.push(abs);
 	const stat = fs.statSync(abs);
 	if (!stat.isDirectory()) {
