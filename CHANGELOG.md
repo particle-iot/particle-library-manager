@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+- fix [case sensitivity issue](https://github.com/spark/particle-library-manager/issues/17)
+
 ## 0.1.4
 
 - adds longest common directory prefix calculation for a list of filenames. 
