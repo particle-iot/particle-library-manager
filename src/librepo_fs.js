@@ -220,21 +220,21 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	/**
 	 * Creates a new FileSystemLibraryRepository instance.
-	 * @param {string} path The location of the file system repository. The contained
+	 * @param {string} repoPath The location of the file system repository. The contained
 	 * libraries are stored as subdirectories under the repo root.
 	 * @param {NamingStrategy} namingStrategy The strategy that maps library metadata to an identifying name,
 	 * and maps that name to the filesystem.
 	 */
-	constructor(path, namingStrategy) {
+	constructor(repoPath, namingStrategy) {
 		super();
 		if (!namingStrategy) {
 			namingStrategy = FileSystemNamingStrategy.BY_NAME;
 		}
 
-		if (!path.endsWith('/')) {
-			path += '/';
+		if (!repoPath.endsWith(path.sep)) {
+			repoPath += path.sep;
 		}
-		this.path = path;
+		this.path = repoPath;
 		this.namingStrategy = namingStrategy;
 		this.sourceExtensions = { 'c':true, 'cpp': true, 'h':true };
 	}
@@ -417,9 +417,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			});
 	}
 
-	readDescriptorV2(name, path) {
+	readDescriptorV2(name, repoPath) {
 		const parse = promisify(properties.read);
-		return parse(path)
+		return parse(repoPath)
 			.then(props => {
 				if (!this.namingStrategy.matchesName(props,name)) {
 					throw new LibraryFormatError(this, name, 'name in descriptor does not match directory name');
@@ -441,7 +441,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {string} The full path of the directory.
 	 */
 	directory(name) {
-		return name ? this.path + name + '/' : this.path;
+		return name ? this.path + name + path.sep : this.path;
 	}
 
 	/**
@@ -671,7 +671,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const v1 = path.join(libdir, firmwareDir);
 		const v2 = path.join(libdir, srcDir);
 		const self = this;
-		function mapper(stat, source, path) {
+		function mapper(stat, source, filePath) {
 			if (stat.isFile()) {
 				return self.migrateSource(name, source, v1, v2);
 			}
@@ -730,7 +730,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const v1 = path.join(libdir, firmwareDir, examplesDir);
 		const v2 = path.join(libdir, examplesDir);
 		const self = this;
-		function mapper(stat, example, path) {
+		function mapper(stat, example, filePath) {
 			return self.migrateExample(name, example, v1, v2);
 		}
 
