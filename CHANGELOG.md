@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- Fix validation and tarball creation on Windows
+
 ## 0.1.5
 
 - fix [case sensitivity issue](https://github.com/spark/particle-library-manager/issues/17)
