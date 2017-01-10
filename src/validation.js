@@ -212,8 +212,9 @@ function _validateLibraryFiles(repo, libraryName) {
 
 	return _mainSourceName(repo, libraryName)
 		.then((mainSourceName) => {
-			requiredFiles['main source'] = new RegExp(`src/${mainSourceName}.cpp`, 'i');
-			requiredFiles['main header'] = new RegExp(`src/${mainSourceName}.h`, 'i');
+			// Match Windows and UNIX paths
+			requiredFiles['main source'] = new RegExp(`src[/\\\\]${mainSourceName}.cpp`, 'i');
+			requiredFiles['main header'] = new RegExp(`src[/\\\\]${mainSourceName}.h`, 'i');
 		})
 		.then(() => _libraryFiles(directory))
 		.then((files) => {
