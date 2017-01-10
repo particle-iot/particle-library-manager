@@ -34,7 +34,8 @@ export class LibraryContributor {
 				ignore: (name) => {
 					const dirs = path.dirname(path.relative(dir, name)).split(path.sep);
 					return dirs.length && dirs[0]==='.git';
-				}
+				},
+				readable: true
 			});
 			pack.pipe(gzip).pipe(archiveWriter);
 
