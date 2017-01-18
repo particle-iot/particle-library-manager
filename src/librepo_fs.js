@@ -731,7 +731,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const v2 = path.join(libdir, examplesDir);
 		const self = this;
 		function mapper(stat, example, filePath) {
-			return self.migrateExample(name, example, v1, v2);
+			if (stat.isFile()) {
+				return self.migrateExample(name, example, path.dirname(filePath), v2);
+			} else {
+				return mapActionDir(filePath, mapper, (promises) => promises);
+			}
 		}
 
 		return this.fileStat(v1).then((stat) => {
