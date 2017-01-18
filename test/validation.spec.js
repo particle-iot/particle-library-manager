@@ -235,6 +235,17 @@ describe('validation', () => {
 			};
 			return setup().then(execute).then(verify);
 		});
+
+		it('returns valid for valid library that has been renamed', () => {
+			const setup = () => getLibrary('library-v2-renamed');
+
+			const execute = (repo) => validateLibrary(repo);
+
+			const verify = (result) => expect(result.valid).to.be.true;
+
+			return setup().then(execute).then(verify);
+		});
+
 	});
 
 	describe('error handling', () => {
