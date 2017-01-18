@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- Migrate examples in nested subdirectories
+
 ## 0.1.6
 
 - Fix validation and tarball creation on Windows
