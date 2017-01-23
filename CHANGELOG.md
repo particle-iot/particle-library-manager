@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8
+
+- Comment out some library fields in template
+- Make sentence mandatory during validation
+- Handle architectures during migration
+
 ## 0.1.7
 
 - Migrate examples in nested subdirectories
