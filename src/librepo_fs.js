@@ -767,7 +767,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	migrateDescriptor(desc) {
-		// for now there's nothing to do.
+		if (desc.architectures) {
+			desc.architectures = desc.architectures.split(',');
+		}
 		return desc;
 	}
 
