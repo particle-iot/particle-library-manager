@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.8
+## 0.1.9
 
 - Comment out some library fields in template
 - Make sentence mandatory during validation
