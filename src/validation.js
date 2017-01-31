@@ -20,7 +20,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 
-const REQUIRED_FIELDS = ['name', 'version', 'author'];
+const REQUIRED_FIELDS = ['name', 'version', 'author', 'sentence'];
 
 const PATTERNS = {
 	name: {

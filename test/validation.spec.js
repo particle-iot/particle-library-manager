@@ -123,6 +123,20 @@ describe('validation', () => {
 				expectError('author', '', "can't be blank");
 			});
 		});
+
+		describe('sentence', () => {
+			it('returns valid for a valid sentence', () => {
+				expectValid('sentence', 'A library');
+			});
+
+			it('returns error for missing sentence', () => {
+				expectError('sentence', undefined, "can't be blank");
+			});
+
+			it('returns error for blank sentence', () => {
+				expectError('sentence', '', "can't be blank");
+			});
+		});
 	});
 
 	describe('validateMetadata', () => {
