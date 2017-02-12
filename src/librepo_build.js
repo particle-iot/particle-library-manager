@@ -17,16 +17,15 @@
  ******************************************************************************
  */
 
-import {AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary} from './librepo';
+import { AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary } from './librepo';
 import Agent from 'particle-api-js/lib/Agent';
-import {LibraryFormatError} from './librepo';
+import { LibraryFormatError } from './librepo';
 
 /**
  * A library retrieved from the Build repo.
  * The metadata should include the ID
  */
-export class BuildLibrary extends AbstractLibrary
-{
+export class BuildLibrary extends AbstractLibrary{
 	constructor(name, metadata, id, repo) {
 		super(name, metadata, repo);
 		if (id === undefined || id.length < 1) {
@@ -66,7 +65,7 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	/**
 	 * @param {String} endpoint The root of the library API.
 	 */
-	constructor({endpoint}) {
+	constructor({ endpoint }) {
 		super();
 		this.endpoint = endpoint;
 		this.agent = new Agent();
@@ -75,7 +74,7 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	fetch(name) {
-		return this.get(this.root+this.dot_json, {name}).then(libs => this._buildLibrary(name, libs));
+		return this.get(this.root+this.dot_json, { name }).then(libs => this._buildLibrary(name, libs));
 	}
 
 	_buildLibrary(name, libs) {

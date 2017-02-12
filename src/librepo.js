@@ -166,8 +166,7 @@ export class MemoryLibraryFile extends LibraryFile {
  * for the library data. The results of these are then passed to template methods
  * `processDefinition()` and `processFiles()`.
  */
-export class AbstractLibrary extends Library
-{
+export class AbstractLibrary extends Library{
 	constructor(name, metadata, repo) {
 		super(name);
 		this.metadata = metadata;
@@ -231,7 +230,7 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	 * @returns {*} The object definition.
 	 */
 	definition(lib) {
-		return Promise.resolve({name:lib.name});
+		return Promise.resolve({ name:lib.name });
 	}
 
 	extractNames(libs) {

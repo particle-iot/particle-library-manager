@@ -10,6 +10,7 @@
     "no-var": 2,
     "valid-jsdoc": [2, {
       "requireReturnDescription": true
-    }]
+    }],
+    "no-console": 0
   }
 }

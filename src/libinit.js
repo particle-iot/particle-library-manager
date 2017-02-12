@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {validateField} from './validation';
+import { validateField } from './validation';
 const path = require('path');
 
 function lowercaseFirstLetter(string) {

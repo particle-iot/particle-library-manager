@@ -19,7 +19,7 @@
 
 import Particle from 'particle-api-js';
 
-import {AbstractLibraryRepository, AbstractLibrary} from './librepo';
+import { AbstractLibraryRepository, AbstractLibrary } from './librepo';
 
 const tar = require('tar-stream');
 const gunzip = require('gunzip-maybe');
@@ -31,8 +31,7 @@ const promisify = require('es6-promisify');
 /**
  * A library retrieved from the cloud.
  */
-export class CloudLibrary extends AbstractLibrary
-{
+export class CloudLibrary extends AbstractLibrary{
 	constructor(name, metadata, repo) {
 		super(name, metadata, repo);
 	}
@@ -128,7 +127,7 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 	/**
 	 * @param {String} endpoint The root of the library API.
 	 */
-	constructor({auth=undefined, client = new Particle().client({auth})}) {
+	constructor({ auth=undefined, client = new Particle().client({ auth }) }) {
 		super();
 		this.api = client.api;
 		this.client = client;
@@ -137,7 +136,7 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	_getLibrary(name, version) {
-		const query = version ? {version} : undefined;
+		const query = version ? { version } : undefined;
 		return this.client.library(name, query);
 	}
 

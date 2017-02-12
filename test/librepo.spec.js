@@ -17,11 +17,11 @@
  ******************************************************************************
  */
 
-import {LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError} from '../src/librepo';
-import {LibraryRepository, Library, LibraryFile, MemoryLibraryFile} from '../src/librepo';
-import {AbstractLibrary, AbstractLibraryRepository} from '../src/librepo';
+import { LibraryNotFoundError, LibraryRepositoryError, LibraryFormatError } from '../src/librepo';
+import { LibraryRepository, Library, LibraryFile, MemoryLibraryFile } from '../src/librepo';
+import { AbstractLibrary, AbstractLibraryRepository } from '../src/librepo';
 import VError from 'verror';
-import {sinon, expect} from './test-setup';
+import { sinon, expect } from './test-setup';
 const Writable = require('stream').Writable;
 
 describe('LibraryManager', () => {
@@ -106,7 +106,7 @@ describe('LibraryManager', () => {
 
 		it('has streamable content', () => {
 			const sut = new LibraryFile('name', 'type', 'ext');
-			const stream = {end: sinon.spy()};
+			const stream = { end: sinon.spy() };
 			const p = sut.content(stream);
 			expect(stream.end).to.be.calledOnce;
 			return expect(p).to.eventually.equal(stream);
@@ -236,7 +236,7 @@ describe('LibraryManager', () => {
 
 		it('returns a defintiion comprising just the library name', () => {
 			const sut = new AbstractLibraryRepository();
-			expect(sut.definition({name:'wombat'})).to.eventually.equal('wombat');
+			expect(sut.definition({ name:'wombat' })).to.eventually.equal('wombat');
 		});
 
 	});

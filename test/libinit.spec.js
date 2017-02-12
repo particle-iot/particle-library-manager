@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {expect, sinon} from './test-setup';
+import { expect, sinon } from './test-setup';
 
 const fs = require('fs');
 const path = require('path');
@@ -136,21 +136,21 @@ describe('library initialize', function doit() {
 		it('sets the name_code option to the code-safe name with the first letter lowercased', () => {
 			const sut = new MockLibraryInitGenerator();
 			sut.options = {};
-			sut._handlePrompts({name:'SparkLib++'});
+			sut._handlePrompts({ name:'SparkLib++' });
 			expect(sut.options).to.have.property('name_code').equal('sparkLib');
 		});
 
 		it('sets the Name_code option to the code-safe name with first letter capitalized', () => {
 			const sut = new MockLibraryInitGenerator();
 			sut.options = {};
-			sut._handlePrompts({name:'my-lib++'});
+			sut._handlePrompts({ name:'my-lib++' });
 			expect(sut.options).to.have.property('Name_code').equal('Mylib');
 		});
 
 		it('does not set the Name_code option when name is not present', () => {
 			const sut = new MockLibraryInitGenerator();
 			sut.options = {};
-			sut._handlePrompts({name2:'abcd'});
+			sut._handlePrompts({ name2:'abcd' });
 			expect(sut.options).to.not.have.property('Name_code');
 		});
 
@@ -160,19 +160,19 @@ describe('library initialize', function doit() {
 			it('validates the name', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
-				expect(() => sut._handlePrompts({name:'ab/cd'})).to.throw(nameError);
+				expect(() => sut._handlePrompts({ name:'ab/cd' })).to.throw(nameError);
 			});
 
 			it('validates the version', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
-				expect(() => sut._handlePrompts({version:'ab/cd'})).to.throw(versionError);
+				expect(() => sut._handlePrompts({ version:'ab/cd' })).to.throw(versionError);
 			});
 
 			it('validates the author, which is freeform', () => {
 				const sut = new MockLibraryInitGenerator();
 				sut.options = {};
-				expect(() => sut._handlePrompts({author:'ab/cd'})).to.not.throw();
+				expect(() => sut._handlePrompts({ author:'ab/cd' })).to.not.throw();
 			});
 
 			it('validates the initial name value', () => {
@@ -218,15 +218,15 @@ describe('library initialize', function doit() {
 			sut._setOutputDir = sinon.stub();
 			sut._allPrompts = sinon.stub().returns('abcd');
 			sut._handlePrompts = sinon.stub().returns('handled');
-			sut.prompt = sinon.stub().returns(Promise.resolve({name:'123'}));
+			sut.prompt = sinon.stub().returns(Promise.resolve({ name:'123' }));
 			// when
 			return sut._prompt()
-			.then((result) => {
-				expect(result).to.be.equal('handled');
-				expect(sut._handlePrompts).to.have.been.calledWith({name:'123'});
-				expect(sut._allPrompts).to.have.been.calledOnce;
-				expect(sut._setOutputDir).to.have.been.calledOnce;
-			});
+				.then((result) => {
+					expect(result).to.be.equal('handled');
+					expect(sut._handlePrompts).to.have.been.calledWith({ name:'123' });
+					expect(sut._allPrompts).to.have.been.calledOnce;
+					expect(sut._setOutputDir).to.have.been.calledOnce;
+				});
 		});
 	});
 });

@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {expect} from './test-setup';
+import { expect } from './test-setup';
 import * as index from '../src/index';
 const fs = require('fs');
 const path = require('path');

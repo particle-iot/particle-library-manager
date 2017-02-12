@@ -17,11 +17,11 @@
  ******************************************************************************
  */
 
-import {expect, sinon} from './test-setup';
-import {FileSystemNamingStrategy, FileSystemLibraryRepository, isLibraryExample} from '../src/librepo_fs';
-import {LibraryContributor} from '../src/libcontribute';
-import {makeCompleteV2Lib} from './librepo_fs_mock.spec';
-import {makeTestLib} from './librepo_fs_mock.spec';
+import { expect, sinon } from './test-setup';
+import { FileSystemNamingStrategy, FileSystemLibraryRepository, isLibraryExample } from '../src/librepo_fs';
+import { LibraryContributor } from '../src/libcontribute';
+import { makeCompleteV2Lib } from './librepo_fs_mock.spec';
+import { makeTestLib } from './librepo_fs_mock.spec';
 const fs = require('fs');
 const path = require('path');
 
@@ -94,12 +94,12 @@ describe('File System', () => {
 		fs.mkdirSync(libdir);
 
 		fse.copySync(v1data, libdir);
-		const comp1 = dircomp.compareSync(libdir, v1data, {compareContent:true});
+		const comp1 = dircomp.compareSync(libdir, v1data, { compareContent:true });
 		expect(comp1.same).to.be.true;
 
 		const sut = new FileSystemLibraryRepository(dir, naming);
 		return sut.setLibraryLayout(name, 2).then(() => {
-			const comp2 = dircomp.compareSync(libdir, v2data, {compareContent:true});
+			const comp2 = dircomp.compareSync(libdir, v2data, { compareContent:true });
 			if (!comp2.same) {
 				//const unequal = comp2.diffSet.filter(item => item.state!=='equal');
 			}
@@ -129,7 +129,7 @@ describe('File System', () => {
 			const dir = tmpobj.name;
 			const repo = new FileSystemLibraryRepository(dir);
 			const lib = makeTestLib(name, '1.2.3');
-			const sut = new LibraryContributor({repo, client});
+			const sut = new LibraryContributor({ repo, client });
 
 			sut._contribute = sinon.stub();
 
@@ -147,7 +147,7 @@ describe('File System', () => {
 			const repo = new FileSystemLibraryRepository(dir);
 			const lib = makeCompleteV2Lib(name, '1.2.3');
 
-			const sut = new LibraryContributor({repo, client});
+			const sut = new LibraryContributor({ repo, client });
 			const callback = sinon.stub();
 			sut._contribute = sinon.stub();
 
