@@ -17,15 +17,15 @@
  ******************************************************************************
  */
 
-import {LibraryNotFoundError, LibraryRepositoryError} from './librepo';
+import { LibraryNotFoundError, LibraryRepositoryError } from './librepo';
 import VError from 'verror';
-import {LibraryContributor} from './libcontribute';
+import { LibraryContributor } from './libcontribute';
 const fs = require('fs');
 const path = require('path');
 const promisify = require('es6-promisify');
 const properties = require('properties-parser');
 
-import {AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatError} from './librepo';
+import { AbstractLibraryRepository, AbstractLibrary, LibraryFile, LibraryFormatError } from './librepo';
 
 /**
  *
@@ -39,16 +39,16 @@ export function mapActionDir(rootDir, mapper, action) {
 	const stat = promisify(fs.stat);
 	const readdir = promisify(fs.readdir);
 	return readdir(rootDir)
-	.then(files => {
-		const filePromises = files.map(file => {
-			const filePath = path.join(rootDir, file);
-			return stat(filePath)
-				.then(stat => mapper(stat, file, filePath));
-		});
-		return Promise
-			.all(filePromises)
+		.then(files => {
+			const filePromises = files.map(file => {
+				const filePath = path.join(rootDir, file);
+				return stat(filePath)
+					.then(stat => mapper(stat, file, filePath));
+			});
+			return Promise
+				.all(filePromises)
 				.then(actionables => action(actionables, files));
-	});
+		});
 }
 
 function isDirectory(stat) {
@@ -479,10 +479,14 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	readFileJSON(name, filename) {
 		const readFile = promisify(fs.readFile);
 		return readFile(filename, 'utf8')
-			.then(json => JSON.parse(json))
+			.then(json => this._parseJSON(json))
 			.catch(error => {
 				throw new LibraryFormatError(this, name, new VError(error, 'error parsing "%s"', filename));
 			});
+	}
+
+	_parseJSON(json) {
+		return JSON.parse(json);
 	}
 
 	_createLibrary(name, metadata) {
@@ -562,11 +566,13 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	getLibraryLayout(name) {
 		const dir = this.libraryDirectory(this.namingStrategy.nameToFilesystem(name));
 		const stat = promisify(fs.stat);
-		const notFound = new LibraryNotFoundError(this, name);
+		const notFound = (error) => error!==undefined ? new LibraryNotFoundError(this, name, error) : new LibraryNotFoundError(this, name);
 		return Promise.resolve()
 			.then(() => {
 				return stat(dir).then((stat) => {
 					return stat.isDirectory();
+				}).catch(err => {
+					throw notFound(err);
 				});
 			})
 			.then(exists => {
@@ -576,19 +582,21 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 							if (stat.isFile()) {
 								return 1;
 							}
-							throw notFound;
+							throw notFound();
 						})
-						.catch(() => stat(path.join(dir, libraryProperties)).then(stat => {
-							if (stat.isFile()) {
-								return 2;
-							}
-							throw notFound;
-						}));
+						.catch(() => stat(path.join(dir, libraryProperties))
+							.catch (err => {
+								throw notFound(err);
+							})
+							.then(stat => {
+								if (stat.isFile()) {
+									return 2;
+								}
+								throw notFound();
+							})
+						);
 				}
-				throw notFound;
-			})
-			.catch((err) => {
-				throw notFound;     // todo - swallow the error? hmmm...
+				throw notFound();
 			});
 	}
 
@@ -655,16 +663,16 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			const v2desc = this.migrateDescriptor(v1desc);
 			return this.writeDescriptorV2(v2descriptorFile, v2desc);
 		})
-		.then(() => this.fileStat(v1test).then((stat) => {
-			if (stat) {
-				return this.mkdirIfNeeded(path.join(libdir, testDir))
-					.then(() => promisify(fs.rename)(v1test, v2test));
-			}
-		}))
-		.then(() => this.migrateSources(libdir, includeName))
-		.then(() => this.migrateExamples(libdir, includeName))
-		.then(() => promisify(fse.remove)(path.join(libdir, firmwareDir)))
-		.then(() => promisify(fse.remove)(v1descriptorFile));
+			.then(() => this.fileStat(v1test).then((stat) => {
+				if (stat) {
+					return this.mkdirIfNeeded(path.join(libdir, testDir))
+						.then(() => promisify(fs.rename)(v1test, v2test));
+				}
+			}))
+			.then(() => this.migrateSources(libdir, includeName))
+			.then(() => this.migrateExamples(libdir, includeName))
+			.then(() => promisify(fse.remove)(path.join(libdir, firmwareDir)))
+			.then(() => promisify(fse.remove)(v1descriptorFile));
 	}
 
 	migrateSources(libdir, name) {
@@ -690,11 +698,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	migrateSource(lib, source, v1dir, v2dir) {
 		return this.mkdirIfNeeded(v2dir)
 			.then(() => promisify(fs.readFile)(path.join(v1dir, source))
-			.then((v1source) => {
-				const v2source = this.migrateSourcecode(v1source.toString('utf-8'), lib);
-				const v2file = path.join(v2dir, source);
-				return promisify(fs.writeFile)(v2file, v2source);
-			}));
+				.then((v1source) => {
+					const v2source = this.migrateSourcecode(v1source.toString('utf-8'), lib);
+					const v2file = path.join(v2dir, source);
+					return promisify(fs.writeFile)(v2file, v2source);
+				}));
 	}
 
 	/**
@@ -708,15 +716,15 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	migrateExample(lib, example, v1dir, v2dir) {
 		return this.mkdirIfNeeded(v2dir)
 			// read the original example file
-		.then(() => promisify(fs.readFile)(path.join(v1dir, example)))
-		.then((v1example) => {
-			const v2example = this.migrateSourcecode(v1example.toString('utf-8'), lib);
-			const basename = this.extension(example)[1];
-			const exampledir = path.join(v2dir, basename);
-			const examplefile = path.join(exampledir, example);
-			return this.mkdirIfNeeded(exampledir)
-				.then(() => promisify(fs.writeFile)(examplefile, v2example));
-		});
+			.then(() => promisify(fs.readFile)(path.join(v1dir, example)))
+			.then((v1example) => {
+				const v2example = this.migrateSourcecode(v1example.toString('utf-8'), lib);
+				const basename = this.extension(example)[1];
+				const exampledir = path.join(v2dir, basename);
+				const examplefile = path.join(exampledir, example);
+				return this.mkdirIfNeeded(exampledir)
+					.then(() => promisify(fs.writeFile)(examplefile, v2example));
+			});
 	}
 
 	/**
@@ -805,11 +813,11 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const name = this.namingStrategy.nameToFilesystem(libname);
 		const libdir = this.libraryDirectory(name);
 		return this.fetch(libname)
-		.then(lib => {
-			const libsrcdir = path.join(libdir, 'src');
-			const targetdir = path.join(dir, lib.name);
-			return this._addAdaptersImpl(callback, targetdir, libsrcdir);
-		});
+			.then(lib => {
+				const libsrcdir = path.join(libdir, 'src');
+				const targetdir = path.join(dir, lib.name);
+				return this._addAdaptersImpl(callback, targetdir, libsrcdir);
+			});
 	}
 
 	isHeaderFile(name) {
@@ -832,7 +840,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			ignore.push(targetdir);
 			const writeFile = promisify(fs.writeFile);
 			const relative = path.relative(targetdir, srcdir);
-			function handleFile(stat, file, filePath) {
+			const handleFile = (stat, file, filePath) => {
 				if (stat.isDirectory()) {
 					return self._addAdaptersImpl(callback, path.join(targetdir, file), path.join(srcdir, file), ignore);
 				} else {
@@ -842,14 +850,14 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 						return false;
 					}
 				}
-			}
+			};
 
 			return mapActionDir(srcdir, handleFile, () => {});
 		}
 	}
 
 	contribute(name, client, dryRun, callback) {
-		const pub = new LibraryContributor({repo: this, client});
+		const pub = new LibraryContributor({ repo: this, client });
 		return pub.contribute(callback, name, dryRun);
 	}
 }
@@ -936,8 +944,8 @@ class LibraryExample {
 	 * @param {string} libraryPath      The library path relative to the base path
 	 * @param {string} example          The example path relative to the base path
 	 */
-	constructor({basePath, libraryPath, example}) {
-		Object.assign(this, {basePath, libraryPath, example});
+	constructor({ basePath, libraryPath, example }) {
+		Object.assign(this, { basePath, libraryPath, example });
 	}
 
 	/**

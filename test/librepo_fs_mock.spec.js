@@ -17,17 +17,27 @@
  ******************************************************************************
  */
 
-import {expect, sinon} from './test-setup';
+import { expect, sinon } from './test-setup';
 import concat from 'concat-stream';
-import {AbstractLibrary} from '../src/librepo';
+import { AbstractLibrary } from '../src/librepo';
 const promisify = require('es6-promisify');
 const fs = require('fs');
 const path = require('path');
 
-import {FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson, isLibraryExample, pathsCommonPrefix} from '../src/librepo_fs';
-import {LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile} from '../src/librepo';
+import { FileSystemNamingStrategy, FileSystemLibraryRepository, getdirs, libraryProperties, sparkDotJson, isLibraryExample, pathsCommonPrefix } from '../src/librepo_fs';
+import { LibraryFormatError, LibraryNotFoundError, MemoryLibraryFile } from '../src/librepo';
+import VError from 'verror';
 
-const libFileContents = { 'h': '// a header file', cpp:'// a cpp file'};
+
+const libFileContents = { 'h': '// a header file', cpp:'// a cpp file' };
+
+function makeFsError(code, errno, msg) {
+	const err = new Error();
+	err.errno = errno;
+	err.code = code;
+	err.message = msg;
+	return err;
+}
 
 /**
  * Creates a mock filesystem structure for a library.
@@ -188,7 +198,7 @@ function libFiles(lib, root) {
 }
 
 export function makeTestLib(name, version) {
-	const lib = makeLibrary(name, {name, version}, [
+	const lib = makeLibrary(name, { name, version }, [
 		new MemoryLibraryFile(name, 'source', 'cpp', '// a cpp file', 1),
 		new MemoryLibraryFile(name, 'source', 'h', '// a header file', 2),
 		new MemoryLibraryFile(name, 'example', 'ino', '// some content ino', 3)
@@ -198,7 +208,7 @@ export function makeTestLib(name, version) {
 
 
 export function makeCompleteV2Lib(name, version) {
-	const lib = makeLibrary(name, {name, version}, [
+	const lib = makeLibrary(name, { name, version }, [
 		new MemoryLibraryFile('src/'+name, 'source', 'cpp', '// a cpp file', 1),
 		new MemoryLibraryFile('src/'+name, 'source', 'h', '// a header file', 2),
 		new MemoryLibraryFile('README', 'source', 'md', '# readme', 3),
@@ -360,9 +370,9 @@ describe('File System Mock', () => {
 		});
 
 		it('can remove the id property from metadata', () => {
-			const md = {name: 'funbuns', 'id': '123'};
+			const md = { name: 'funbuns', 'id': '123' };
 			const sut = new FileSystemLibraryRepository('not used');
-			expect(sut.removeId(md)).to.be.deep.equal({name: 'funbuns'});
+			expect(sut.removeId(md)).to.be.deep.equal({ name: 'funbuns' });
 		});
 
 		it('can fetch a filename from the library anem, file base and file extension', () => {
@@ -371,7 +381,7 @@ describe('File System Mock', () => {
 		});
 
 		it('can determine source code files', () => {
-			const isSourceData = {'abcd/a.txt':false, '123/a.c': true, 'yaya/a.cpp': true, '../a.properties': false};
+			const isSourceData = { 'abcd/a.txt':false, '123/a.c': true, 'yaya/a.cpp': true, '../a.properties': false };
 
 			for (let [name,isSource] of Object.entries(isSourceData)) {
 				it(`can determine if file '${name}' is source code`, () => {
@@ -428,13 +438,13 @@ describe('File System Mock', () => {
 		it('prepares v2 descriptor and doesn\'t modify an existing sentence property', () => {
 			const desc = { sentence: 'abc', description: 'def' };
 			const sut = new FileSystemLibraryRepository('mydir');
-			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'abc', description: 'def'});
+			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({ sentence: 'abc', description: 'def' });
 		});
 
 		it('prepares v2 descriptor by setting the sentence property if not defined', () => {
 			const desc = { description: 'def' };
 			const sut = new FileSystemLibraryRepository('mydir');
-			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({sentence: 'def', description: 'def'});
+			expect(sut.prepareDescriptorV2(desc)).to.be.deep.equal({ sentence: 'def', description: 'def' });
 		});
 
 
@@ -474,15 +484,18 @@ describe('File System Mock', () => {
 		it('can read a v1 descriptor', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
 			fs.writeFileSync('mydir/test.json', '{"name":"myname", "description":"desc"}');
-			expect(sut.readFileJSON('name_not_used', 'mydir/test.json'))
-				.to.eventually.deep.equal({name:'myname', description:'desc'});
+			return expect(sut.readFileJSON('name_not_used', 'mydir/test.json'))
+				.to.eventually.deep.equal({ name:'myname', description:'desc' });
 		});
 
 		it('rejects an invalid v1 descriptor', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
 			fs.writeFileSync('mydir/test.json', '{"name":"myname, "description":"desc"}');
-			expect(sut.readFileJSON('somename', 'mydir/test.json'))
-				.to.eventually.be.rejected.and.deep.equal(new LibraryFormatError(sut, 'somename', 'Error parsing file "mydir/test.json"'));
+			const msg = 'Unexpected token d in JSON at position 18';
+			sut._parseJSON = sinon.stub().throws(new Error(msg));
+			return expect(sut.readFileJSON('somename', 'mydir/test.json'))
+				.to.eventually.be.rejected.and.deep.equal(new LibraryFormatError(sut, 'somename',
+					new VError(new Error(msg), 'error parsing "mydir/test.json"')));
 		});
 
 		describe('layout', () => {
@@ -491,7 +504,8 @@ describe('File System Mock', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'abcd__';
 				const result = sut.getLibraryLayout(name);
-				return expect(result).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/abcd__/\'');
+				return expect(result).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
 			it('can detect legacy layout', () => {
@@ -514,7 +528,8 @@ describe('File System Mock', () => {
 				mkdir('mydir');
 				mkdir('mydir/invalid');
 				const sut = new FileSystemLibraryRepository('mydir');
-				return expect(sut.getLibraryLayout('invalid')).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, 'invalid'));
+				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/invalid/library.properties\'');
+				return expect(sut.getLibraryLayout('invalid')).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, 'invalid', cause));
 			});
 
 			it('can write legacy layout', () => {
@@ -544,18 +559,21 @@ describe('File System Mock', () => {
 			it('rejects a library layout when spark.json is a directory', () => {
 				const [sut, name, libdir] = buildLibDir();
 				mkdir(path.join(libdir, sparkDotJson));
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
 			it('rejects a library layout when no metadata is present', () => {
 				const [sut, name] = buildLibDir();
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
 			it('rejects a library layout when no directory is present', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'whatever';
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/whatever/\'');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
 			it('rejects a library layout when expected location is a file', () => {
@@ -564,7 +582,6 @@ describe('File System Mock', () => {
 				fs.writeFileSync(path.join('mydir', name, ''));
 				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
 			});
-
 		});
 
 		describe('migrate', () => {
@@ -619,12 +636,12 @@ describe('File System Mock', () => {
 		describe('mkdirIfNeeded', () => {
 			it('raises no error when the directory already exists', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
-				return expect(sut.mkdirIfNeeded('mydir')).to.eventually.not.reject;
+				return expect(sut.mkdirIfNeeded('mydir')).to.eventually.not.be.rejected;
 			});
 
 			it('mkdir raises error if something other than "EEXIST"', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
-				return expect(sut.mkdirIfNeeded('mydir/:/!|,')).to.eventually.reject;
+				return expect(sut.mkdirIfNeeded('mydir/:/!|,')).to.eventually.be.rejected;
 			});
 		});
 
@@ -641,7 +658,7 @@ describe('File System Mock', () => {
 		describe('Name Strategy', () => {
 			const sut = FileSystemNamingStrategy.BY_NAME;
 			it('returns the library name for the library ident', () => {
-				expect(sut.toName({name:'finbarr'})).to.be.equal('finbarr');
+				expect(sut.toName({ name:'finbarr' })).to.be.equal('finbarr');
 			});
 
 			it('returns the same name for filesystem', () => {
@@ -649,7 +666,7 @@ describe('File System Mock', () => {
 			});
 
 			it('matches the same name', () => {
-				return expect(sut.matchesName({name:'abcd'}, 'abcd')).to.be.true;
+				return expect(sut.matchesName({ name:'abcd' }, 'abcd')).to.be.true;
 			});
 		});
 	});
@@ -658,7 +675,7 @@ describe('File System Mock', () => {
 		const sut = FileSystemNamingStrategy.BY_NAME_AT_VERSION;
 
 		it('returns the library name@version for the library ident', () => {
-			expect(sut.toName({name:'finbarr', version:'fnarr'})).to.be.equal('finbarr@fnarr');
+			expect(sut.toName({ name:'finbarr', version:'fnarr' })).to.be.equal('finbarr@fnarr');
 		});
 
 		it('returns the same name for filesystem', () => {
@@ -666,14 +683,14 @@ describe('File System Mock', () => {
 		});
 
 		it('matches the same name@version', () => {
-			return expect(sut.matchesName({name:'abcd', version:'1'}, 'abcd@1')).to.be.true;
+			return expect(sut.matchesName({ name:'abcd', version:'1' }, 'abcd@1')).to.be.true;
 		});
 	});
 
 	describe('Direct Strategy', () => {
 		const sut = FileSystemNamingStrategy.DIRECT;
 		it('returns the library name for the library ident', () => {
-			expect(sut.toName({name:'finbarr', version:'fnarr'})).to.be.equal('finbarr');
+			expect(sut.toName({ name:'finbarr', version:'fnarr' })).to.be.equal('finbarr');
 		});
 
 		it('returns the empty name for filesystem', () => {
@@ -681,18 +698,18 @@ describe('File System Mock', () => {
 		});
 
 		it('matches the same name', () => {
-			return expect(sut.matchesName({name:'abcd', version:'1'}, 'abcd')).to.be.true;
+			return expect(sut.matchesName({ name:'abcd', version:'1' }, 'abcd')).to.be.true;
 		});
 
 		it('matches the empty string', () => {
-			return expect(sut.matchesName({name:'abcd', version:'1'}, '')).to.be.true;
+			return expect(sut.matchesName({ name:'abcd', version:'1' }, '')).to.be.true;
 		});
 
 		it('provides the name by reading the library in the directory', () => {
 			const mockRepo = {};
 			mockRepo.descriptorFileV2 = sinon.stub().returns('file');
-			mockRepo.readDescriptorV2 = sinon.stub().returns(Promise.resolve({name:'abcd'}));
-			mockRepo.fileStat = sinon.stub().returns(Promise.resolve({isFile: () => true}));
+			mockRepo.readDescriptorV2 = sinon.stub().returns(Promise.resolve({ name:'abcd' }));
+			mockRepo.fileStat = sinon.stub().returns(Promise.resolve({ isFile: () => true }));
 
 			// const filePath = this.descriptorFileV2(name);
 			// return this.readDescriptorV2(name, filePath)
@@ -708,7 +725,7 @@ describe('File System Mock', () => {
 
 		it('is not writable', () => {
 			const repo = new FileSystemLibraryRepository('.', sut);
-			return expect(repo.add({metadata: {name:'test'}})).to.be.rejected.and.eventually.have.property('name').equal('LibraryRepositoryError');
+			return expect(repo.add({ metadata: { name:'test' } })).to.be.rejected.and.eventually.have.property('name').equal('LibraryRepositoryError');
 		});
 
 		it('can retrieve a library by default', () => {
@@ -727,7 +744,7 @@ describe('File System Mock', () => {
 
 		it('throws LibraryNotFoundError if the requested name does not match the library name', () => {
 			const repo = new FileSystemLibraryRepository('./mydir/lib1', sut);
-			return expect(repo.fetch('lib2')).to.eventually.reject;
+			return expect(repo.fetch('lib2')).to.eventually.be.rejected;
 		});
 
 		it('returns no names if the directory is not a valid library', () => {
@@ -750,7 +767,7 @@ describe('File System Mock', () => {
 		});
 
 		it('raises an error when the layout is not v2', () => {
-			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({isDirectory: () => true}));
+			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({ isDirectory: () => true }));
 			sut._addAdapters = sinon.spy();
 			sut.getLibraryLayout = sinon.stub().returns(Promise.resolve(1));
 			// when
@@ -764,7 +781,7 @@ describe('File System Mock', () => {
 		});
 
 		it('raises an error when the target directory does not exist', () => {
-			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({isDirectory: () => false}));
+			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({ isDirectory: () => false }));
 			sut._addAdapters = sinon.spy();
 			sut.getLibraryLayout = sinon.stub().returns(Promise.resolve(2));
 			// when
@@ -778,7 +795,7 @@ describe('File System Mock', () => {
 		});
 
 		it('calls _addAdapter when the layout is v2 and the directory exists', () => {
-			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({isDirectory: () => true}));
+			sut.fileStat = sinon.stub().withArgs('somedir').returns(Promise.resolve({ isDirectory: () => true }));
 			sut._addAdapters = sinon.spy();
 			sut.getLibraryLayout = sinon.stub().returns(Promise.resolve(2));
 			// when
@@ -900,27 +917,27 @@ describe('File System Mock', () => {
 			const base = buildV2Library('mylib');
 			const basePath = base+'examples/huzzah';
 			process.chdir(basePath);
-			return expect(isLibraryExample('code.ino')).to.eventually.eql({basePath:path.resolve(), libraryPath:'../..', example:'code.ino'});
+			return expect(isLibraryExample('code.ino')).to.eventually.eql({ basePath:path.resolve(), libraryPath:'../..', example:'code.ino' });
 		});
 
 		it('can successfully detect an example directory from the root of the library', () => {
 			const base = buildV2Library('mylib');
 			const basePath = base;
 			process.chdir(basePath);
-			return expect(isLibraryExample('examples/huzzah')).to.eventually.eql({basePath:path.resolve(), libraryPath:'', example:'examples/huzzah/'});
+			return expect(isLibraryExample('examples/huzzah')).to.eventually.eql({ basePath:path.resolve(), libraryPath:'', example:'examples/huzzah/' });
 		});
 
 		it('can successfully detect an example directory as the current folder', () => {
 			const base = buildV2Library('mylib');
 			const basePath = base+'examples/huzzah';
 			process.chdir(basePath);
-			return expect(isLibraryExample('.')).to.eventually.eql({basePath:path.resolve(), libraryPath:'../..', example:'./'});
+			return expect(isLibraryExample('.')).to.eventually.eql({ basePath:path.resolve(), libraryPath:'../..', example:'./' });
 		});
 
 		it('can successfully detect an example file given the full path from the current folder', () => {
 			const base = buildV2Library('mylib');
 			const basePath = cwd;
-			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({basePath, libraryPath:base.slice(0,-1), example:base+'examples/huzzah/'});
+			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({ basePath, libraryPath:base.slice(0,-1), example:base+'examples/huzzah/' });
 		});
 	});
 

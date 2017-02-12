@@ -58,7 +58,7 @@ export function validateField(field, value) {
 	}
 
 	let validator;
-	if (validator = PATTERNS[field]) {
+	if ((validator = PATTERNS[field])) {
 		if (!value.match(validator.pattern)) {
 			return {
 				field, value,
