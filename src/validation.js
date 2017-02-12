@@ -214,7 +214,7 @@ function _validateLibraryFiles(repo, libraryName) {
 		.then((mainSourceName) => {
 			// Match Windows and UNIX paths
 			// todo - factor out the regex (it's copied from PATTERNS.name.pattern without the start/end match)
-			requiredFiles['main source'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.cpp', 'i');
+			//requiredFiles['main source'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.cpp', 'i');
 			requiredFiles['main header'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.h', 'i');
 		})
 		.then(() => _libraryFiles(directory))

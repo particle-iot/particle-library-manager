@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- relaxed library validation. only a header file need exist. 
+
 ## 0.1.6
 
 - Fix validation and tarball creation on Windows
