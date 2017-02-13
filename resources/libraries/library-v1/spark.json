@@ -3,5 +3,6 @@
   "author": "Joe Goggins <joe@particle.io>",
   "license": "MIT",
   "version": "0.0.10",
-  "description": "A simple library that illustrates coding conventions of a Spark Library"
+  "description": "A simple library that illustrates coding conventions of a Spark Library",
+  "architectures": "spark-core,particle-photon"
 }

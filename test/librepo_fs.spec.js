@@ -127,6 +127,10 @@ describe('File System', () => {
 		return assertMigrate('library-v1-noexamples', 'library-v2-noexamples');
 	});
 
+	it('can migrate a v1 library with nested examples to v2 format', () => {
+		return assertMigrate('library-v1-nested-examples', 'library-v2-nested-examples');
+	});
+
 
 	describe('LibraryContributor', () => {
 
