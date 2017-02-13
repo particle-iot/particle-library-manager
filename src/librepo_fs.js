@@ -361,27 +361,32 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return writeFile(toFile, content);
 	}
 
-	buildV2Descriptor(metadata) {
+	buildV2Descriptor(metadata, withComments) {
 		let content = [];
-		function addProperty(target, value, name) {
+		function addProperty(target, value, name, comment) {
 			if (value!==undefined) {
 				content.push(`${name}=${value}\n`);
+			} else if (withComments) {
+				content.push(`# ${name}=${comment}\n`);
 			}
 		}
 
-		addProperty(content, metadata.name, 'name');
-		addProperty(content, metadata.version, 'version');
-		addProperty(content, metadata.license, 'license');
-		addProperty(content, metadata.author, 'author');
-		addProperty(content, metadata.description, 'sentence');
-		addProperty(content, metadata.architectures && metadata.architectures.join(','), 'architectures');
+		addProperty(content, metadata.name, 'name', 'the name of this library');
+		addProperty(content, metadata.version, 'version', 'the current version of this library');
+		addProperty(content, metadata.license, 'license', 'insert your choice of license here');
+		addProperty(content, metadata.author, 'author', 'library author, e.g. name + email address');
+		addProperty(content, metadata.description, 'sentence', 'one sentence description of this library');
+		addProperty(content, metadata.url, 'url', 'the url for the project');
+		addProperty(content, metadata.paragraph, 'paragraph', 'a longer description of this library');
+		addProperty(content, metadata.repository, 'repository', 'git repository for the project, like https://github.com/mygithub_user/my_repo.git');
+		addProperty(content, metadata.architectures && metadata.architectures.join(','), 'architectures', 'a list of supported boards if this library is hardware dependent, like particle-photon,particle-electron');
 		return content.join('');
 	}
 
-	writeDescriptorV2(toFile, metadata) {
+	writeDescriptorV2(toFile, metadata, withComments) {
 		const writeFile = promisify(fs.writeFile);
-		const content = this.buildV2Descriptor(metadata);
 		this.prepareDescriptorV2(metadata);
+		const content = this.buildV2Descriptor(metadata, withComments);
 		return writeFile(toFile, content);
 	}
 
@@ -663,7 +668,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return this.readDescriptorV1(orgName, v1descriptorFile).then((v1desc) => {
 			includeName = v1desc.name;
 			const v2desc = this.migrateDescriptor(v1desc);
-			return this.writeDescriptorV2(v2descriptorFile, v2desc);
+			return this.writeDescriptorV2(v2descriptorFile, v2desc, true);
 		})
 			.then(() => this.fileStat(v1test).then((stat) => {
 				if (stat) {

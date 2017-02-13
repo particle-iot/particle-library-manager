@@ -461,13 +461,16 @@ describe('File System Mock', () => {
 			const content = sut.buildV2Descriptor({
 				name: 'abcd', version: '1.2.3', license: 'dummy', author: 'Mr Big', 'description': 'Fixes the world',
 				architectures: ['particle-photon', 'particle-p1']
-			});
+			}, true);
 			expect(content).to.be.equal(
 				'name=abcd\n' +
 				'version=1.2.3\n' +
 				'license=dummy\n' +
 				'author=Mr Big\n' +
 				'sentence=Fixes the world\n' +
+				'# url=the url for the project\n'+
+				'# paragraph=a longer description of this library\n'+
+				'# repository=git repository for the project, like https://github.com/mygithub_user/my_repo.git\n' +
 				'architectures=particle-photon,particle-p1\n');
 		});
 

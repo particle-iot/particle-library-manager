@@ -109,7 +109,7 @@ describe('File System', () => {
 		return sut.setLibraryLayout(name, 2).then(() => {
 			const comp2 = dircomp.compareSync(libdir, v2data, { compareContent:true });
 			if (!comp2.same) {
-				//const unequal = comp2.diffSet.filter(item => item.state!=='equal');
+//				const unequal = comp2.diffSet.filter(item => item.state!=='equal');
 			}
 			expect(comp2.same).to.be.true;
 		});
