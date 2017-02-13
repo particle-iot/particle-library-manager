@@ -137,6 +137,7 @@ export class LibraryFile {
 }
 
 export class MemoryLibraryFile extends LibraryFile {
+	/* istanbul ignore next */
 	constructor(name, kind, extension, content, id) {
 		super(name, kind, extension);
 		this.string_content = content;
@@ -167,7 +168,7 @@ export class MemoryLibraryFile extends LibraryFile {
  * `processDefinition()` and `processFiles()`.
  */
 export class AbstractLibrary extends Library{
-	constructor(name, metadata, repo) {
+	constructor(name, metadata, repo) { /* istanbul ignore next */
 		super(name);
 		this.metadata = metadata;
 		this.repo = repo;
@@ -246,6 +247,3 @@ export class AbstractLibraryRepository extends LibraryRepository {
 		return lib.name;
 	}
 }
-
-// keep all branches  of the ES6 transpilled code executed
-export default () => {};

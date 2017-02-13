@@ -117,8 +117,9 @@ describe('CloudLibraryRepository', () => {
 				expect('/newlib/project.properties').to.not.be.a.file;
 				expect('/newlib/src/neopixel.cpp').to.be.a.file;
 				expect('/newlib/src/neopixel.h').to.be.a.file;
+				mockfs.restore();
 			})
-			.finally(() => {
+			.catch(() => {
 				mockfs.restore();
 			});
 	});

@@ -117,6 +117,23 @@ describe('library initialize', function doit() {
 			}).then(validateOutput);
 		});
 
+		it('sets the year from the "year" options', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = { year: 1234 };
+			const date = new Date();
+			sut._setYear(date);
+			expect(sut.options.year).to.eql(1234);
+		});
+
+		it('sets the year from the current year when "year" option not defined', () => {
+			const sut = new MockLibraryInitGenerator();
+			sut.options = {};
+			const date = new Date();
+			sut._setYear(date);
+			expect(sut.options.year).to.eql(date.getFullYear());
+		});
+
+
 		it('sets the output directory from the "dir" option', () => {
 			const sut = new MockLibraryInitGenerator();
 			sut.options = { dir: 'abcd' };

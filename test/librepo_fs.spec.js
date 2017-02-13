@@ -22,6 +22,7 @@ import { FileSystemNamingStrategy, FileSystemLibraryRepository, isLibraryExample
 import { LibraryContributor } from '../src/libcontribute';
 import { makeCompleteV2Lib } from './librepo_fs_mock.spec';
 import { makeTestLib } from './librepo_fs_mock.spec';
+import { NamingStrategy } from '../src/librepo_fs';
 const fs = require('fs');
 const path = require('path');
 
@@ -54,6 +55,13 @@ describe('File System', () => {
 	it('is a no-op to migrate a v2 library to v2', () => {
 		const sut = new FileSystemLibraryRepository(path.join(testdata, 'library-v2'));
 		expect(sut.setLibraryLayout('library-v2', 2)).eventually.not.rejected;
+	});
+
+	describe('naming strategy', () => {
+		it('requires toName to be overridden', () => {
+			const sut = new NamingStrategy();
+			expect(() => sut.toName()).to.throw(Error, 'not implemented');
+		});
 	});
 
 	describe('direct naming strategy', () => {
@@ -268,6 +276,11 @@ describe('File System', () => {
 		});
 	});
 
+	describe('LibraryDirectStrategy', () => {
+		it('matches empty name', () => {
+			const sut = FileSystemNamingStrategy.DIRECT;
+			expect(sut.matchesName({}, '')).to.be.true;
+		});
+	});
 });
-
 

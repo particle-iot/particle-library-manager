@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import fs from 'fs-extra';
+import klaw from 'klaw';
 import path from 'path';
 
 const REQUIRED_FIELDS = ['name', 'version', 'author'];
@@ -174,7 +174,7 @@ function _validateLibraryMetadata(repo, libraryName) {
 function _libraryFiles(directory) {
 	return new Promise((fulfill) => {
 		const files = [];
-		fs.walk(directory)
+		klaw(directory)
 			.on('data', (item) => {
 				const relativePath = path.relative(directory, item.path);
 				files.push(relativePath);

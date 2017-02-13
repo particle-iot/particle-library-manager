@@ -42,6 +42,12 @@ describe('LibraryManager', () => {
 				// expect(sut instanceof LibraryRepositoryError).to.be.true;
 				expect(sut.name).to.be.string('LibraryRepositoryError');
 			});
+
+			it('propagates additional parameters to super', () => {
+				const cause = new Error('boom');
+				const sut = new LibraryRepositoryError({}, cause);
+				expect(sut.cause()).to.eql(cause);
+			});
 		});
 
 		describe('LibraryNotFoundError', () => {

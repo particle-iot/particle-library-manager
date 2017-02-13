@@ -91,12 +91,14 @@ export class FileSystemLibrary extends AbstractLibrary {
 export class NamingStrategy {
 
 	/**
-	 * Generates a filesystem safe name for a library.
+	 * Generates a filesystem-safe name for a library.
 	 * @param {object} metadata The library metadata to generate a name for.
 	 * @return {string} An identifier for this library, derived from the library metadata.
 	 * @abstract
 	 */
-	toName(metadata) {}
+	toName(metadata) {
+		throw new Error('not implemented');
+	}
 
 	nameToFilesystem(name) {
 		return name;
