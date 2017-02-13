@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import {validateField} from './validation';
+import { validateField } from './validation';
 const path = require('path');
 
 function lowercaseFirstLetter(string) {
@@ -60,6 +60,7 @@ function validationError(validation) {
 export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	constructor(...args) {
+		/* istanbul ignore next */
 		super(...args);
 	}
 
@@ -69,15 +70,15 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	 * @returns {undefined} nothing
 	 */
 	_initializeOptions() {
-		this.option('name');
-		this.option('version');
-		this.option('year');
-		this.option('dir');
+		this.argument('name', { type: String, required: false });
+		this.argument('version', { type: String, required: false });
+		this.argument('year', { type: Number, required: false });
+		this.argument('dir', { type: String, required: false });
 	}
 
-	_setYear() {
+	_setYear(currentDate = new Date()) {
 		if (this.options.year === undefined) {
-			this.options.year = new Date().getFullYear();
+			this.options.year = currentDate.getFullYear();
 		}
 	}
 
@@ -243,9 +244,10 @@ export function buildLibraryInitGeneratorClass() {
 	 * functionality to create a new library in the file system.
 	 *
 	 */
-	class LibraryInitGenerator extends LibraryInitGeneratorMixin(gen.Base) { // eslint-disable-line new-cap
+	class LibraryInitGenerator extends LibraryInitGeneratorMixin(gen) { // eslint-disable-line new-cap
 
 		constructor(...args) {
+			/* istanbul ignore next */
 			super(...args);
 			this.sourceRoot(sourceRoot());
 			this._initializeOptions();

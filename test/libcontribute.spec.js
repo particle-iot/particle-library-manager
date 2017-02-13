@@ -1,6 +1,6 @@
 
-import {expect, sinon} from './test-setup';
-import {LibraryContributor} from '../src/libcontribute';
+import { expect, sinon } from './test-setup';
+import { LibraryContributor } from '../src/libcontribute';
 
 
 describe('LibraryContributor', () => {
@@ -11,7 +11,7 @@ describe('LibraryContributor', () => {
 	beforeEach(() => {
 		repo = {};
 		client = {};
-		sut = new LibraryContributor({repo, client});
+		sut = new LibraryContributor({ repo, client });
 	});
 
 	it('saves the client and repo', () => {
@@ -103,10 +103,10 @@ describe('LibraryContributor', () => {
 			return expectValidateResultSuccess(undefined);
 		});
 		it('validates with a valid result', () => {
-			return expectValidateResultSuccess({valid: true});
+			return expectValidateResultSuccess({ valid: true });
 		});
 		it('fails with a invalid result and no details', () => {
-			const validationResult = {valid: false};
+			const validationResult = { valid: false };
 			const verifyError = () => {
 				throw Error('expected exception');
 			};
@@ -119,7 +119,7 @@ describe('LibraryContributor', () => {
 		});
 
 		it('fails with a invalid result and validation details', () => {
-			const validationResult = {valid: false, errors: { sympathy: 'is needed'}};
+			const validationResult = { valid: false, errors: { sympathy: 'is needed' } };
 			const verifyError = () => {
 				throw Error('expected exception');
 			};
@@ -176,7 +176,7 @@ describe('LibraryContributor', () => {
 
 		it('verify happy path', () => {
 			const expectedResult = 123;
-			const validatePromise = Promise.resolve({valid:true});
+			const validatePromise = Promise.resolve({ valid:true });
 			const setup = () => {
 				sut._buildValidatePromise = sinon.stub().returns(validatePromise);
 				sut._buildNotifyPromise = sinon.stub().resolves(validatePromise);
@@ -262,22 +262,22 @@ describe('LibraryContributor', () => {
 			Object.keys(files).forEach((key) => createFile(tmpdir, key, files[key]));
 			const sut = new LibraryContributor({}, {});
 			return sut.targzdir(tmpdir)
-			.then((stream) => {
-				const resultdir = path.join(tmpdir, 'result');
-				fs.mkdirSync(resultdir);
+				.then((stream) => {
+					const resultdir = path.join(tmpdir, 'result');
+					fs.mkdirSync(resultdir);
 
-				const tarfs = require('tar-fs');
-				const gunzip = require('gunzip-maybe');
-				return new Promise((fulfill, reject) => {
-					const extract = tarfs.extract(resultdir);
-					extract.on('finish', fulfill);
-					extract.on('error', reject);
-					stream.pipe(gunzip()).pipe(extract);
-				})
-				.then(() => {
-					Object.keys(files).forEach((key) => verifyFile(resultdir, key, files[key]));
+					const tarfs = require('tar-fs');
+					const gunzip = require('gunzip-maybe');
+					return new Promise((fulfill, reject) => {
+						const extract = tarfs.extract(resultdir);
+						extract.on('finish', fulfill);
+						extract.on('error', reject);
+						stream.pipe(gunzip()).pipe(extract);
+					})
+						.then(() => {
+							Object.keys(files).forEach((key) => verifyFile(resultdir, key, files[key]));
+						});
 				});
-			});
 		});
 	});
 });

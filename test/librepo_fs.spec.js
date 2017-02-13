@@ -17,11 +17,12 @@
  ******************************************************************************
  */
 
-import {expect, sinon} from './test-setup';
-import {FileSystemNamingStrategy, FileSystemLibraryRepository, isLibraryExample} from '../src/librepo_fs';
-import {LibraryContributor} from '../src/libcontribute';
-import {makeCompleteV2Lib} from './librepo_fs_mock.spec';
-import {makeTestLib} from './librepo_fs_mock.spec';
+import { expect, sinon } from './test-setup';
+import { FileSystemNamingStrategy, FileSystemLibraryRepository, isLibraryExample } from '../src/librepo_fs';
+import { LibraryContributor } from '../src/libcontribute';
+import { makeCompleteV2Lib } from './librepo_fs_mock.spec';
+import { makeTestLib } from './librepo_fs_mock.spec';
+import { NamingStrategy } from '../src/librepo_fs';
 const fs = require('fs');
 const path = require('path');
 
@@ -54,6 +55,13 @@ describe('File System', () => {
 	it('is a no-op to migrate a v2 library to v2', () => {
 		const sut = new FileSystemLibraryRepository(path.join(testdata, 'library-v2'));
 		expect(sut.setLibraryLayout('library-v2', 2)).eventually.not.rejected;
+	});
+
+	describe('naming strategy', () => {
+		it('requires toName to be overridden', () => {
+			const sut = new NamingStrategy();
+			expect(() => sut.toName()).to.throw(Error, 'not implemented');
+		});
 	});
 
 	describe('direct naming strategy', () => {
@@ -94,12 +102,12 @@ describe('File System', () => {
 		fs.mkdirSync(libdir);
 
 		fse.copySync(v1data, libdir);
-		const comp1 = dircomp.compareSync(libdir, v1data, {compareContent:true});
+		const comp1 = dircomp.compareSync(libdir, v1data, { compareContent:true });
 		expect(comp1.same).to.be.true;
 
 		const sut = new FileSystemLibraryRepository(dir, naming);
 		return sut.setLibraryLayout(name, 2).then(() => {
-			const comp2 = dircomp.compareSync(libdir, v2data, {compareContent:true});
+			const comp2 = dircomp.compareSync(libdir, v2data, { compareContent:true });
 			if (!comp2.same) {
 				//const unequal = comp2.diffSet.filter(item => item.state!=='equal');
 			}
@@ -133,7 +141,7 @@ describe('File System', () => {
 			const dir = tmpobj.name;
 			const repo = new FileSystemLibraryRepository(dir);
 			const lib = makeTestLib(name, '1.2.3');
-			const sut = new LibraryContributor({repo, client});
+			const sut = new LibraryContributor({ repo, client });
 
 			sut._contribute = sinon.stub();
 
@@ -151,7 +159,7 @@ describe('File System', () => {
 			const repo = new FileSystemLibraryRepository(dir);
 			const lib = makeCompleteV2Lib(name, '1.2.3');
 
-			const sut = new LibraryContributor({repo, client});
+			const sut = new LibraryContributor({ repo, client });
 			const callback = sinon.stub();
 			sut._contribute = sinon.stub();
 
@@ -272,6 +280,11 @@ describe('File System', () => {
 		});
 	});
 
+	describe('LibraryDirectStrategy', () => {
+		it('matches empty name', () => {
+			const sut = FileSystemNamingStrategy.DIRECT;
+			expect(sut.matchesName({}, '')).to.be.true;
+		});
+	});
 });
-
 

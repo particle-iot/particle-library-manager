@@ -23,19 +23,19 @@ const mockfs = require('mock-fs');
 require('es6-promise').polyfill();
 require('promise.prototype.finally');
 
-import {expect, sinon} from './test-setup';
-import {CloudLibraryRepository} from '../src/librepo_cloud';
-import {CloudLibrary} from '../src/librepo_cloud';
+import { expect, sinon } from './test-setup';
+import { CloudLibraryRepository } from '../src/librepo_cloud';
+import { CloudLibrary } from '../src/librepo_cloud';
 
 
 
 describe('CloudLibraryRepository', () => {
 
 	const client = { api: {} };
-	const sut = new CloudLibraryRepository({auth:'auth', client});
+	const sut = new CloudLibraryRepository({ auth:'auth', client });
 
 	it('can be instantiated with auth token', () => {
-		const sut = new CloudLibraryRepository({auth:'auth'});
+		const sut = new CloudLibraryRepository({ auth:'auth' });
 		expect(sut).to.be.ok;
 		expect(sut).to.have.property('client').that.is.ok;
 		expect(sut).to.have.property('api').that.is.equal(sut.client.api);
@@ -52,7 +52,7 @@ describe('CloudLibraryRepository', () => {
 
 
 	it('can be instantiated with a client', () => {
-		const sut = new CloudLibraryRepository({auth:'auth', client});
+		const sut = new CloudLibraryRepository({ auth:'auth', client });
 		expect(sut).to.have.property('client').that.is.equal(client);
 		expect(sut).to.have.property('api').that.is.equal(client.api);
 		expect(sut).to.have.property('auth').that.is.equal('auth');
@@ -61,7 +61,7 @@ describe('CloudLibraryRepository', () => {
 	it('delegates getLibrary to the client', () => {
 		client.library = sinon.stub();
 		sut._getLibrary('somelib', '1.2.3');
-		expect(client.library).to.be.calledWith('somelib', {version:'1.2.3'});
+		expect(client.library).to.be.calledWith('somelib', { version:'1.2.3' });
 	});
 
 	it('can create a new library', () => {
@@ -79,7 +79,7 @@ describe('CloudLibraryRepository', () => {
 	});
 
 	it('delegates index() to client.libraries()', () => {
-		const libs = [ { name: 'lib1'}, { name: 'lib2'} ];
+		const libs = [{ name: 'lib1' }, { name: 'lib2' }];
 		client.libraries = sinon.stub().returns(Promise.resolve(libs));
 		return sut.index().then((result) => {
 			expect(result).to.be.deep.equal(libs);
@@ -88,7 +88,7 @@ describe('CloudLibraryRepository', () => {
 	});
 
 	it('delegates names() to index and extractNames', () => {
-		const libs = [ { name: 'lib1'}, { name: 'lib2'} ];
+		const libs = [{ name: 'lib1' }, { name: 'lib2' }];
 		sut.index = sinon.stub().returns(Promise.resolve(libs));
 		return sut.names().then((names) => {
 			expect(sut.index).to.be.calledWith();
@@ -107,7 +107,7 @@ describe('CloudLibraryRepository', () => {
 		lib.download = sinon.stub().returns(Promise.resolve(buffer));
 		const sut = new CloudLibrary('abcd', lib);
 
-		mockfs({'/':{}});
+		mockfs({ '/':{} });
 		// this isn't a pure unit test, but is simpler to code than mocking the tar.gz functionality.
 		return sut.copyTo('/newlib')
 			.then((lib) => {
@@ -117,8 +117,9 @@ describe('CloudLibraryRepository', () => {
 				expect('/newlib/project.properties').to.not.be.a.file;
 				expect('/newlib/src/neopixel.cpp').to.be.a.file;
 				expect('/newlib/src/neopixel.h').to.be.a.file;
+				mockfs.restore();
 			})
-			.finally(() => {
+			.catch(() => {
 				mockfs.restore();
 			});
 	});
@@ -133,7 +134,7 @@ describe('CloudLibraryRepository', () => {
 		it('fails when the tar.gz is not valid', () => {
 			const buffer = new Buffer(2000);
 			buffer.fill(0);
-			const lib = {download: sinon.stub().returns(Promise.resolve(buffer))};
+			const lib = { download: sinon.stub().returns(Promise.resolve(buffer)) };
 			const sut = new CloudLibrary('abcd', lib);
 			expect (sut.copyTo('tmp')).to.eventually.reject;
 		});

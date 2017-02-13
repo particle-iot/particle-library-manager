@@ -1,11 +1,11 @@
-import {validateLibrary} from './validation';
+import { validateLibrary } from './validation';
 
 import zlib from 'zlib';
 import tarfs from 'tar-fs';
 import fs from 'fs';
 import path from 'path';
 import tmp from 'tmp';
-import {validationMessage} from './validation';
+import { validationMessage } from './validation';
 
 export class LibraryContributor {
 
@@ -13,8 +13,8 @@ export class LibraryContributor {
 	 * @param {FileSystemLibraryRepository} repo  The repo containing the library.
 	 * @param {Particle.Client} client  The particle-api.js client.
 	 */
-	constructor({repo, client}) {
-		Object.assign(this, {repo, client});
+	constructor({ repo, client }) {
+		Object.assign(this, { repo, client });
 	}
 
 	/**

@@ -17,7 +17,7 @@
  ******************************************************************************
  */
 
-import fs from 'fs-extra';
+import klaw from 'klaw';
 import path from 'path';
 
 const REQUIRED_FIELDS = ['name', 'version', 'author', 'sentence'];
@@ -58,7 +58,7 @@ export function validateField(field, value) {
 	}
 
 	let validator;
-	if (validator = PATTERNS[field]) {
+	if ((validator = PATTERNS[field])) {
 		if (!value.match(validator.pattern)) {
 			return {
 				field, value,
@@ -174,7 +174,7 @@ function _validateLibraryMetadata(repo, libraryName) {
 function _libraryFiles(directory) {
 	return new Promise((fulfill) => {
 		const files = [];
-		fs.walk(directory)
+		klaw(directory)
 			.on('data', (item) => {
 				const relativePath = path.relative(directory, item.path);
 				files.push(relativePath);
@@ -213,8 +213,9 @@ function _validateLibraryFiles(repo, libraryName) {
 	return _mainSourceName(repo, libraryName)
 		.then((mainSourceName) => {
 			// Match Windows and UNIX paths
-			requiredFiles['main source'] = new RegExp(`src[/\\\\]${mainSourceName}.cpp`, 'i');
-			requiredFiles['main header'] = new RegExp(`src[/\\\\]${mainSourceName}.h`, 'i');
+			// todo - factor out the regex (it's copied from PATTERNS.name.pattern without the start/end match)
+			//requiredFiles['main source'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.cpp', 'i');
+			requiredFiles['main header'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.h', 'i');
 		})
 		.then(() => _libraryFiles(directory))
 		.then((files) => {

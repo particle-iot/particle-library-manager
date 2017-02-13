@@ -17,11 +17,11 @@
  ******************************************************************************
  */
 
-import {expect} from './test-setup';
-import {validateField, validateMetadata, validateLibrary} from '../src/validation';
-import {FileSystemLibraryRepository, FileSystemNamingStrategy} from '../src/librepo_fs';
+import { expect } from './test-setup';
+import { validateField, validateMetadata, validateLibrary } from '../src/validation';
+import { FileSystemLibraryRepository, FileSystemNamingStrategy } from '../src/librepo_fs';
 import path from 'path';
-import {formatValidationErrors} from '../src/validation';
+import { formatValidationErrors } from '../src/validation';
 
 describe('validation', () => {
 
@@ -245,10 +245,21 @@ describe('validation', () => {
 
 			const verify = (result) => {
 				expect(result.valid).to.be.false;
-				expect(result.errors).to.have.keys('README.md', 'LICENSE', 'main source', 'main header');
+				expect(result.errors).to.have.keys('README.md', 'LICENSE', 'main header');
 			};
 			return setup().then(execute).then(verify);
 		});
+
+		it('returns valid for valid library that has been renamed', () => {
+			const setup = () => getLibrary('library-v2-renamed');
+
+			const execute = (repo) => validateLibrary(repo);
+
+			const verify = (result) => expect(result.valid).to.be.true;
+
+			return setup().then(execute).then(verify);
+		});
+
 	});
 
 	describe('error handling', () => {
@@ -269,13 +280,13 @@ describe('validation', () => {
 
 	describe('error messaging', () => {
 		it('formats empty errors', () => {
-			const invalid = { valid: false, errors: {}};
+			const invalid = { valid: false, errors: {} };
 			expect(formatValidationErrors(invalid).join()).to.be.equal('');
 		});
 
 
 		it('formats a single validation error', () => {
-			const invalid = { valid: false, errors: { a: 'needed b'}};
+			const invalid = { valid: false, errors: { a: 'needed b' } };
 			expect(formatValidationErrors(invalid).join()).to.be.equal('a needed b');
 		});
 	});

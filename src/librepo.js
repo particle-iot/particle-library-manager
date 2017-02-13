@@ -137,6 +137,7 @@ export class LibraryFile {
 }
 
 export class MemoryLibraryFile extends LibraryFile {
+	/* istanbul ignore next */
 	constructor(name, kind, extension, content, id) {
 		super(name, kind, extension);
 		this.string_content = content;
@@ -166,9 +167,8 @@ export class MemoryLibraryFile extends LibraryFile {
  * for the library data. The results of these are then passed to template methods
  * `processDefinition()` and `processFiles()`.
  */
-export class AbstractLibrary extends Library
-{
-	constructor(name, metadata, repo) {
+export class AbstractLibrary extends Library{
+	constructor(name, metadata, repo) { /* istanbul ignore next */
 		super(name);
 		this.metadata = metadata;
 		this.repo = repo;
@@ -231,7 +231,7 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	 * @returns {*} The object definition.
 	 */
 	definition(lib) {
-		return Promise.resolve({name:lib.name});
+		return Promise.resolve({ name:lib.name });
 	}
 
 	extractNames(libs) {
@@ -247,6 +247,3 @@ export class AbstractLibraryRepository extends LibraryRepository {
 		return lib.name;
 	}
 }
-
-// keep all branches  of the ES6 transpilled code executed
-export default () => {};
