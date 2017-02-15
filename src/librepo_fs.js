@@ -376,8 +376,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		addProperty(content, metadata.license, 'license', 'insert your choice of license here');
 		addProperty(content, metadata.author, 'author', 'library author, e.g. name + email address');
 		addProperty(content, metadata.description, 'sentence', 'one sentence description of this library');
+		addProperty(content, metadata.paragraph, 'paragraph', 'a longer description of this library, always prepended with sentence when shown');
 		addProperty(content, metadata.url, 'url', 'the url for the project');
-		addProperty(content, metadata.paragraph, 'paragraph', 'a longer description of this library');
 		addProperty(content, metadata.repository, 'repository', 'git repository for the project, like https://github.com/mygithub_user/my_repo.git');
 		addProperty(content, metadata.architectures && metadata.architectures.join(','), 'architectures', 'a list of supported boards if this library is hardware dependent, like particle-photon,particle-electron');
 		return content.join('');
