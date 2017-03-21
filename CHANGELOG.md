@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.11 - 21 March 2017
+
+- library validation allows libraries to be renamed
+- library properties files include commented out values for common fields
+- bump version of dependencies, in particular yeoman
+
 ## 0.1.10 - 7 February 2017
 
 - updated library resources to include the architectures flag. Fixes migration tests in the CLI.
