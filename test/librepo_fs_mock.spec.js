@@ -207,13 +207,13 @@ export function makeTestLib(name, version) {
 }
 
 
-export function makeCompleteV2Lib(name, version) {
+export function makeCompleteV2Lib(name, version, extraFiles=[]) {
 	const lib = makeLibrary(name, { name, version }, [
 		new MemoryLibraryFile('src/'+name, 'source', 'cpp', '// a cpp file', 1),
 		new MemoryLibraryFile('src/'+name, 'source', 'h', '// a header file', 2),
 		new MemoryLibraryFile('README', 'source', 'md', '# readme', 3),
 		new MemoryLibraryFile('LICENSE', 'source', '', '# license', 4),
-	]);
+	].concat(extraFiles));
 	return lib;
 }
 
@@ -378,6 +378,11 @@ describe('File System Mock', () => {
 		it('can fetch a filename from the library anem, file base and file extension', () => {
 			const sut = new FileSystemLibraryRepository('mydir');
 			expect(sut.libraryFileName('mylib', 'file', 'ext')).to.be.equal('mydir/mylib/file.ext');
+		});
+
+		it('can fetch a filename from the library anem, file base and empty extension', () => {
+			const sut = new FileSystemLibraryRepository('mydir');
+			expect(sut.libraryFileName('mylib', 'file')).to.be.equal('mydir/mylib/file');
 		});
 
 		it('can determine source code files', () => {

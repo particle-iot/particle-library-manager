@@ -7,6 +7,13 @@ import path from 'path';
 import tmp from 'tmp';
 import { validationMessage } from './validation';
 
+const minimatch = require('minimatch');
+
+const defaultWhitelist = ['*.ino', '*.pde', '*.cpp', '*.c', '*.c++', '*.h', '*.h++', '*.hpp', '*.ipp', '*.properties', '*.md', '*.txt', '*.S', '*.a', 'LICENSE'];
+
+/**
+ * Creates the tar.gz stream for sending to the library api to contribute the library.
+ */
 export class LibraryContributor {
 
 	/**
@@ -17,24 +24,75 @@ export class LibraryContributor {
 		Object.assign(this, { repo, client });
 	}
 
+	_isdirectory(name) {
+		try {
+			return fs.statSync(name).isDirectory();
+		} catch (error) {
+			return false;
+		}
+	}
+
+	/**
+	 * @param {string} dir  The directory the filter will be operating on.
+	 * @param {Array.<string>} whitelist Array of glob patterns to whitelist.
+	 * @return {function} a function that takes a filename as string and returns
+	 * true if the file should be excluded from the library archive.
+	 */
+	_buildFilter(dir, whitelist) {
+		const expr = this._buildMatchExpression(whitelist);
+		// match the file base (ignore the directory)
+		// allow dots as a prefix (allows .gitignore)
+		// case-insensitive match
+		const matcher = minimatch.filter(expr, { matchBase: true, dot: true, nocase: true });
+		return (name) => {
+			const isdir = this._isdirectory(name);
+			name = path.relative(dir, name);    // ensure it's relative
+			if (isdir) {                        // designate as a directory
+				name = name + path.sep;
+			}
+			const dirname = path.dirname(name);
+			const dirs = dirname.split(path.sep);
+			const isgit = dirs.length && dirs[0]==='.git';
+			let result;
+			if (isgit) {
+				result = true;
+			} else if (isdir) {
+				result = false;  // // do not ignore - always allow directories. The glob is only applied to files
+			} else {
+				result = !matcher(name);
+			}
+			return result;
+		};
+	}
+
+	/**
+	 * @param {Array.<string>} globs An array of glob expressions.
+	 * @returns {string} The glob match expression
+	 * @private
+	 */
+	_buildMatchExpression(globs) {
+		globs = globs.map((item) => {
+			return item.trim();
+		});
+		return '+(' + globs.join('|') + ')';
+	}
+
 	/**
 	 * Creates a tar.gz stream containing the contents of the given directory in the file system that can be piped to another stream.
 	 * @param {string} dir The directory to tar.gz
+	 * @param {Array.<string>} whitelist The files to include in the library.
 	 * @returns {ReadableStream} a stream that can be piped to a writableStream to provide the tar.gz file.
 	 */
-	targzdir(dir) {
+	_targzdir(dir, whitelist) {
 		return new Promise((fulfill, reject) => {
-			// WORKAROUND: form-data in superagent in particle-api-js only support file streams so copy to a temporary file
+			// WORKAROUND: form-data in superagent in particle-api-js only supports file streams so copy to a temporary file
 			const archive = tmp.fileSync();
 
 			const archiveWriter = fs.createWriteStream(archive.name);
 			const gzip = zlib.createGzip();
 
 			const pack = tarfs.pack(dir, {
-				ignore: (name) => {
-					const dirs = path.dirname(path.relative(dir, name)).split(path.sep);
-					return dirs.length && dirs[0]==='.git';
-				},
+				ignore: this._buildFilter(dir, whitelist),
 				readable: true
 			});
 			pack.pipe(gzip).pipe(archiveWriter);
@@ -57,7 +115,7 @@ export class LibraryContributor {
 	}
 
 	/**
-	 * Contributees a library with the given name from the repo.
+	 * Contributes a library with the given name from the repo.
 	 * @param {function} callback  Called during the contributing process:
 	 *  callback('validatingLibrary', name)
 	 *  callback('contributingLibrary', library)
@@ -87,8 +145,23 @@ export class LibraryContributor {
 			});
 	}
 
+	_buildWhitelist(defaultWhitelist, whitelist) {
+		return defaultWhitelist.concat(whitelist);
+	}
+
+	/**
+	 * Parses a whitelist string, which is a comma-separated list of glob expressions
+	 * @param {string} whitelist    The string to parse
+	 * @returns {Array.<string>}    The list of array globs.
+	 * @private
+	 */
+	_parseWhitelist(whitelist) {
+		return whitelist ? whitelist.split(',') : [];
+	}
+
 	_doContributeLibrary(callback, library, libraryDirectory, dryRun) {
-		const contributePromise = this._buildContributePromise(libraryDirectory, library.name, dryRun);
+		const whitelist = this._buildWhitelist(defaultWhitelist, this._parseWhitelist(library.whitelist));
+		const contributePromise = this._buildContributePromise(libraryDirectory, library.name, whitelist, dryRun);
 		const notify = this._buildNotifyPromise(callback, 'contributingLibrary', contributePromise, library);
 		return notify
 			.then(() => callback('contributeComplete', library));
@@ -125,12 +198,13 @@ export class LibraryContributor {
 	 * Constructs a promise to perform the contributing of the library.
 	 * @param {string} libraryDirectory      The directory of the library to contribute.
 	 * @param {string} libraryName           The name of the library in the repo
+	 * @param {string} libraryWhitelist      The array of globs to whitelist
 	 * @param {boolean} dryRun               When true, the library is only zipped, and not contributeed.
 	 * @returns {*|Promise.<boolean>}       Promise to contribute the library.
 	 * @private
 	 */
-	_buildContributePromise(libraryDirectory, libraryName, dryRun) {
-		return Promise.resolve(this.targzdir(libraryDirectory))
+	_buildContributePromise(libraryDirectory, libraryName, libraryWhitelist, dryRun) {
+		return Promise.resolve(this._targzdir(libraryDirectory, libraryWhitelist))
 			.then(pipe => dryRun ? true : this._contribute(libraryName, pipe));
 	}
 }
