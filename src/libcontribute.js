@@ -1,4 +1,5 @@
 import { validateLibrary } from './validation';
+import EventEmitter from 'events';
 
 import zlib from 'zlib';
 import tarfs from 'tar-fs';
@@ -14,13 +15,14 @@ const defaultWhitelist = ['*.ino', '*.pde', '*.cpp', '*.c', '*.c++', '*.h', '*.h
 /**
  * Creates the tar.gz stream for sending to the library api to contribute the library.
  */
-export class LibraryContributor {
+export class LibraryContributor extends EventEmitter {
 
 	/**
 	 * @param {FileSystemLibraryRepository} repo  The repo containing the library.
 	 * @param {Particle.Client} client  The particle-api.js client.
 	 */
 	constructor({ repo, client }) {
+		super();
 		Object.assign(this, { repo, client });
 	}
 
@@ -45,6 +47,7 @@ export class LibraryContributor {
 		// case-insensitive match
 		const matcher = minimatch.filter(expr, { matchBase: true, dot: true, nocase: true });
 		return (name) => {
+			const originalName = name;
 			const isdir = this._isdirectory(name);
 			name = path.relative(dir, name);    // ensure it's relative
 			if (isdir) {                        // designate as a directory
@@ -61,6 +64,7 @@ export class LibraryContributor {
 			} else {
 				result = !matcher(name);
 			}
+			this.emit('file', originalName, result);
 			return result;
 		};
 	}
