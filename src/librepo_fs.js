@@ -263,7 +263,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * library file.
 	 */
 	libraryFileName(libraryName, fileName, fileExt) {
-		return this.libraryDirectory(libraryName) + fileName + '.' + fileExt;
+		return this.libraryDirectory(libraryName) + fileName + (fileExt ? '.' + fileExt : '');
 	}
 
 	/**

@@ -31,25 +31,26 @@ describe('LibraryContributor', () => {
 
 	describe('_buildContributePromise', () => {
 		it('tars the directory but doesn\'t contribute for a dry run', () => {
-			sut.targzdir = sinon.stub().resolves({});
+			sut._targzdir = sinon.stub().resolves({});
 			sut._contribute = sinon.stub();
 			const dryRun = true;
-			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, dryRun);
+			const whitelist = ['*.*'];
+			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, whitelist, dryRun);
 			const validate = () => {
-				expect(sut.targzdir).to.be.calledWith(libraryDirectory);
+				expect(sut._targzdir).to.be.calledWith(libraryDirectory, whitelist);
 				expect(sut._contribute).to.not.have.been.called;
 			};
 			return exercise.then(validate);
 		});
 
-		it('tars the directory and contributees', () => {
+		it('tars the directory and contributes', () => {
 			const pipe = 'pipe';
-			sut.targzdir = sinon.stub().resolves(pipe);
+			sut._targzdir = sinon.stub().resolves(pipe);
 			sut._contribute = sinon.stub();
 			const dryRun = false;
 			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, dryRun);
 			const validate = () => {
-				expect(sut.targzdir).to.be.calledWith(libraryDirectory);
+				expect(sut._targzdir).to.be.calledWith(libraryDirectory);
 				expect(sut._contribute).to.have.been.calledWith(libraryName, pipe);
 			};
 			return exercise.then(validate);
@@ -130,21 +131,88 @@ describe('LibraryContributor', () => {
 			return expectValidateResultSuccess(validationResult)
 				.then(verifyError).catch(verify);
 		});
+	});
+
+	describe('_parseWhitelist', () => {
+		it('parses undefined to an empty array', () => {
+			expect(sut._parseWhitelist()).to.eql([]);
+		});
+
+		it('parses a comma separated list to an array', () => {
+			expect(sut._parseWhitelist('*.cpp,*.h')).to.eql(['*.cpp', '*.h']);
+		});
+	});
+
+	describe('_buildWhitelist', () => {
+		it('appends the whitelist to the default whitelist', () => {
+			expect(sut._buildWhitelist(['abc'], ['def', '123'])).eql(['abc', 'def', '123']);
+		});
+
+		it('appends the empty whitelist to the default whitelist', () => {
+			expect(sut._buildWhitelist(['abc'], [])).eql(['abc']);
+		});
+	});
+
+	describe('_buildMatchExpression', () => {
+		it('trims each expression', () => {
+			expect(sut._buildMatchExpression([' *.txt '])).to.equal('+(*.txt)');
+		});
+
+		it('trims each expression and joins with pipes', () => {
+			expect(sut._buildMatchExpression([' *.txt ', 'a.b'])).to.equal('+(*.txt|a.b)');
+		});
+	});
+
+	describe('_buildFilter', () => {
+		let filter;
+		const whitelist = ['*.in', 'LICENSE', '*.txt', 'b*.bin'];
+		const results = {
+			'a.in' : true,
+			'A.IN' : true,  // case insensitive
+			'a.inc' : false,
+			'a.out' : false,
+			'image.jpg' : false,
+			'LICENSE' : true,
+			'LICENSE.txt' : true,
+			'LICENSE.' : false,
+			'license' : true,
+			'a.bin' : false,
+			'b.bin' : true,
+			'bozo.bin' : true,
+			'somedir/b.bin' : true,      // glob is recursive by default
+			'somedir/a.bin' : false,
+			'.git/something.txt' : false,   // .git directory excluded
+		};
+		beforeEach(() => {
+			filter = sut._buildFilter('', whitelist);
+			expect(filter).isFunction;
+		});
+
+		for (const key of Object.keys(results)) {
+			it((results[key] ? 'allows' : 'rejects') + ' the file '+key, () => {
+				expect(filter(key)).to.be.eql(!results[key]);
+			});
+		}
 
 	});
 
 	describe('_doContributeLibrary', () => {
 		it('calls _buildContributePromise', () => {
 			const callback = sinon.stub();
+			const whitelistString = '*.*';
+			const whitelist = [whitelistString];
+			sut._parseWhitelist = sinon.stub().returns(whitelist);
+			sut._buildWhitelist = sinon.stub().returns(whitelist);
 			sut._buildContributePromise = sinon.stub().resolves();
 			sut._buildNotifyPromise = sinon.stub().resolves();
-
-			const library = { name: libraryName };
+			const library = { name: libraryName, whitelist: whitelistString };
 			const dryRun = 'dryRun';
 
 			const exercise = sut._doContributeLibrary(callback, library, libraryDirectory, dryRun);
 			const validate = () => {
-				expect(sut._buildContributePromise).to.be.calledWith(libraryDirectory, libraryName, dryRun);
+				expect(sut._parseWhitelist).to.be.calledWith(whitelistString);
+				expect(sut._buildWhitelist).to.be.calledWith(sinon.match.array, whitelist);
+				expect(sut._buildContributePromise).to.be.calledWith(libraryDirectory, libraryName, whitelist, dryRun);
 				expect(callback).to.be.calledWith('contributeComplete', library);
 			};
 			return exercise.then(validate);
@@ -234,8 +302,11 @@ describe('LibraryContributor', () => {
 
 		const files = {
 			'src/file.cpp':'void f() { return 42;}',
+			'src/file.h':'void f(); // meaning of life',
+			'src/bigfile.bin' : 'ignored',
 			'.gitignore':'me',
-			'.git/blah':'stuff'
+			'LICENSE': 'blah blah',
+			'.git/blah':'gitty stuff'
 		};
 
 		function createFile(tmpdir, name, content) {
@@ -248,7 +319,7 @@ describe('LibraryContributor', () => {
 
 		function verifyFile(tmpdir, name, content) {
 			const file = path.join(tmpdir, name);
-			if (name.startsWith('.git/')) {
+			if (name.startsWith('.git/') || name.endsWith('.bin')) {
 				expect(fs.existsSync(file), `file ${file} should not exist`).to.eql(false);
 			} else {
 				expect(fs.existsSync(file), `file ${file} should exist`).to.eql(true);
@@ -261,7 +332,7 @@ describe('LibraryContributor', () => {
 			const tmpdir = tmpdirobj.name;
 			Object.keys(files).forEach((key) => createFile(tmpdir, key, files[key]));
 			const sut = new LibraryContributor({}, {});
-			return sut.targzdir(tmpdir)
+			return sut._targzdir(tmpdir, ['*.cpp', '*.h', 'license', '.gitignore'])
 				.then((stream) => {
 					const resultdir = path.join(tmpdir, 'result');
 					fs.mkdirSync(resultdir);

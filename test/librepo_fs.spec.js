@@ -23,6 +23,7 @@ import { LibraryContributor } from '../src/libcontribute';
 import { makeCompleteV2Lib } from './librepo_fs_mock.spec';
 import { makeTestLib } from './librepo_fs_mock.spec';
 import { NamingStrategy } from '../src/librepo_fs';
+import { MemoryLibraryFile } from '../src/librepo';
 const fs = require('fs');
 const path = require('path');
 
@@ -157,7 +158,10 @@ describe('File System', () => {
 			const tmpobj = tmp.dirSync();
 			const dir = tmpobj.name;
 			const repo = new FileSystemLibraryRepository(dir);
-			const lib = makeCompleteV2Lib(name, '1.2.3');
+			const lib = makeCompleteV2Lib(name, '1.2.3', [
+				new MemoryLibraryFile('big', 'duff', 'pdf', '# readme', 100),
+				new MemoryLibraryFile('.git/somefile', 'duff', '', '# readme', 101),
+			]);
 
 			const sut = new LibraryContributor({ repo, client });
 			const callback = sinon.stub();
@@ -187,10 +191,12 @@ describe('File System', () => {
 					});
 					return promise.then(() => {
 						expect(names).to.include('README.md');
-						expect(names).include('LICENSE.');
 						expect(names).include('library.properties');
 						expect(names).include('src/fred.cpp');
 						expect(names).include('src/fred.h');
+						expect(names).include('LICENSE');
+						expect(names).to.not.include('big.pdf');
+						expect(names).to.not.include('.git/something');
 
 						expect(callback).to.have.been.calledWith('validatingLibrary');
 						expect(callback).to.have.been.calledWith('contributingLibrary');
