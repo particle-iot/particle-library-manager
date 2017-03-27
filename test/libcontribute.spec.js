@@ -190,7 +190,12 @@ describe('LibraryContributor', () => {
 
 		for (const key of Object.keys(results)) {
 			it((results[key] ? 'allows' : 'rejects') + ' the file '+key, () => {
-				expect(filter(key)).to.be.eql(!results[key]);
+				const listener = sinon.stub();
+				sut.on('file', listener);
+				const ignored = !results[key];
+				expect(filter(key)).to.be.eql(ignored);
+				expect(listener).to.have.been.called;
+				expect(listener).to.have.been.calledWith(key, ignored);
 			});
 		}
 
