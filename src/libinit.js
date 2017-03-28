@@ -60,8 +60,7 @@ function validationError(validation) {
 export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	constructor(...args) {
-		/* istanbul ignore next */
-		super(...args);
+		super(...args); 		/* istanbul ignore next: coverage bug? */
 	}
 
 	/**
@@ -247,8 +246,7 @@ export function buildLibraryInitGeneratorClass() {
 	class LibraryInitGenerator extends LibraryInitGeneratorMixin(gen) { // eslint-disable-line new-cap
 
 		constructor(...args) {
-			/* istanbul ignore next */
-			super(...args);
+			super(...args);  			/* istanbul ignore next: coverage bug? */
 			this.sourceRoot(sourceRoot());
 			this._initializeOptions();
 			this._checkFields();
@@ -274,4 +272,5 @@ export function buildLibraryInitGeneratorClass() {
 
 
 // keep all branches  of the ES6 transpilled code executed
+/* istanbul ignore next: not executed on node 7 */
 export default () => {};
