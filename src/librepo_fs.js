@@ -1119,5 +1119,6 @@ export function isLibraryExample(file, cwd=process.cwd()) {
 
 
 // keep all branches  of the ES6 transpilled code executed
+/* istanbul ignore next: not executed on node 7 */
 export default () => {};
 

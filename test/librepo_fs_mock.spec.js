@@ -972,8 +972,12 @@ describe('File System Mock', () => {
 
 		function createFilesAndComputePrefix(paths, relative, cwd) {
 			for (let p of paths) {
-				mkdirp(path.dirname(p));
-				fs.writeFileSync(p, '');
+				if (p.endsWith('/')) {
+					mkdirp(p);
+				} else {
+					mkdirp(path.dirname(p));
+					fs.writeFileSync(p, '');
+				}
 			}
 			const result = pathsCommonPrefix(paths, relative, cwd);
 			return result;
@@ -981,6 +985,7 @@ describe('File System Mock', () => {
 
 		it('computes the longest common prefix of several files and directories where filenames have a common prefix', () => {
 			const paths = [
+				path.join('/mydir', 'dir2', 'src')+'/',
 				path.join('/mydir', 'dir2', 'src', 'file.txt'),
 				path.join('/mydir', 'dir2', 'src', 'file2.txt'),
 				path.join('/mydir', 'dir2', 'src', 'fi', 'file2.txt')

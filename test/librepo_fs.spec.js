@@ -291,6 +291,17 @@ describe('File System', () => {
 			const sut = FileSystemNamingStrategy.DIRECT;
 			expect(sut.matchesName({}, '')).to.be.true;
 		});
+
+		it('matches the descriptor name', () => {
+			const sut = FileSystemNamingStrategy.DIRECT;
+			expect(sut.matchesName({ name:'fred' }, 'fred')).to.be.true;
+		});
+
+		it('mismatches the descriptor name', () => {
+			const sut = FileSystemNamingStrategy.DIRECT;
+			expect(sut.matchesName({ name:'freddie' }, 'fred')).to.be.false;
+		});
+
 	});
 });
 
