@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.12 - 28 March 2017
+
+- White list files for library upload
+
 ## 0.1.11 - 21 March 2017
 
 - library validation allows libraries to be renamed
