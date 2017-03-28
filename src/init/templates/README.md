@@ -19,6 +19,7 @@ _TODO: update this README_
 Connect XYZ hardware, add the <%- name %> library to your project and follow this simple example:
 
 ```
+#include "<%- name %>.h"
 <%- Name_code %> <%- name_code %>;
 
 void setup() {

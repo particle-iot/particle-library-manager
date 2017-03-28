@@ -1,6 +1,6 @@
 #pragma once
 
-/* <%- name_code %> library by <%- author %>
+/* <%- name %> library by <%- author %>
  */
 
 // This will load the definition for common Particle variable types

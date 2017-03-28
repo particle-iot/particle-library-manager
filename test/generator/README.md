@@ -19,6 +19,7 @@ _TODO: update this README_
 Connect XYZ hardware, add the nominative library to your project and follow this simple example:
 
 ```
+#include "nominative.h"
 Nominative nominative;
 
 void setup() {

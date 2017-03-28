@@ -1,7 +1,7 @@
-/* <%- name_code %> library by <%- author %>
+/* <%- name %> library by <%- author %>
  */
 
-#include "<%- name_code %>.h"
+#include "<%- name %>.h"
 
 /**
  * Constructor.

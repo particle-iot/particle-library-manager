@@ -1,6 +1,6 @@
 // Example usage for <%- name %> library by <%- author %>.
 
-#include "<%- name_code %>.h"
+#include "<%- name %>.h"
 
 // Initialize objects from the lib
 <%- Name_code %> <%- name_code %>;
