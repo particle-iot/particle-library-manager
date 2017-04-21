@@ -963,33 +963,32 @@ class LibraryExample {
 
 	/**
 	 *
-	 * @param {Object} files `list` - the actual filenames to send, `alias` the filenames as seen by the user, maps each
-	 *  index to the corresponding file in `list`, `map`. `baseDir` the root directory relative to the filenames in `list`.
+	 * @param {Object} fileMap Object mapping from filenames seen by the compile server to local relative filenames
 	 * @returns {Promise} to build the file mapping
 	 *
 	 * The library directory is assumed to be the common parent and this is made the base directory.
 	 *
 	 */
-	buildFiles(files) {
-		// the physical location of files is what is shown in error messages so that they are consistent from the
+	buildFiles(fileMap) {
+		// Clear existing files
+		Object.keys(fileMap).forEach(f => delete fileMap[f]);
+
+		// the local relative location of files is what is shown in error messages so that they are consistent from the
 		// user's working directory
 		// The target namespace moves the library.properties into the root as project.properties
-		files.list = [];
-		files.map = {};
-		files.basePath = this.basePath;
 		const srcDirectory = this._asDirectory('src');
 		const libDirectory = this._asDirectory('lib');
 
 		return Promise.all([
 			// add the example file, or the contents of the example directory to 'src' in the target
-			this._addFiles(files, this.example, srcDirectory),
+			this._addFiles(fileMap, this.example, srcDirectory),
 
 			// rename the library to project files
-			this._addFiles(files, path.join(this.libraryPath, 'library.properties'), 'project.properties'),
+			this._addFiles(fileMap, path.join(this.libraryPath, 'library.properties'), 'project.properties'),
 
 			// copy the library sources into src (potential name-clash with example sources?)
-			this._addFiles(files, path.join(this.libraryPath, srcDirectory), srcDirectory, false),
-			this._addFiles(files, path.join(this.libraryPath, libDirectory), libDirectory, false)
+			this._addFiles(fileMap, path.join(this.libraryPath, srcDirectory), srcDirectory, false),
+			this._addFiles(fileMap, path.join(this.libraryPath, libDirectory), libDirectory, false)
 		]);
 	}
 
@@ -997,49 +996,13 @@ class LibraryExample {
 		return this._isFile(p) ? p + path.sep : p;
 	}
 
-	/**
-	 * Adds a mapping. The mapping is from the target file to the source file - that is, the mapping shows all files in the
-	 * target project, and the corresponding source files where the content can be obtained from.
-	 * @param {Object} files the file mapping object with a `map` property and `basePath` for defining the logical namespace.
-	 * @param {String} source The source file relative to `this.basePath`
-	 * @param {String} target The target file relative to `files.basePath` (the target namespace)
-	 * @returns {undefined} nothing
-	 * @private
-	 */
-	_addFileMapping(files, source, target) {
-		// given a target file, retrieve the physical file where it lives, relative to this.basePath
-		files.map[target] = source;
-	}
-
-	/**
-	 * Adds all the files under the given directory to a mapping recursively.
-	 * @param {Object} files     The structure to populate. It is updated by calling `_addFileMapping` for each file added.
-	 * @param {string} source  The path of the files to copy - this part of the path is not featured in the destination path
-	 * @param {string} destination The path of the destination.
-	 * @param {string} subdir   The current recursion point below the source folder
-	 * @returns {Promise} to add a mapping from all files in the source directory to the destination directory
-	 * @private
-	 */
-	_addDirectory(files, source, destination, subdir='') {
-		function mapper(stat, file, filePath) {
-			const traversePath = path.join(subdir, file);
-			const sourcePath = path.join(source, traversePath);             // the path to the source file
-			const destinationPath = path.join(destination, traversePath);   // the path to the destination file
-			if (stat.isDirectory()) {
-				// recurse
-				return this._addDirectory(files, source, destination, traversePath);
-			} else {
-				// add the file - todo should this filter out files like the CLI does?
-				this._addFileMapping(files, sourcePath, destinationPath);
-			}
-		}
-		const directory = path.resolve(path.join(files.basePath, source, subdir));
-		return mapActionDir(directory, mapper.bind(this), () => {});
+	_isFile(p) {
+		return !p.endsWith(path.sep);
 	}
 
 	/**
 	 * Adds files to the file mappings. Directories are indicated by ending with a trailing slash.
-	 * @param {Files} files     The object that holds the mappings. `basePath` defies the root for the files
+	 * @param {Object} fileMap Object mapping from filenames seen by the compile server to local relative filenames
 	 * @param {String} source    The source file or directory, relative to `files.basePath` If it is a file, the file is copied to the destination.
 	 *  If it is a directory, the directory path is not part of the destination name, only files and subdirectories
 	 *  under the directory are mapped to the destination path.
@@ -1048,7 +1011,7 @@ class LibraryExample {
 	 * @returns {Promise} to add the files to the `files` mapping
 	 * @private
 	 */
-	_addFiles(files, source, destination, mandatory=true) {
+	_addFiles(fileMap, source, destination, mandatory=true) {
 		const destinationFile = this._isFile(destination);
 
 		const stat = promisify(fs.stat);
@@ -1060,11 +1023,11 @@ class LibraryExample {
 				if (!destinationFile) {
 					destination = path.join(destination, source);
 				}
-				this._addFileMapping(files, source, destination);
+				this._addFileMapping(fileMap, source, destination);
 			} else {
 				// assume destination is a directory, since copying a source directory to a file
 				// makes little sense here.
-				return this._addDirectory(files, source, destination);
+				return this._addDirectory(fileMap, source, destination);
 			}
 		});
 
@@ -1075,8 +1038,44 @@ class LibraryExample {
 		return promise;
 	}
 
-	_isFile(p) {
-		return !p.endsWith(path.sep);
+	/**
+	 * Adds a mapping. The mapping is from the target file to the source file - that is, the mapping shows all files in the
+	 * target project, and the corresponding source files where the content can be obtained from.
+	 * @param {Object} fileMap Object mapping from filenames seen by the compile server to local relative filenames
+	 * @param {String} source The source file relative to `this.basePath`
+	 * @param {String} target The target file relative to `files.basePath` (the target namespace)
+	 * @returns {undefined} nothing
+	 * @private
+	 */
+	_addFileMapping(fileMap, source, target) {
+		// given a target file, retrieve the physical file where it lives, relative to this.basePath
+		fileMap[target] = source;
+	}
+
+	/**
+	 * Adds all the files under the given directory to a mapping recursively.
+	 * @param {Object} fileMap Object mapping from filenames seen by the compile server to local relative filenames
+	 * @param {string} source  The path of the files to copy - this part of the path is not featured in the destination path
+	 * @param {string} destination The path of the destination.
+	 * @param {string} subdir   The current recursion point below the source folder
+	 * @returns {Promise} to add a mapping from all files in the source directory to the destination directory
+	 * @private
+	 */
+	_addDirectory(fileMap, source, destination, subdir='') {
+		function mapper(stat, file, filePath) {
+			const traversePath = path.join(subdir, file);
+			const sourcePath = path.join(source, traversePath);             // the path to the source file
+			const destinationPath = path.join(destination, traversePath);   // the path to the destination file
+			if (stat.isDirectory()) {
+				// recurse
+				return this._addDirectory(fileMap, source, destination, traversePath);
+			} else {
+				// add the file - todo should this filter out files like the CLI does?
+				this._addFileMapping(fileMap, sourcePath, destinationPath);
+			}
+		}
+		const directory = path.resolve(path.join(this.basePath, source, subdir));
+		return mapActionDir(directory, mapper.bind(this), () => {});
 	}
 }
 

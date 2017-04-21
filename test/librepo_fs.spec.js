@@ -221,7 +221,7 @@ describe('File System', () => {
 		describe('given an example via a relative path', () => {
 			let example;
 			let cwd;
-			let files;
+			let fileMap;
 			const libname = 'library-v2-adapters';
 			/**
 			 * Make the current directory the test data
@@ -235,8 +235,8 @@ describe('File System', () => {
 					example = ex;
 					expect(example).to.be.ok;
 				}).then(() => {
-					files = {};
-					return example.buildFiles(files);
+					fileMap = {};
+					return example.buildFiles(fileMap);
 				});
 			});
 
@@ -248,15 +248,14 @@ describe('File System', () => {
 				expect(example).to.have.property('basePath').equal(path.resolve(testdata));
 				expect(example).to.have.property('libraryPath').equal(libname);
 				expect(example).to.have.property('example').equal(path.join(libname,'examples','blink-an-led')+path.sep);
-				expect(files).to.have.property('map').that.is.ok;
-				expect(files).to.have.property('basePath').that.is.equal(testdata);
+				expect(Object.keys(fileMap)).to.have.length(6);
 			});
 
 
 			function expectHasMapping(src, target=src) {
 				// src is relative to the library
 				src = path.join(libname, src);
-				expect(files.map).has.property(target).equal(src);
+				expect(fileMap).has.property(target).equal(src);
 			}
 
 			it('moves library.properties to project.properties', () => {
