@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/spark/particle-library-manager.svg?branch=master)](https://travis-ci.org/spark/particle-library-manager)
-[![Coverage Status](https://coveralls.io/repos/github/spark/particle-library-manager/badge.svg?branch=master)](https://coveralls.io/github/spark/particle-library-manager?branch=master)
+[![Build Status](https://travis-ci.org/particle-iot/particle-library-manager.svg?branch=master)](https://travis-ci.org/particle-iot/particle-library-manager)
+[![Coverage Status](https://coveralls.io/repos/github/particle-iot/particle-library-manager/badge.svg?branch=master)](https://coveralls.io/github/particle-iot/particle-library-manager?branch=master)
 
 # Particle Library Manager
 

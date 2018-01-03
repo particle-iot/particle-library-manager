@@ -4,7 +4,7 @@ About
 This repo serves as the specfication for what constitutes a valid Spark firmware library and an actual example library you can use as a reference when writing your own libraries.
 
 Spark Libraries can be used in the [Spark IDE](https://www.spark.io/build).
-_Soon_ you'll also be able to use them with the [Spark CLI](https://github.com/spark/spark-cli) and when compiling firmware locally with [Spark core-firmware](https://github.com/spark/core-firmware).
+_Soon_ you'll also be able to use them with the [Spark CLI](https://github.com/particle-iot/spark-cli) and when compiling firmware locally with [Spark core-firmware](https://github.com/particle-iot/core-firmware).
 
 ## Table of Contents
 
@@ -127,7 +127,7 @@ EOS
 	fi
 
 	echo "Creation of ${LIB_NAME} complete!"
-	echo "Check out https://github.com/spark/uber-library-example for more details"
+	echo "Check out https://github.com/particle-iot/uber-library-example for more details"
 }
 
 ```

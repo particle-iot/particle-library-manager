@@ -30,7 +30,7 @@
 
 ## 0.1.5
 
-- fix [case sensitivity issue](https://github.com/spark/particle-library-manager/issues/17)
+- fix [case sensitivity issue](https://github.com/particle-iot/particle-library-manager/issues/17)
 
 ## 0.1.4
 
