@@ -37,21 +37,6 @@ const config = {
 describe('BuildLibraryRepository', function build()  {
 	this.timeout(10000);
 
-	it('can fetch index', () => {
-		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
-		const result = sut.index();
-		return result.then((result) => {
-			expect(result).to.have.length.greaterThan(0);
-			for (let lib of result) {
-				expect(lib).to.have.property('id');
-				expect(lib).to.have.property('title');
-				expect(lib).to.have.property('content');
-				expect(lib).to.have.property('version');
-				expect(lib).to.have.property('visibility').equal('public');
-			}
-		});
-	});
-
 	it("can fetch names", () => {
 		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
 		const promise = sut.names().then((result) => {
