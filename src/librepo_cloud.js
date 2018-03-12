@@ -132,7 +132,7 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 		this.api = client.api;
 		this.client = client;
 		this.auth = auth;
-		this.api.debug = console.log;
+		this.api.debug = console.log; // eslint-disable-line no-console
 	}
 
 	_getLibrary(name, version) {
