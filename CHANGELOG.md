@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.13 - 6 Septeber 2018
+
+- Allow single letter names
+
 ## 0.1.12 - 28 March 2017
 
 - White list files for library upload
