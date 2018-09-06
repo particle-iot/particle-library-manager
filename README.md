@@ -29,3 +29,16 @@ The module provides library management:
 
 When changing the code please adhere to test-first principles - first change the unit tests and integration tests to
 fail without your intended change, and then make the change, tweaking code/tests until green is seen.
+
+# Release
+
+Run these commands to release
+```
+npm version <minor|major|patch>
+# update CHANGELOG.md
+git push --follow-tags
+npm publish
+```
+
+Then create a GitHub release
+
