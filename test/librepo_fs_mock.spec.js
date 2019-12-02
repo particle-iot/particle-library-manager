@@ -31,14 +31,6 @@ import VError from 'verror';
 
 const libFileContents = { 'h': '// a header file', cpp:'// a cpp file' };
 
-function makeFsError(code, errno, msg) {
-	const err = new Error();
-	err.errno = errno;
-	err.code = code;
-	err.message = msg;
-	return err;
-}
-
 /**
  * Creates a mock filesystem structure for a library.
  * @param {String} name The name of the library.
@@ -507,12 +499,18 @@ describe('File System Mock', () => {
 		});
 
 		describe('layout', () => {
-
+			// TODO (mirande): a number of these errors use messages like:
+			// `library 'abcd__' not found in repo '[object Object]'` - fix!
 			it('throws exception for layout if library directory does not exist', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'abcd__';
 				const result = sut.getLibraryLayout(name);
-				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/abcd__/\'');
+				const cause = makeFsError({
+					code: 'ENOENT',
+					errno: -2,
+					message: 'ENOENT, no such file or directory \'mydir/abcd__/\'',
+					path: 'mydir/abcd__/'
+				});
 				return expect(result).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
@@ -536,7 +534,12 @@ describe('File System Mock', () => {
 				mkdir('mydir');
 				mkdir('mydir/invalid');
 				const sut = new FileSystemLibraryRepository('mydir');
-				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/invalid/library.properties\'');
+				const cause = makeFsError({
+					code: 'ENOENT',
+					errno: -2,
+					message: 'ENOENT, no such file or directory \'mydir/invalid/library.properties\'',
+					path: 'mydir/invalid/library.properties'
+				});
 				return expect(sut.getLibraryLayout('invalid')).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, 'invalid', cause));
 			});
 
@@ -567,20 +570,35 @@ describe('File System Mock', () => {
 			it('rejects a library layout when spark.json is a directory', () => {
 				const [sut, name, libdir] = buildLibDir();
 				mkdir(path.join(libdir, sparkDotJson));
-				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'');
+				const cause = makeFsError({
+					code: 'ENOENT',
+					errno: -2,
+					message: 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'',
+					path: 'mydir/testlib/library.properties'
+				});
 				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
 			it('rejects a library layout when no metadata is present', () => {
 				const [sut, name] = buildLibDir();
-				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'');
+				const cause = makeFsError({
+					code: 'ENOENT',
+					errno: -2,
+					message: 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'',
+					path: 'mydir/testlib/library.properties'
+				});
 				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
 			it('rejects a library layout when no directory is present', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'whatever';
-				const cause = makeFsError('ENOENT', 34, 'ENOENT, no such file or directory \'mydir/whatever/\'');
+				const cause = makeFsError({
+					code: 'ENOENT',
+					errno: -2,
+					message: 'ENOENT, no such file or directory \'mydir/whatever/\'',
+					path: 'mydir/whatever/'
+				});
 				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
 			});
 
@@ -590,6 +608,15 @@ describe('File System Mock', () => {
 				fs.writeFileSync(path.join('mydir', name, ''));
 				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
 			});
+
+			function makeFsError({ code, errno, message, path }){
+				const err = new Error();
+				err.errno = errno;
+				err.code = code;
+				err.message = message;
+				err.path = path;
+				return err;
+			}
 		});
 
 		describe('migrate', () => {
