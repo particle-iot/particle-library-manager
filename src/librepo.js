@@ -45,8 +45,9 @@ export class LibraryRepositoryError extends VError {
 
 }
 
-function notFound(repo, library) {
-	return `library '${library}' not found in repo '${repo}'.`;
+function notFound(repo, library){
+	const location = typeof repo === 'string' ? repo : repo.path;
+	return `library '${library}' not found in repo '${location}'.`;
 }
 
 export class LibraryNotFoundError extends LibraryRepositoryError {

@@ -499,8 +499,6 @@ describe('File System Mock', () => {
 		});
 
 		describe('layout', () => {
-			// TODO (mirande): a number of these errors use messages like:
-			// `library 'abcd__' not found in repo '[object Object]'` - fix!
 			it('throws exception for layout if library directory does not exist', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'abcd__';
@@ -511,7 +509,10 @@ describe('File System Mock', () => {
 					message: 'ENOENT, no such file or directory \'mydir/abcd__/\'',
 					path: 'mydir/abcd__/'
 				});
-				return expect(result).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
+				const error = new LibraryNotFoundError(sut, name, cause);
+
+				expect(error).to.have.property('message', 'library \'abcd__\' not found in repo \'mydir/\'.: ENOENT, no such file or directory \'mydir/abcd__/\'');
+				return expect(result).to.eventually.be.rejected.deep.equal(error);
 			});
 
 			it('can detect legacy layout', () => {
@@ -540,7 +541,10 @@ describe('File System Mock', () => {
 					message: 'ENOENT, no such file or directory \'mydir/invalid/library.properties\'',
 					path: 'mydir/invalid/library.properties'
 				});
-				return expect(sut.getLibraryLayout('invalid')).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, 'invalid', cause));
+				const error = new LibraryNotFoundError(sut, 'invalid', cause);
+
+				expect(error).to.have.property('message', 'library \'invalid\' not found in repo \'mydir/\'.: ENOENT, no such file or directory \'mydir/invalid/library.properties\'');
+				return expect(sut.getLibraryLayout('invalid')).to.eventually.be.rejected.deep.equal(error);
 			});
 
 			it('can write legacy layout', () => {
@@ -576,7 +580,10 @@ describe('File System Mock', () => {
 					message: 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'',
 					path: 'mydir/testlib/library.properties'
 				});
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
+				const error = new LibraryNotFoundError(sut, name, cause);
+
+				expect(error).to.have.property('message', 'library \'testlib\' not found in repo \'mydir/\'.: ENOENT, no such file or directory \'mydir/testlib/library.properties\'');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(error);
 			});
 
 			it('rejects a library layout when no metadata is present', () => {
@@ -587,7 +594,10 @@ describe('File System Mock', () => {
 					message: 'ENOENT, no such file or directory \'mydir/testlib/library.properties\'',
 					path: 'mydir/testlib/library.properties'
 				});
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
+				const error = new LibraryNotFoundError(sut, name, cause);
+
+				expect(error).to.have.property('message', 'library \'testlib\' not found in repo \'mydir/\'.: ENOENT, no such file or directory \'mydir/testlib/library.properties\'');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(error);
 			});
 
 			it('rejects a library layout when no directory is present', () => {
@@ -599,14 +609,20 @@ describe('File System Mock', () => {
 					message: 'ENOENT, no such file or directory \'mydir/whatever/\'',
 					path: 'mydir/whatever/'
 				});
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name, cause));
+				const error = new LibraryNotFoundError(sut, name, cause);
+
+				expect(error).to.have.property('message', 'library \'whatever\' not found in repo \'mydir/\'.: ENOENT, no such file or directory \'mydir/whatever/\'');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(error);
 			});
 
 			it('rejects a library layout when expected location is a file', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'whatever';
+				const error = new LibraryNotFoundError(sut, name);
 				fs.writeFileSync(path.join('mydir', name, ''));
-				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
+
+				expect(error).to.have.property('message', 'library \'whatever\' not found in repo \'mydir/\'.');
+				return expect(sut.getLibraryLayout(name)).to.eventually.be.rejected.deep.equal(error);
 			});
 
 			function makeFsError({ code, errno, message, path }){
