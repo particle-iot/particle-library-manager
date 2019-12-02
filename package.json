@@ -56,7 +56,7 @@
     "tar-fs": "^1.13.2",
     "tar-stream": "^1.5.2",
     "tmp": "0.0.31",
-    "verror": "^1.6.1"
+    "verror": "^1.10.0"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
