@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.14 - 2 December 2019
+
+- update to latest superagent to fix deprecation warnings in Node v12
+
 ## 0.1.13 - 6 Septeber 2018
 
 - Allow single letter names
