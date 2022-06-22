@@ -55,7 +55,7 @@ export class LibraryContributor extends EventEmitter {
 			}
 			const dirname = path.dirname(name);
 			const dirs = dirname.split(path.sep);
-			const isgit = dirs.length && dirs[0]==='.git';
+			const isgit = dirs.length && dirs[0] === '.git';
 			let result;
 			if (isgit) {
 				result = true;
@@ -129,7 +129,7 @@ export class LibraryContributor extends EventEmitter {
 	 * @param {boolean} dryRun When true, the library is only validated, and not contributeed.
 	 * @return {Promise} to contribute the named library.
 	 */
-	contribute(callback, name, dryRun=false) {
+	contribute(callback, name, dryRun = false) {
 		const libraryDirectory = this.repo.libraryDirectory(name);
 		return this._doContribute(callback, name, libraryDirectory, dryRun);
 	}
@@ -191,7 +191,7 @@ export class LibraryContributor extends EventEmitter {
 		return this._validateLibrary(this.repo, name)
 			.then((results) => {
 				if (results && !results.valid) {
-					const error = new Error('Library is not valid. '+validationMessage(results));
+					const error = new Error('Library is not valid. ' + validationMessage(results));
 					error.validate = results;
 					throw error;
 				}

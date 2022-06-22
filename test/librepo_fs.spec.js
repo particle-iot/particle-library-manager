@@ -66,13 +66,13 @@ describe('File System', () => {
 	});
 
 	describe('direct naming strategy', () => {
-		const sut = new FileSystemLibraryRepository(testdata+'/library-v2', FileSystemNamingStrategy.DIRECT);
+		const sut = new FileSystemLibraryRepository(testdata + '/library-v2', FileSystemNamingStrategy.DIRECT);
 
-		it('is a no-op to migrate a v2 library to v2 with direct naming strategy, default name', ()=>{
+		it('is a no-op to migrate a v2 library to v2 with direct naming strategy, default name', () => {
 			return expect(sut.setLibraryLayout('', 2)).eventually.not.rejected;
 		});
 
-		it('is a no-op to migrate a v2 library to v2 with direct naming strategy, explicit name', ()=>{
+		it('is a no-op to migrate a v2 library to v2 with direct naming strategy, explicit name', () => {
 			return expect(sut.setLibraryLayout('uber-library-example', 2)).eventually.not.rejected;
 		});
 
@@ -247,13 +247,13 @@ describe('File System', () => {
 			it('recognizes it as an example', () => {
 				expect(example).to.have.property('basePath').equal(path.resolve(testdata));
 				expect(example).to.have.property('libraryPath').equal(libname);
-				expect(example).to.have.property('example').equal(path.join(libname,'examples','blink-an-led')+path.sep);
+				expect(example).to.have.property('example').equal(path.join(libname,'examples','blink-an-led') + path.sep);
 				expect(files).to.have.property('map').that.is.ok;
 				expect(files).to.have.property('basePath').that.is.equal(testdata);
 			});
 
 
-			function expectHasMapping(src, target=src) {
+			function expectHasMapping(src, target = src) {
 				// src is relative to the library
 				src = path.join(libname, src);
 				expect(files.map).has.property(target).equal(src);

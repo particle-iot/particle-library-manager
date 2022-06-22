@@ -16,7 +16,8 @@
     "manager"
   ],
   "engines": {
-    "node": ">=0.10.33"
+    "node": ">=12",
+    "npm": "8.x"
   },
   "config": {
     "build-url": "https://build.particle.io"

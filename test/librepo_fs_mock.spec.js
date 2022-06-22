@@ -45,8 +45,8 @@ function makeFsError(code, errno, msg) {
  * @param {Boolean} metadata Adds the library properties file when true.
  * @returns {Object} representing the mock file system.
  */
-function makeFsLib(name, metadata=true) {
-	let result = {};
+function makeFsLib(name, metadata = true) {
+	const result = {};
 	result[`${name}.h`] = '// a header file';
 	result[`${name}.cpp`] = '// a cpp file';
 	if (metadata) {
@@ -96,7 +96,7 @@ function fetchContent(libraryFile) {
 }
 
 function sourcesOnly(files) {
-	return files.filter((file) => file.kind==='source');
+	return files.filter((file) => file.kind === 'source');
 }
 
 function libsFilesEqual(expected, actual) {
@@ -107,7 +107,7 @@ function libsFilesEqual(expected, actual) {
 		expect(actualFiles.length).to.equal(expectedFiles.length);
 		const contentsSame = [];
 
-		for (let i=0; i<actualFiles.length; i++) {
+		for (let i = 0; i < actualFiles.length; i++) {
 			const expectedFile = expectedFiles[i];
 			const actualFile = actualFiles[i];
 
@@ -154,25 +154,25 @@ function libsEqual(expected, actual) {
  */
 function checkFileSystem(path, expected) {
 	const checks = [];
-	for (let [key, value] of Object.entries(expected)) {
+	for (const [key, value] of Object.entries(expected)) {
 		let fun;
 		let promises = [];
 		if (typeof value == 'string') {
 			fun = () => {
 				const readFile = promisify(fs.readFile);
-				return readFile(path+'/'+key).then((contents) => {
+				return readFile(path + '/' + key).then((contents) => {
 					expect(contents.toString()).to.be.equal(value);
 				});
 			};
 		} else {
 			fun = () => {
 				const stat = promisify(fs.stat);
-				return stat(path+'/'+key).then((stat) => {
+				return stat(path + '/' + key).then((stat) => {
 					expect(stat.isDirectory()).to.be.true;
 				});
 			};
 			// check that the directory exists in the filesystem
-			promises = checkFileSystem(path+'/'+key, value);
+			promises = checkFileSystem(path + '/' + key, value);
 		}
 		// ensure the directory is checked first before checking subcontents
 		checks.push(Promise.resolve().then(fun));
@@ -190,7 +190,7 @@ function checkFileSystem(path, expected) {
  */
 function libFiles(lib, root) {
 	const name = lib.name;
-	const path = root+'/'+name;
+	const path = root + '/' + name;
 	// the spec for the lib.
 	const expected = makeFsLib(name);
 
@@ -207,10 +207,10 @@ export function makeTestLib(name, version) {
 }
 
 
-export function makeCompleteV2Lib(name, version, extraFiles=[]) {
+export function makeCompleteV2Lib(name, version, extraFiles = []) {
 	const lib = makeLibrary(name, { name, version }, [
-		new MemoryLibraryFile('src/'+name, 'source', 'cpp', '// a cpp file', 1),
-		new MemoryLibraryFile('src/'+name, 'source', 'h', '// a header file', 2),
+		new MemoryLibraryFile('src/' + name, 'source', 'cpp', '// a cpp file', 1),
+		new MemoryLibraryFile('src/' + name, 'source', 'h', '// a header file', 2),
 		new MemoryLibraryFile('README', 'source', 'md', '# readme', 3),
 		new MemoryLibraryFile('LICENSE', 'source', '', '# license', 4),
 	].concat(extraFiles));
@@ -235,7 +235,7 @@ describe('File System Mock', () => {
 
 	function mkdirp(name) {
 		const parent = path.dirname(name);
-		if (parent && parent!=='/') {
+		if (parent && parent !== '/') {
 			mkdirp(parent);
 		}
 		mkdir(name);
@@ -335,7 +335,7 @@ describe('File System Mock', () => {
 		});
 
 		describe('can fetch libraries by name', () => {
-			for (let [name,data] of Object.entries(libData)) {
+			for (const [name,data] of Object.entries(libData)) {
 				it(`can fetch library '${name}' by name`, () => {
 					const sut = new FileSystemLibraryRepository('mydir');
 					const promiseLib = sut.fetch(name);
@@ -346,12 +346,12 @@ describe('File System Mock', () => {
 							return lib.files().then((files) => {
 								expect(files.length).to.be.equal(2);
 								const checkContents = [];
-								for (let file of files) {
+								for (const file of files) {
 									expect(file.name).to.be.equal(name);
 									expect(file.extension).to.be.oneOf(['cpp', 'h']);
 									// verify contents
 									const expectedContents = libFileContents[file.extension];
-									checkContents.push(new Promise((resolve)=> {
+									checkContents.push(new Promise((resolve) => {
 										const store = concat((content) => {
 											expect(content.toString()).to.be.equal(expectedContents);
 											resolve();
@@ -388,7 +388,7 @@ describe('File System Mock', () => {
 		it('can determine source code files', () => {
 			const isSourceData = { 'abcd/a.txt':false, '123/a.c': true, 'yaya/a.cpp': true, '../a.properties': false };
 
-			for (let [name,isSource] of Object.entries(isSourceData)) {
+			for (const [name,isSource] of Object.entries(isSourceData)) {
 				it(`can determine if file '${name}' is source code`, () => {
 					const sut = new FileSystemLibraryRepository('mydir');
 					expect(sut.isSourceFileName(name)).to.be.equal(isSource);
@@ -473,8 +473,8 @@ describe('File System Mock', () => {
 				'license=dummy\n' +
 				'author=Mr Big\n' +
 				'sentence=Fixes the world\n' +
-				'# paragraph=a longer description of this library, always prepended with sentence when shown\n'+
-				'# url=the url for the project\n'+
+				'# paragraph=a longer description of this library, always prepended with sentence when shown\n' +
+				'# url=the url for the project\n' +
 				'# repository=git repository for the project, like https://github.com/mygithub_user/my_repo.git\n' +
 				'architectures=particle-photon,particle-p1\n');
 		});
@@ -550,7 +550,7 @@ describe('File System Mock', () => {
 				return expect(result).to.eventually.equal(1);
 			});
 
-			function buildLibDir(name='testlib') {
+			function buildLibDir(name = 'testlib') {
 				mkdir('mydir');
 				const libdir = path.join('mydir', name);
 				mkdir(libdir);
@@ -901,12 +901,12 @@ describe('File System Mock', () => {
 		function buildV2Library(name) {
 			mkdir('mydir');
 			mkdir('mydir/v2');
-			const base = 'mydir/v2/'+name+'/';
+			const base = 'mydir/v2/' + name + '/';
 			mkdir(base);
-			fs.writeFileSync(base+'library.properties', '');
-			mkdir(base+'examples');
-			mkdir(base+'examples/huzzah');
-			fs.writeFileSync(base+'examples/huzzah/code.ino', '');
+			fs.writeFileSync(base + 'library.properties', '');
+			mkdir(base + 'examples');
+			mkdir(base + 'examples/huzzah');
+			fs.writeFileSync(base + 'examples/huzzah/code.ino', '');
 			return base;
 		}
 
@@ -923,7 +923,7 @@ describe('File System Mock', () => {
 
 		it('can successfully detect a relative example file', () => {
 			const base = buildV2Library('mylib');
-			const basePath = base+'examples/huzzah';
+			const basePath = base + 'examples/huzzah';
 			process.chdir(basePath);
 			return expect(isLibraryExample('code.ino')).to.eventually.eql({ basePath:path.resolve(), libraryPath:'../..', example:'code.ino' });
 		});
@@ -937,7 +937,7 @@ describe('File System Mock', () => {
 
 		it('can successfully detect an example directory as the current folder', () => {
 			const base = buildV2Library('mylib');
-			const basePath = base+'examples/huzzah';
+			const basePath = base + 'examples/huzzah';
 			process.chdir(basePath);
 			return expect(isLibraryExample('.')).to.eventually.eql({ basePath:path.resolve(), libraryPath:'../..', example:'./' });
 		});
@@ -945,7 +945,7 @@ describe('File System Mock', () => {
 		it('can successfully detect an example file given the full path from the current folder', () => {
 			const base = buildV2Library('mylib');
 			const basePath = cwd;
-			return expect(isLibraryExample(base+'examples/huzzah')).to.eventually.eql({ basePath, libraryPath:base.slice(0,-1), example:base+'examples/huzzah/' });
+			return expect(isLibraryExample(base + 'examples/huzzah')).to.eventually.eql({ basePath, libraryPath:base.slice(0,-1), example:base + 'examples/huzzah/' });
 		});
 	});
 
@@ -971,7 +971,7 @@ describe('File System Mock', () => {
 		});
 
 		function createFilesAndComputePrefix(paths, relative, cwd) {
-			for (let p of paths) {
+			for (const p of paths) {
 				if (p.endsWith('/')) {
 					mkdirp(p);
 				} else {
@@ -985,7 +985,7 @@ describe('File System Mock', () => {
 
 		it('computes the longest common prefix of several files and directories where filenames have a common prefix', () => {
 			const paths = [
-				path.join('/mydir', 'dir2', 'src')+'/',
+				path.join('/mydir', 'dir2', 'src') + '/',
 				path.join('/mydir', 'dir2', 'src', 'file.txt'),
 				path.join('/mydir', 'dir2', 'src', 'file2.txt'),
 				path.join('/mydir', 'dir2', 'src', 'fi', 'file2.txt')
@@ -1007,7 +1007,7 @@ describe('File System Mock', () => {
 				path.join('/mydir', 'dir2', 'lib', 'file.txt'),
 				path.join('/mydir', 'dir2', 'src', 'file2.txt')
 			];
-			for (let p of paths) {
+			for (const p of paths) {
 				mkdirp(path.dirname(p));
 				fs.writeFileSync(p, '');
 			}
@@ -1020,7 +1020,7 @@ describe('File System Mock', () => {
 				path.join('/mydir', 'dir2', 'lib', 'file.txt'),
 				path.join('/mydir', 'dir2', 'src', 'file2.txt')
 			];
-			for (let p of paths) {
+			for (const p of paths) {
 				mkdirp(path.dirname(p));
 				fs.writeFileSync(p, '');
 			}

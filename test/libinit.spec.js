@@ -62,7 +62,7 @@ describe('library initialize', function doit() {
 	 * @returns {nada} nothing
 	 */
 	function assertGeneratedContent(expected, actual) {
-		if (actual===undefined) {
+		if (actual === undefined) {
 			actual = expected;
 		}
 		const expectedContent = fs.readFileSync(path.join(__dirname,'./generator/', expected), 'utf8');
@@ -217,7 +217,7 @@ describe('library initialize', function doit() {
 				const prompts = sut._allPrompts();
 				expect(prompts).has.property('length').equal(3);
 
-				expect(prompts[0].validate('ab/cd')).to.equal(nameError+'.');
+				expect(prompts[0].validate('ab/cd')).to.equal(nameError + '.');
 				expect(prompts[1].validate('ab/cd')).to.equal(versionError);
 				expect(prompts[2].validate('ab/cd')).to.be.true;
 			});

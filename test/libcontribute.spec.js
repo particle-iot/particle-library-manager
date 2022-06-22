@@ -189,7 +189,7 @@ describe('LibraryContributor', () => {
 		});
 
 		for (const key of Object.keys(results)) {
-			it((results[key] ? 'allows' : 'rejects') + ' the file '+key, () => {
+			it((results[key] ? 'allows' : 'rejects') + ' the file ' + key, () => {
 				const listener = sinon.stub();
 				sut.on('file', listener);
 				const ignored = !results[key];

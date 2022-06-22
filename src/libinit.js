@@ -38,8 +38,8 @@ function validationMessage(v) {
 }
 
 function validationError(validation) {
-	let msg = [];
-	for (let idx in validation) {
+	const msg = [];
+	for (const idx in validation) {
 		const v = validation[idx];
 		const m = validationMessage(v);
 		msg.push(m);
@@ -96,7 +96,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	}
 
 	_allPrompts() {
-		let prompt = [];
+		const prompt = [];
 
 		if (this.options.name === undefined) {
 			prompt.push({
@@ -152,8 +152,8 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	_validate() {
 		const options = ['name', 'version', 'author'];
-		let result = [];
-		for (let idx in options) {
+		const result = [];
+		for (const idx in options) {
 			const check = this._validateOption(options[idx]);
 			if (check && !check.valid) {
 				result.push(check);
@@ -164,7 +164,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	_validateOption(attribute) {
 		const value = this.options[attribute];
-		if (value!==undefined && value!==null) {
+		if (value !== undefined && value !== null) {
 			return this._validateField(attribute, value.toString());
 		}
 		return null;

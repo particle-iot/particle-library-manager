@@ -150,7 +150,7 @@ describe('LibraryManager', () => {
 				result += chunk;
 				next();
 			};
-			ws.on('end', ()=>{
+			ws.on('end', () => {
 				expect(result).to.be.equal('lots of content here');
 			});
 			sut.content(ws);

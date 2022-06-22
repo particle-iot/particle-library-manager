@@ -62,7 +62,7 @@ function isDirectory(stat) {
  * @returns {Array<T>} The itmes array with all those that didn't satisfy the predicate removed.
  */
 function removeFailedPredicate(predicates, items) {
-	return items.filter((_,i) => predicates[i]===true);
+	return items.filter((_,i) => predicates[i] === true);
 }
 
 /**
@@ -134,7 +134,7 @@ export class NamingStrategy {
 	 * @returns {boolean} true if the name matches the descriptor.
 	 */
 	matchesName(descriptor, name) {
-		return this.toName(descriptor)===name;
+		return this.toName(descriptor) === name;
 	}
 }
 
@@ -167,7 +167,7 @@ class LibraryDirectStrategy extends NamingStrategy {
 	}
 
 	matchesName(descriptor, name) {
-		return name==='' ? true : super.matchesName(descriptor, name);
+		return name === '' ? true : super.matchesName(descriptor, name);
 	}
 
 	/**
@@ -308,9 +308,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 * @param {Number} layout   The layout version to use. 1 means legacy v1 (with firmware directory), 2 means library v2.
      * @return {Promise} promise to create the library.
 	 */
-	add(library, layout=2) {
+	add(library, layout = 2) {
 		const name = this.nameFor(library);
-		if (this.namingStrategy.nameToFilesystem(name)==='') {
+		if (this.namingStrategy.nameToFilesystem(name) === '') {
 			return Promise.reject(new LibraryRepositoryError(this, 'repo is not writable'));
 		}
 
@@ -319,7 +319,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			.then(() => mkdir(this.libraryDirectory(name)))
 			.then(() => library.definition())
 			.then(definition => {
-				if (layout===1) {
+				if (layout === 1) {
 					return this.writeDescriptorV1(this.descriptorFileV1(name), definition);
 				} else {
 					return this.writeDescriptorV2(this.descriptorFileV2(name), definition);
@@ -328,9 +328,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			.then(() => library.files())
 			.then((files) => {
 				const copyFiles = [];
-				for (let file of files) {
+				for (const file of files) {
 					if (this.includeLibraryFile(file)) {
-						copyFiles.push(Promise.resolve().then(()=>this.copyLibraryFile(name, file)));
+						copyFiles.push(Promise.resolve().then(() => this.copyLibraryFile(name, file)));
 					}
 				}
 				return Promise.all(copyFiles);
@@ -362,9 +362,9 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	buildV2Descriptor(metadata, withComments) {
-		let content = [];
+		const content = [];
 		function addProperty(target, value, name, comment) {
-			if (value!==undefined) {
+			if (value !== undefined) {
 				content.push(`${name}=${value}\n`);
 			} else if (withComments) {
 				content.push(`# ${name}=${comment}\n`);
@@ -431,7 +431,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 				if (!this.namingStrategy.matchesName(props,name)) {
 					throw new LibraryFormatError(this, name, 'name in descriptor does not match directory name');
 				}
-				if (props.sentence!==undefined) {
+				if (props.sentence !== undefined) {
 					props.description = props.sentence;
 				}
 				if (props.architectures) {
@@ -527,7 +527,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	 */
 	extension(name) {
 		const idx = name.lastIndexOf('.');
-		return idx>=0 ? [name.substring(idx+1), name.substring(0,idx)] : ['', name];
+		return idx >= 0 ? [name.substring(idx + 1), name.substring(0,idx)] : ['', name];
 	}
 
 	isSourceFile(stat, name) {
@@ -536,7 +536,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	isSourceFileName(name) {
 		//return this.sourceExtensions[this.extension(name)[0]]!==false;
-		return name!==libraryProperties;
+		return name !== libraryProperties;
 	}
 
 	/**
@@ -548,7 +548,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const libraryDir = this.libraryDirectory(this.nameFor(lib));
 		// iterate over all the files and
 
-		return mapActionDir(libraryDir, (...args)=>this.isSourceFile(...args), (include, files) => {
+		return mapActionDir(libraryDir, (...args) => this.isSourceFile(...args), (include, files) => {
 			const filtered = removeFailedPredicate(include, files);
 			return this.createLibraryFiles(lib, filtered);
 		});
@@ -562,7 +562,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	createLibraryFile(libraryDir, fileName) {
 		const [extension, baseFile] = this.extension(fileName);
-		return Promise.resolve(new FileSystemLibraryFile(libraryDir+fileName, baseFile, 'source', extension));
+		return Promise.resolve(new FileSystemLibraryFile(libraryDir + fileName, baseFile, 'source', extension));
 	}
 
 	/**
@@ -573,7 +573,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	getLibraryLayout(name) {
 		const dir = this.libraryDirectory(this.namingStrategy.nameToFilesystem(name));
 		const stat = promisify(fs.stat);
-		const notFound = (error) => error!==undefined ? new LibraryNotFoundError(this, name, error) : new LibraryNotFoundError(this, name);
+		const notFound = (error) => error !== undefined ? new LibraryNotFoundError(this, name, error) : new LibraryNotFoundError(this, name);
 		return Promise.resolve()
 			.then(() => {
 				return stat(dir).then((stat) => {
@@ -624,8 +624,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 
 	setLibraryLayout(name, layout) {
 		return this.getLibraryLayout(name).then(currentLayout => {
-			if (currentLayout!==layout) {                                   // some change needed
-				if (layout!==2 || currentLayout!==1) {                      // support only migrate to v2 for now
+			if (currentLayout !== layout) {                                   // some change needed
+				if (layout !== 2 || currentLayout !== 1) {                      // support only migrate to v2 for now
 					throw new LibraryRepositoryError(this, 'the requested library migration is not supported');
 				}
 				return this.migrateV2(name);
@@ -799,13 +799,13 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	addAdapters(callback, libname, dir) {
 		return this.getLibraryLayout(libname)
 			.then((layout) => {
-				if (layout!==2) {
+				if (layout !== 2) {
 					throw this._requireV2Format(libname);
 				}
 				return this.fileStat(dir);
 			})
 			.then(stat => {
-				if (stat===null || !stat.isDirectory()) {
+				if (stat === null || !stat.isDirectory()) {
 					throw this._targetDirectoryDoesNotExist(dir);
 				}
 				return this._addAdapters(callback, libname, dir);
@@ -879,7 +879,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 function isLibraryV2(directory) {
 	return new FileSystemLibraryRepository(directory, FileSystemNamingStrategy.DIRECT)
 		.getLibraryLayout().
-		then(layout => layout===2);
+		then(layout => layout === 2);
 }
 
 function normalizeAndSplitPath(p, cwd, absPaths) {
@@ -900,7 +900,7 @@ function longestArrayCommonPrefix(current, next) {
 
 	const upper = Math.min(current.length, next.length);
 	let i = 0;
-	while (i<upper && current[i]===next[i]) {
+	while (i < upper && current[i] === next[i]) {
 		i++;
 	}
 	const prefix = current.slice(0, i);
@@ -920,20 +920,20 @@ function longestArrayCommonPrefix(current, next) {
  * <DANGER: for expediency we are using sync fs functions here. This should only be used
  * from client code: REGNAD>
  */
-export function pathsCommonPrefix(files, relative=undefined, cwd=process.cwd()) {
+export function pathsCommonPrefix(files, relative = undefined, cwd = process.cwd()) {
 
 	let result = '';
 	if (files.length) {
 		let longest;
 		const absFiles = [];
-		for (let file of files) {
+		for (const file of files) {
 			const split = normalizeAndSplitPath(file, cwd, absFiles);
 			longest = longestArrayCommonPrefix(longest, split);
 		}
 
 		result = longest.join(path.sep);
 		if (relative) {
-			for (let file of absFiles) {
+			for (const file of absFiles) {
 				relative.push(path.relative(result, file));
 			}
 		}
@@ -1020,7 +1020,7 @@ class LibraryExample {
 	 * @returns {Promise} to add a mapping from all files in the source directory to the destination directory
 	 * @private
 	 */
-	_addDirectory(files, source, destination, subdir='') {
+	_addDirectory(files, source, destination, subdir = '') {
 		function mapper(stat, file, filePath) {
 			const traversePath = path.join(subdir, file);
 			const sourcePath = path.join(source, traversePath);             // the path to the source file
@@ -1048,7 +1048,7 @@ class LibraryExample {
 	 * @returns {Promise} to add the files to the `files` mapping
 	 * @private
 	 */
-	_addFiles(files, source, destination, mandatory=true) {
+	_addFiles(files, source, destination, mandatory = true) {
 		const destinationFile = this._isFile(destination);
 
 		const stat = promisify(fs.stat);
@@ -1088,7 +1088,7 @@ class LibraryExample {
  * @returns {*} a falsey value if it is not an example in a v2 library.
  *  otherwise returns a LibraryExample instance.
  */
-export function isLibraryExample(file, cwd=process.cwd()) {
+export function isLibraryExample(file, cwd = process.cwd()) {
 	const stat = promisify(fs.stat);
 	// the directory containing the example
 	const examplePath = path.resolve(cwd, file);
@@ -1100,7 +1100,7 @@ export function isLibraryExample(file, cwd=process.cwd()) {
 			// the library directory
 			const libraryDirectory = path.resolve(examplesDirectory, '..');
 			// `/examples`
-			const examplesSingleDir = path.sep+examplesDir;
+			const examplesSingleDir = path.sep + examplesDir;
 			// todo - case insensitive comparison on file systems that are case insensitive?
 			let isExample = examplesDirectory.endsWith(examplesSingleDir);
 			isExample = isExample && isLibraryV2(libraryDirectory).
