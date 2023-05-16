@@ -85,7 +85,7 @@ export class LibraryContributor extends EventEmitter {
 	 * Creates a tar.gz stream containing the contents of the given directory in the file system that can be piped to another stream.
 	 * @param {string} dir The directory to tar.gz
 	 * @param {Array.<string>} whitelist The files to include in the library.
-	 * @returns {ReadableStream} a stream that can be piped to a writableStream to provide the tar.gz file.
+	 * @returns {string} a filename of the tar.gz file
 	 */
 	_targzdir(dir, whitelist) {
 		return new Promise((fulfill, reject) => {
@@ -102,8 +102,7 @@ export class LibraryContributor extends EventEmitter {
 			pack.pipe(gzip).pipe(archiveWriter);
 
 			archiveWriter.on('finish', () => {
-				const archiveReader = fs.createReadStream(archive.name);
-				fulfill(archiveReader);
+				fulfill(archive.name);
 			});
 
 			archiveWriter.on('error', reject);
@@ -208,8 +207,8 @@ export class LibraryContributor extends EventEmitter {
 	 * @private
 	 */
 	_buildContributePromise(libraryDirectory, libraryName, libraryWhitelist, dryRun) {
-		return Promise.resolve(this._targzdir(libraryDirectory, libraryWhitelist))
-			.then(pipe => dryRun ? true : this._contribute(libraryName, pipe));
+		return this._targzdir(libraryDirectory, libraryWhitelist)
+			.then(archiveName => dryRun ? true : this._contribute(libraryName, fs.createReadStream(archiveName)));
 	}
 }
 

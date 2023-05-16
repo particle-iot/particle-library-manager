@@ -44,14 +44,14 @@ describe('LibraryContributor', () => {
 		});
 
 		it('tars the directory and contributes', () => {
-			const pipe = 'pipe';
-			sut._targzdir = sinon.stub().resolves(pipe);
+			const archiveName = 'archive.tar.gz';
+			sut._targzdir = sinon.stub().resolves(archiveName);
 			sut._contribute = sinon.stub();
 			const dryRun = false;
 			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, dryRun);
 			const validate = () => {
 				expect(sut._targzdir).to.be.calledWith(libraryDirectory);
-				expect(sut._contribute).to.have.been.calledWith(libraryName, pipe);
+				expect(sut._contribute).to.have.been.calledWith(libraryName);
 			};
 			return exercise.then(validate);
 		});
@@ -338,7 +338,8 @@ describe('LibraryContributor', () => {
 			Object.keys(files).forEach((key) => createFile(tmpdir, key, files[key]));
 			const sut = new LibraryContributor({}, {});
 			return sut._targzdir(tmpdir, ['*.cpp', '*.h', 'license', '.gitignore'])
-				.then((stream) => {
+				.then((archiveName) => {
+					const stream = fs.createReadStream(archiveName);
 					const resultdir = path.join(tmpdir, 'result');
 					fs.mkdirSync(resultdir);
 
