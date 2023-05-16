@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.15 - 16 May 2023
+
+- Fix implementation of library upload so it works in Node 16
+
 ## 0.1.14 - 2 December 2019
 
 - update to latest superagent to fix deprecation warnings in Node v12
