@@ -19,6 +19,7 @@
 
 import { validateField } from './validation';
 const path = require('path');
+const inquirer = require('inquirer');
 
 function lowercaseFirstLetter(string) {
 	return string.charAt(0).toLowerCase() + string.slice(1);
@@ -57,11 +58,18 @@ function validationError(validation) {
  * @param {class} B The base class to use for the mixin
  * @returns {LibraryInitGeneratorMixin} The mixin class with B as the base.
  */
-export const LibraryInitGeneratorMixin = (B) => class extends B {
+export class LibraryInitGeneratorMixin {
 
 	constructor(...args) {
-		super(...args); 		/* istanbul ignore next: coverage bug? */
+		// super(...args); 		/* istanbul ignore next: coverage bug? */
+		this.arguments = [];
+		this._destinationRoot = undefined;
+		this.destinationRoot = (dir) => (this._destinationRoot = dir);
+		this.argument = (name, options) => (this.arguments.push({ name, options }));
+		this.fs = { copyTpl : () => {} };
+		this.options = {};
 	}
+
 
 	/**
 	 * Registers the option names.
@@ -93,6 +101,10 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 			return true;
 		}
 		return validationMessage(result);
+	}
+
+	prompt(questions) {
+		return inquirer.prompt(questions);
 	}
 
 	_allPrompts() {
@@ -175,15 +187,13 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	}
 
 	_prompt() {
-		this._setYear();
-		this._setOutputDir();
 		const prompt = this._allPrompts();
 		return this.prompt(prompt).then((data) => this._handlePrompts(data));
 	}
 
 	get prompting() {
 		return {
-			prompt : this._prompt
+			prompt : this._prompt.bind(this)
 		};
 	}
 
@@ -229,11 +239,9 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 			}
 		};
 	}
-};
+}
 
 export function buildLibraryInitGeneratorClass() {
-	const gen = require('yeoman-generator');
-
 	function sourceRoot() {
 		return path.join(__dirname, 'init', 'templates');
 	}
@@ -243,13 +251,14 @@ export function buildLibraryInitGeneratorClass() {
 	 * functionality to create a new library in the file system.
 	 *
 	 */
-	class LibraryInitGenerator extends LibraryInitGeneratorMixin(gen) { // eslint-disable-line new-cap
+	class LibraryInitGenerator extends LibraryInitGeneratorMixin { // eslint-disable-line new-cap
 
 		constructor(...args) {
 			super(...args);  			/* istanbul ignore next: coverage bug? */
-			this.sourceRoot(sourceRoot());
+			this.sourceRoot = sourceRoot();
 			this._initializeOptions();
 			this._checkFields();
+			this.fs = this.fs || { copyTpl : () => {} };
 		}
 
 		// It looks like yeoman is expecting the getters specifically on this
@@ -265,7 +274,7 @@ export function buildLibraryInitGeneratorClass() {
 
 	// provide the directory unambiguously for external tests since npm link and other
 	// packaging tricks can mean external code can end up using the wrong directory
-	LibraryInitGenerator.sources = sourceRoot();
+	LibraryInitGenerator.sources = path.join(__dirname, 'init', 'templates');
 
 	return LibraryInitGenerator;
 }
