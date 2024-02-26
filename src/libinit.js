@@ -18,6 +18,7 @@
  */
 
 import { validateField } from './validation';
+import { processTemplate } from './util/template_processor';
 const path = require('path');
 const inquirer = require('inquirer');
 
@@ -39,8 +40,8 @@ function validationMessage(v) {
 }
 
 function validationError(validation) {
-	let msg = [];
-	for (let idx in validation) {
+	const msg = [];
+	for (const idx in validation) {
 		const v = validation[idx];
 		const m = validationMessage(v);
 		msg.push(m);
@@ -61,13 +62,19 @@ function validationError(validation) {
 export class LibraryInitGeneratorMixin {
 
 	constructor(...args) {
-		// super(...args); 		/* istanbul ignore next: coverage bug? */
 		this.arguments = [];
-		this._destinationRoot = undefined;
-		this.destinationRoot = (dir) => (this._destinationRoot = dir);
 		this.argument = (name, options) => (this.arguments.push({ name, options }));
-		this.fs = { copyTpl : () => {} };
 		this.options = {};
+		this.destinationRoot = undefined;
+		this.sourceRoot = path.join(__dirname, 'init', 'templates');
+	}
+
+	destinationPath(file) {
+		return path.join(process.cwd(), file);
+	}
+
+	templatePath(file) {
+		return path.join(this.sourceRoot, file);
 	}
 
 
@@ -108,7 +115,7 @@ export class LibraryInitGeneratorMixin {
 	}
 
 	_allPrompts() {
-		let prompt = [];
+		const prompt = [];
 
 		if (this.options.name === undefined) {
 			prompt.push({
@@ -164,8 +171,8 @@ export class LibraryInitGeneratorMixin {
 
 	_validate() {
 		const options = ['name', 'version', 'author'];
-		let result = [];
-		for (let idx in options) {
+		const result = [];
+		for (const idx in options) {
 			const check = this._validateOption(options[idx]);
 			if (check && !check.valid) {
 				result.push(check);
@@ -176,7 +183,7 @@ export class LibraryInitGeneratorMixin {
 
 	_validateOption(attribute) {
 		const value = this.options[attribute];
-		if (value!==undefined && value!==null) {
+		if (value !== undefined && value !== null) {
 			return this._validateField(attribute, value.toString());
 		}
 		return null;
@@ -197,88 +204,45 @@ export class LibraryInitGeneratorMixin {
 		};
 	}
 
-	get writing() {
-		return {
-			libraryProperties() {
-				this.fs.copyTpl(
-					this.templatePath('library.properties'),
-					this.destinationPath('library.properties'),
-					this.options
-				);
+	async write() {
+		await processTemplate({
+			templatePath: this.templatePath('library.properties'),
+			destinationPath: this.destinationPath('library.properties'),
+			options: this.options
+		});
 
-				this.fs.copyTpl(
-					this.templatePath('README.md'),
-					this.destinationPath('README.md'),
-					this.options
-				);
+		await processTemplate({
+			templatePath: this.templatePath('README.md'),
+			destinationPath: this.destinationPath('README.md'),
+			options: this.options
+		});
 
-				this.fs.copyTpl(
-					this.templatePath('LICENSE'),
-					this.destinationPath('LICENSE'),
-					this.options
-				);
+		await processTemplate({
+			templatePath: this.templatePath('LICENSE'),
+			destinationPath: this.destinationPath('LICENSE'),
+			options: this.options
+		});
 
-				const filename = `src/${this.options.name}.cpp`;
-				this.fs.copyTpl(
-					this.templatePath('src/library.cpp'),
-					this.destinationPath(filename),
-					this.options
-				);
+		const filename = `src/${this.options.name}.cpp`;
+		await processTemplate({
+			templatePath: this.templatePath('src/library.cpp'),
+			destinationPath: this.destinationPath(filename),
+			options: this.options
+		});
 
-				this.fs.copyTpl(
-					this.templatePath('src/library.h'),
-					this.destinationPath(`src/${this.options.name}.h`),
-					this.options
-				);
+		await processTemplate({
+			templatePath: this.templatePath('src/library.h'),
+			destinationPath: this.destinationPath(`src/${this.options.name}.h`),
+			options: this.options
+		});
 
-				this.fs.copyTpl(
-					this.templatePath('examples/usage/usage.ino'),
-					this.destinationPath('examples/usage/usage.ino'),
-					this.options
-				);
-			}
-		};
+		await processTemplate({
+			templatePath: this.templatePath('examples/usage/usage.ino'),
+			destinationPath: this.destinationPath('examples/usage/usage.ino'),
+			options: this.options
+		});
 	}
 }
-
-export function buildLibraryInitGeneratorClass() {
-	function sourceRoot() {
-		return path.join(__dirname, 'init', 'templates');
-	}
-
-	/**
-	 * Yeoman generator that provides library initialize
-	 * functionality to create a new library in the file system.
-	 *
-	 */
-	class LibraryInitGenerator extends LibraryInitGeneratorMixin { // eslint-disable-line new-cap
-
-		constructor(...args) {
-			super(...args);  			/* istanbul ignore next: coverage bug? */
-			this.sourceRoot = sourceRoot();
-			this._initializeOptions();
-			this._checkFields();
-			this.fs = this.fs || { copyTpl : () => {} };
-		}
-
-		// It looks like yeoman is expecting the getters specifically on this
-		// rather than on super.
-		get prompting() {
-			return super.prompting;
-		}
-
-		get writing() {
-			return super.writing;
-		}
-	}
-
-	// provide the directory unambiguously for external tests since npm link and other
-	// packaging tricks can mean external code can end up using the wrong directory
-	LibraryInitGenerator.sources = path.join(__dirname, 'init', 'templates');
-
-	return LibraryInitGenerator;
-}
-
 
 // keep all branches  of the ES6 transpilled code executed
 /* istanbul ignore next: not executed on node 7 */
