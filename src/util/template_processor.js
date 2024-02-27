@@ -1,8 +1,14 @@
 import fs from 'fs-extra';
-import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { readFile, writeFile } from 'fs/promises';
 
-
+/**
+ * Processes a template file and replaces variables with values.
+ * @param {string} templatePath - The path to the template file
+ * @param {string} destinationPath - The path to the destination file
+ * @param {object} options - The options to replace in the template
+ * @return {Promise<void>} nothing
+ */
 export async function processTemplate ({ templatePath, destinationPath, options }){
 	// open the template file
 	let file = await readFile(templatePath, 'utf8');
@@ -12,10 +18,8 @@ export async function processTemplate ({ templatePath, destinationPath, options 
 		const regex = new RegExp(`<%-\\s*${key}\\s*%>`, 'g');
 		file = file.replace(regex, value);
 	}
-	// write the file to the destination path
-	// ensure the directory exists
+
 	await fs.ensureDir(path.dirname(destinationPath));
 	await writeFile(destinationPath, file);
-
 }
 
