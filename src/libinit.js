@@ -59,18 +59,21 @@ function validationError(validation) {
  * @param {class} B The base class to use for the mixin
  * @returns {LibraryInitGeneratorMixin} The mixin class with B as the base.
  */
-export class LibraryInitGeneratorMixin {
+export class LibraryInitGenerator {
 
 	constructor(...args) {
 		this.arguments = [];
 		this.argument = (name, options) => (this.arguments.push({ name, options }));
 		this.options = {};
-		this.destinationRoot = undefined;
 		this.sourceRoot = path.join(__dirname, 'init', 'templates');
 	}
 
+	destinationRoot(rootPath) {
+		this._destinationRoot = rootPath;
+	}
+
 	destinationPath(file) {
-		return path.join(process.cwd(), file);
+		return path.join((this._destinationRoot || process.cwd()), file);
 	}
 
 	templatePath(file) {
@@ -194,6 +197,8 @@ export class LibraryInitGeneratorMixin {
 	}
 
 	_prompt() {
+		this._setYear();
+		this._setOutputDir();
 		const prompt = this._allPrompts();
 		return this.prompt(prompt).then((data) => this._handlePrompts(data));
 	}

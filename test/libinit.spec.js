@@ -21,16 +21,12 @@ import { expect, sinon } from './test-setup';
 
 const fs = require('fs');
 const path = require('path');
-const helpers = require('yeoman-test');
-const assert = require('yeoman-assert');
 const fse = require('fs-extra');
 const timekeeper = require('timekeeper');
 
 
-import { buildLibraryInitGeneratorClass } from '../src/libinit';
+import { LibraryInitGenerator } from '../src/libinit';
 import { appRoot } from '../src/index';
-
-// http://yeoman.io/generator/module-test_helpers.html
 
 
 
@@ -54,7 +50,7 @@ describe('library initialize', function doit() {
 	 * @returns {nada} nothing
 	 */
 	function assertGeneratedContent(expected, actual) {
-		if (actual===undefined) {
+		if (actual === undefined) {
 			actual = expected;
 		}
 		const expectedContent = fs.readFileSync(path.join(__dirname,'./generator/', expected), 'utf8');
@@ -109,16 +105,16 @@ describe('library initialize', function doit() {
 			}).then(validateOutput);
 		});
 
-		it.skip('sets the year from the "year" options', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('sets the year from the "year" options', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = { year: 1234 };
 			const date = new Date();
 			sut._setYear(date);
 			expect(sut.options.year).to.eql(1234);
 		});
 
-		it.skip('sets the year from the current year when "year" option not defined', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('sets the year from the current year when "year" option not defined', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = {};
 			const date = new Date();
 			sut._setYear(date);
@@ -126,38 +122,38 @@ describe('library initialize', function doit() {
 		});
 
 
-		it.skip('sets the output directory from the "dir" option', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('sets the output directory from the "dir" option', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = { dir: 'abcd' };
 			sut.destinationRoot = sinon.stub();
 			sut._setOutputDir();
 			expect(sut.destinationRoot).to.have.been.calledWith('abcd');
 		});
 
-		it.skip('does not set the output directory when the dir option is not present', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('does not set the output directory when the dir option is not present', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = { };
 			sut.destinationRoot = sinon.stub();
 			sut._setOutputDir();
 			expect(sut.destinationRoot).to.have.not.been.called;
 		});
 
-		it.skip('sets the name_code option to the code-safe name with the first letter lowercased', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('sets the name_code option to the code-safe name with the first letter lowercased', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = {};
 			sut._handlePrompts({ name:'SparkLib++' });
 			expect(sut.options).to.have.property('name_code').equal('sparkLib');
 		});
 
-		it.skip('sets the Name_code option to the code-safe name with first letter capitalized', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('sets the Name_code option to the code-safe name with first letter capitalized', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = {};
 			sut._handlePrompts({ name:'my-lib++' });
 			expect(sut.options).to.have.property('Name_code').equal('Mylib');
 		});
 
-		it.skip('does not set the Name_code option when name is not present', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('does not set the Name_code option when name is not present', () => {
+			const sut = new LibraryInitGenerator();
 			sut.options = {};
 			sut._handlePrompts({ name2:'abcd' });
 			expect(sut.options).to.not.have.property('Name_code');
@@ -166,45 +162,45 @@ describe('library initialize', function doit() {
 		describe('validation', () => {
 			const nameError = 'name: must only contain letters, numbers, dashes, underscores and plus signs';
 			const versionError = 'version: must be formatted like 1.0.0';
-			it.skip('validates the name', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the name', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = {};
 				expect(() => sut._handlePrompts({ name:'ab/cd' })).to.throw(nameError);
 			});
 
-			it.skip('validates the version', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the version', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = {};
 				expect(() => sut._handlePrompts({ version:'ab/cd' })).to.throw(versionError);
 			});
 
-			it.skip('validates the author, which is freeform', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the author, which is freeform', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = {};
 				expect(() => sut._handlePrompts({ author:'ab/cd' })).to.not.throw();
 			});
 
-			it.skip('validates the initial name value', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the initial name value', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = { name: '//' };
 				expect(() => sut._checkFields()).to.throw(nameError);
 			});
 
-			it.skip('validates the initial version value', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the initial version value', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = { version: '//' };
 				expect(() => sut._checkFields()).to.throw(versionError);
 			});
 
-			it.skip('validates the initial version value when set as a number', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the initial version value when set as a number', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = { version: 123 };
 				expect(() => sut._checkFields()).to.throw(versionError);
 			});
 
 
-			it.skip('validates the prompts', () => {
-				const sut = new MockLibraryInitGenerator();
+			it('validates the prompts', () => {
+				const sut = new LibraryInitGenerator();
 				sut.options = {};
 				const prompts = sut._allPrompts();
 				expect(prompts).has.property('length').equal(3);
@@ -215,13 +211,8 @@ describe('library initialize', function doit() {
 			});
 		});
 
-		it.skip('prompting delegates to the _prompt method', () => {
-			const sut = new MockLibraryInitGenerator();
-			expect(sut.prompting).to.have.property('prompt').equal(sut._prompt);
-		});
-
-		it.skip('the _prompt method configures and fetches options', () => {
-			const sut = new MockLibraryInitGenerator();
+		it('the _prompt method configures and fetches options', () => {
+			const sut = new LibraryInitGenerator();
 			// given
 			sut._setYear = sinon.stub();
 			sut._setOutputDir = sinon.stub();
