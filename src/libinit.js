@@ -20,7 +20,6 @@
 import { validateField } from './validation';
 import { processTemplate } from './util/template_processor';
 const path = require('path');
-const inquirer = require('inquirer');
 
 function lowercaseFirstLetter(string) {
 	return string.charAt(0).toLowerCase() + string.slice(1);
@@ -55,17 +54,13 @@ function validationError(validation) {
  * Code the functionality separate from the generator so we can mock the various
  * generator operations - having to subclass Base binds the functionality too closely
  * to the generator.
- *
- * @param {class} B The base class to use for the mixin
- * @returns {LibraryInitGeneratorMixin} The mixin class with B as the base.
  */
 export class LibraryInitGenerator {
 
-	constructor(...args) {
+	constructor({ prompt }) {
 		this.arguments = [];
-		this.argument = (name, options) => (this.arguments.push({ name, options }));
-		this.options = {};
 		this.sourceRoot = path.join(__dirname, 'init', 'templates');
+		this.prompt = prompt;
 	}
 
 	destinationRoot(rootPath) {
@@ -80,6 +75,9 @@ export class LibraryInitGenerator {
 		return path.join(this.sourceRoot, file);
 	}
 
+	argument(name, options) {
+		this.arguments.push({ name, options });
+	}
 
 	/**
 	 * Registers the option names.
@@ -111,10 +109,6 @@ export class LibraryInitGenerator {
 			return true;
 		}
 		return validationMessage(result);
-	}
-
-	prompt(questions) {
-		return inquirer.prompt(questions);
 	}
 
 	_allPrompts() {
@@ -203,12 +197,6 @@ export class LibraryInitGenerator {
 		return this.prompt(prompt).then((data) => this._handlePrompts(data));
 	}
 
-	get prompting() {
-		return {
-			prompt : this._prompt.bind(this)
-		};
-	}
-
 	async write() {
 		await processTemplate({
 			templatePath: this.templatePath('library.properties'),
@@ -246,6 +234,12 @@ export class LibraryInitGenerator {
 			destinationPath: this.destinationPath('examples/usage/usage.ino'),
 			options: this.options
 		});
+	}
+
+	async run({ options } = {}) {
+		this.options = options || {};
+		await this._prompt();
+		await this.write();
 	}
 }
 
