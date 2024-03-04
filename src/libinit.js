@@ -19,6 +19,7 @@
 
 import { validateField } from './validation';
 import { processTemplate } from './util/template_processor';
+import * as os from 'os';
 const path = require('path');
 
 function lowercaseFirstLetter(string) {
@@ -57,10 +58,11 @@ function validationError(validation) {
  */
 export class LibraryInitGenerator {
 
-	constructor({ prompt }) {
+	constructor({ prompt, stdout }) {
 		this.arguments = [];
 		this.sourceRoot = path.join(__dirname, 'init', 'templates');
 		this.prompt = prompt;
+		this.stdout = stdout; // TODO (hmontero): Remove both stdout and prompt in order to make particle-library manager just handle library creation and not prompt for anything
 	}
 
 	destinationRoot(rootPath) {
@@ -203,37 +205,46 @@ export class LibraryInitGenerator {
 			destinationPath: this.destinationPath('library.properties'),
 			options: this.options
 		});
+		this.stdout.write(`Created library.properties${os.EOL}`);
 
 		await processTemplate({
 			templatePath: this.templatePath('README.md'),
 			destinationPath: this.destinationPath('README.md'),
 			options: this.options
 		});
+		this.stdout.write(`Created README.md${os.EOL}`);
 
 		await processTemplate({
 			templatePath: this.templatePath('LICENSE'),
 			destinationPath: this.destinationPath('LICENSE'),
 			options: this.options
 		});
+		this.stdout.write(`Created LICENSE${os.EOL}`);
 
-		const filename = `src/${this.options.name}.cpp`;
+		const filename = path.join('src', `${this.options.name}.cpp`);
 		await processTemplate({
-			templatePath: this.templatePath('src/library.cpp'),
+			templatePath: this.templatePath(path.join('src', 'library.cpp')),
 			destinationPath: this.destinationPath(filename),
 			options: this.options
 		});
+		this.stdout.write(`Created ${filename}${os.EOL}`);
 
+		const libraryFileName = path.join('src', `${this.options.name}.h`);
 		await processTemplate({
-			templatePath: this.templatePath('src/library.h'),
-			destinationPath: this.destinationPath(`src/${this.options.name}.h`),
+			templatePath: this.templatePath(path.join('src', 'library.h')),
+			destinationPath: this.destinationPath(libraryFileName),
 			options: this.options
 		});
+		this.stdout.write(`Created ${libraryFileName}${os.EOL}`);
 
+		const exampleFileName = path.join('examples', 'usage', 'usage.ino');
 		await processTemplate({
-			templatePath: this.templatePath('examples/usage/usage.ino'),
-			destinationPath: this.destinationPath('examples/usage/usage.ino'),
+			templatePath: this.templatePath(exampleFileName),
+			destinationPath: this.destinationPath(exampleFileName),
 			options: this.options
 		});
+		this.stdout.write(`Created ${exampleFileName}${os.EOL}`);
+
 	}
 
 	async run({ options } = {}) {

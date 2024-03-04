@@ -74,7 +74,7 @@ describe('library initialize', function doit() {
 
 		it('interpolates all template files', async () => {
 			this.timeout(30000);
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({ prompt: prompt.resolves(), stdout: { write: sinon.stub() } });
 			sut._destinationRoot = TEMP_PATH;
 			await sut.run({ options: testData });
 			expect(sut.prompt).to.have.been.calledWith([]);
@@ -83,14 +83,20 @@ describe('library initialize', function doit() {
 
 		it('should prompt for all properties if not provided', async () => {
 			this.timeout(30000);
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves(testData) });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(testData),
+				stdout: { write: sinon.stub() }
+			});
 			sut._destinationRoot = TEMP_PATH;
 			await sut.run();
 			validateOutput();
 		});
 
 		it('sets the year from the "year" options', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = { year: 1234 };
 			const date = new Date();
 			sut._setYear(date);
@@ -98,7 +104,10 @@ describe('library initialize', function doit() {
 		});
 
 		it('sets the year from the current year when "year" option not defined', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = {};
 			const date = new Date();
 			sut._setYear(date);
@@ -107,7 +116,10 @@ describe('library initialize', function doit() {
 
 
 		it('sets the output directory from the "dir" option', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = { dir: 'abcd' };
 			sut.destinationRoot = sinon.stub();
 			sut._setOutputDir();
@@ -115,7 +127,10 @@ describe('library initialize', function doit() {
 		});
 
 		it('does not set the output directory when the dir option is not present', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = { };
 			sut.destinationRoot = sinon.stub();
 			sut._setOutputDir();
@@ -123,21 +138,30 @@ describe('library initialize', function doit() {
 		});
 
 		it('sets the name_code option to the code-safe name with the first letter lowercased', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = {};
 			sut._handlePrompts({ name:'SparkLib++' });
 			expect(sut.options).to.have.property('name_code').equal('sparkLib');
 		});
 
 		it('sets the Name_code option to the code-safe name with first letter capitalized', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = {};
 			sut._handlePrompts({ name:'my-lib++' });
 			expect(sut.options).to.have.property('Name_code').equal('Mylib');
 		});
 
 		it('does not set the Name_code option when name is not present', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			sut.options = {};
 			sut._handlePrompts({ name2:'abcd' });
 			expect(sut.options).to.not.have.property('Name_code');
@@ -147,44 +171,65 @@ describe('library initialize', function doit() {
 			const nameError = 'name: must only contain letters, numbers, dashes, underscores and plus signs';
 			const versionError = 'version: must be formatted like 1.0.0';
 			it('validates the name', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = {};
 				expect(() => sut._handlePrompts({ name:'ab/cd' })).to.throw(nameError);
 			});
 
 			it('validates the version', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = {};
 				expect(() => sut._handlePrompts({ version:'ab/cd' })).to.throw(versionError);
 			});
 
 			it('validates the author, which is freeform', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = {};
 				expect(() => sut._handlePrompts({ author:'ab/cd' })).to.not.throw();
 			});
 
 			it('validates the initial name value', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = { name: '//' };
 				expect(() => sut._checkFields()).to.throw(nameError);
 			});
 
 			it('validates the initial version value', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = { version: '//' };
 				expect(() => sut._checkFields()).to.throw(versionError);
 			});
 
 			it('validates the initial version value when set as a number', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = { version: 123 };
 				expect(() => sut._checkFields()).to.throw(versionError);
 			});
 
 
 			it('validates the prompts', () => {
-				const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+				const sut = new LibraryInitGenerator({
+					prompt: prompt.resolves(),
+					stdout: { write: sinon.stub() }
+				});
 				sut.options = {};
 				const prompts = sut._allPrompts();
 				expect(prompts).has.property('length').equal(3);
@@ -196,7 +241,10 @@ describe('library initialize', function doit() {
 		});
 
 		it('the _prompt method configures and fetches options', () => {
-			const sut = new LibraryInitGenerator({ prompt: prompt.resolves() });
+			const sut = new LibraryInitGenerator({
+				prompt: prompt.resolves(),
+				stdout: { write: sinon.stub() }
+			});
 			// given
 			sut._setYear = sinon.stub();
 			sut._setOutputDir = sinon.stub();
