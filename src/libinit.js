@@ -18,6 +18,8 @@
  */
 
 import { validateField } from './validation';
+import { processTemplate } from './util/template_processor';
+import * as os from 'os';
 const path = require('path');
 
 function lowercaseFirstLetter(string) {
@@ -38,8 +40,8 @@ function validationMessage(v) {
 }
 
 function validationError(validation) {
-	let msg = [];
-	for (let idx in validation) {
+	const msg = [];
+	for (const idx in validation) {
 		const v = validation[idx];
 		const m = validationMessage(v);
 		msg.push(m);
@@ -53,14 +55,30 @@ function validationError(validation) {
  * Code the functionality separate from the generator so we can mock the various
  * generator operations - having to subclass Base binds the functionality too closely
  * to the generator.
- *
- * @param {class} B The base class to use for the mixin
- * @returns {LibraryInitGeneratorMixin} The mixin class with B as the base.
  */
-export const LibraryInitGeneratorMixin = (B) => class extends B {
+export class LibraryInitGenerator {
 
-	constructor(...args) {
-		super(...args); 		/* istanbul ignore next: coverage bug? */
+	constructor({ prompt, stdout }) {
+		this.arguments = [];
+		this.sourceRoot = path.join(__dirname, 'init', 'templates');
+		this.prompt = prompt;
+		this.stdout = stdout; // TODO (hmontero): Remove both stdout and prompt in order to make particle-library manager just handle library creation and not prompt for anything
+	}
+
+	destinationRoot(rootPath) {
+		this._destinationRoot = rootPath;
+	}
+
+	destinationPath(file) {
+		return path.join((this._destinationRoot || process.cwd()), file);
+	}
+
+	templatePath(file) {
+		return path.join(this.sourceRoot, file);
+	}
+
+	argument(name, options) {
+		this.arguments.push({ name, options });
 	}
 
 	/**
@@ -96,7 +114,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 	}
 
 	_allPrompts() {
-		let prompt = [];
+		const prompt = [];
 
 		if (this.options.name === undefined) {
 			prompt.push({
@@ -152,8 +170,8 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	_validate() {
 		const options = ['name', 'version', 'author'];
-		let result = [];
-		for (let idx in options) {
+		const result = [];
+		for (const idx in options) {
 			const check = this._validateOption(options[idx]);
 			if (check && !check.valid) {
 				result.push(check);
@@ -164,7 +182,7 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 
 	_validateOption(attribute) {
 		const value = this.options[attribute];
-		if (value!==undefined && value!==null) {
+		if (value !== undefined && value !== null) {
 			return this._validateField(attribute, value.toString());
 		}
 		return null;
@@ -181,95 +199,60 @@ export const LibraryInitGeneratorMixin = (B) => class extends B {
 		return this.prompt(prompt).then((data) => this._handlePrompts(data));
 	}
 
-	get prompting() {
-		return {
-			prompt : this._prompt
-		};
+	async write() {
+		await processTemplate({
+			templatePath: this.templatePath('library.properties'),
+			destinationPath: this.destinationPath('library.properties'),
+			options: this.options
+		});
+		this.stdout.write(`Created library.properties${os.EOL}`);
+
+		await processTemplate({
+			templatePath: this.templatePath('README.md'),
+			destinationPath: this.destinationPath('README.md'),
+			options: this.options
+		});
+		this.stdout.write(`Created README.md${os.EOL}`);
+
+		await processTemplate({
+			templatePath: this.templatePath('LICENSE'),
+			destinationPath: this.destinationPath('LICENSE'),
+			options: this.options
+		});
+		this.stdout.write(`Created LICENSE${os.EOL}`);
+
+		const filename = path.join('src', `${this.options.name}.cpp`);
+		await processTemplate({
+			templatePath: this.templatePath(path.join('src', 'library.cpp')),
+			destinationPath: this.destinationPath(filename),
+			options: this.options
+		});
+		this.stdout.write(`Created ${filename}${os.EOL}`);
+
+		const libraryFileName = path.join('src', `${this.options.name}.h`);
+		await processTemplate({
+			templatePath: this.templatePath(path.join('src', 'library.h')),
+			destinationPath: this.destinationPath(libraryFileName),
+			options: this.options
+		});
+		this.stdout.write(`Created ${libraryFileName}${os.EOL}`);
+
+		const exampleFileName = path.join('examples', 'usage', 'usage.ino');
+		await processTemplate({
+			templatePath: this.templatePath(exampleFileName),
+			destinationPath: this.destinationPath(exampleFileName),
+			options: this.options
+		});
+		this.stdout.write(`Created ${exampleFileName}${os.EOL}`);
+
 	}
 
-	get writing() {
-		return {
-			libraryProperties() {
-				this.fs.copyTpl(
-					this.templatePath('library.properties'),
-					this.destinationPath('library.properties'),
-					this.options
-				);
-
-				this.fs.copyTpl(
-					this.templatePath('README.md'),
-					this.destinationPath('README.md'),
-					this.options
-				);
-
-				this.fs.copyTpl(
-					this.templatePath('LICENSE'),
-					this.destinationPath('LICENSE'),
-					this.options
-				);
-
-				const filename = `src/${this.options.name}.cpp`;
-				this.fs.copyTpl(
-					this.templatePath('src/library.cpp'),
-					this.destinationPath(filename),
-					this.options
-				);
-
-				this.fs.copyTpl(
-					this.templatePath('src/library.h'),
-					this.destinationPath(`src/${this.options.name}.h`),
-					this.options
-				);
-
-				this.fs.copyTpl(
-					this.templatePath('examples/usage/usage.ino'),
-					this.destinationPath('examples/usage/usage.ino'),
-					this.options
-				);
-			}
-		};
+	async run({ options } = {}) {
+		this.options = options || {};
+		await this._prompt();
+		await this.write();
 	}
-};
-
-export function buildLibraryInitGeneratorClass() {
-	const gen = require('yeoman-generator');
-
-	function sourceRoot() {
-		return path.join(__dirname, 'init', 'templates');
-	}
-
-	/**
-	 * Yeoman generator that provides library initialize
-	 * functionality to create a new library in the file system.
-	 *
-	 */
-	class LibraryInitGenerator extends LibraryInitGeneratorMixin(gen) { // eslint-disable-line new-cap
-
-		constructor(...args) {
-			super(...args);  			/* istanbul ignore next: coverage bug? */
-			this.sourceRoot(sourceRoot());
-			this._initializeOptions();
-			this._checkFields();
-		}
-
-		// It looks like yeoman is expecting the getters specifically on this
-		// rather than on super.
-		get prompting() {
-			return super.prompting;
-		}
-
-		get writing() {
-			return super.writing;
-		}
-	}
-
-	// provide the directory unambiguously for external tests since npm link and other
-	// packaging tricks can mean external code can end up using the wrong directory
-	LibraryInitGenerator.sources = sourceRoot();
-
-	return LibraryInitGenerator;
 }
-
 
 // keep all branches  of the ES6 transpilled code executed
 /* istanbul ignore next: not executed on node 7 */
