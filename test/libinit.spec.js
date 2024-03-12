@@ -77,7 +77,7 @@ describe('library initialize', function doit() {
 			const sut = new LibraryInitGenerator({ prompt: prompt.resolves(), stdout: { write: sinon.stub() } });
 			sut._destinationRoot = TEMP_PATH;
 			await sut.run({ options: testData });
-			expect(sut.prompt).to.have.been.calledWith([]);
+			expect(sut.prompt).to.not.have.been.called;
 			validateOutput();
 		});
 

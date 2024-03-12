@@ -196,7 +196,10 @@ export class LibraryInitGenerator {
 		this._setYear();
 		this._setOutputDir();
 		const prompt = this._allPrompts();
-		return this.prompt(prompt).then((data) => this._handlePrompts(data));
+		if (prompt.length) {
+			return this.prompt(prompt).then((data) => this._handlePrompts(data));
+		}
+		return this._handlePrompts({});
 	}
 
 	async write() {
