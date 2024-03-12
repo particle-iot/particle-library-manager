@@ -235,8 +235,8 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	}
 
 	extractNames(libs) {
-		let result = [];
-		for (let lib of libs) {
+		const result = [];
+		for (const lib of libs) {
 			const name = this.extractName(lib);
 			result.push(name);
 		}

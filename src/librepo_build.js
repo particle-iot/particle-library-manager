@@ -40,7 +40,7 @@ export class BuildLibrary extends AbstractLibrary{
 
 	tabsToFiles(tabs) {
 		const files = [];
-		for (let tab of tabs) {
+		for (const tab of tabs) {
 			files.push(this.tabToFile(tab));
 		}
 		return files;
@@ -74,11 +74,11 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	fetch(name) {
-		return this.get(this.root+this.dot_json, { name }).then(libs => this._buildLibrary(name, libs));
+		return this.get(this.root + this.dot_json, { name }).then(libs => this._buildLibrary(name, libs));
 	}
 
 	_buildLibrary(name, libs) {
-		if (libs.length!==1) {
+		if (libs.length !== 1) {
 			throw new LibraryNotFoundError(this, name);
 		}
 		const metadata = libs[0];
@@ -90,7 +90,7 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	names() {
-		return this.index().then((libs)=>{
+		return this.index().then((libs) => {
 			return this.extractNames(libs);
 		});
 	}
@@ -104,7 +104,7 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	 * @returns {Array} of library metadata. The format is specific to the version of the library.
 	 */
 	index() {
-		return this.get(this.root+this.dot_json);
+		return this.get(this.root + this.dot_json);
 	}
 
 	get(resource, args) {

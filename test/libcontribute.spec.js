@@ -189,7 +189,7 @@ describe('LibraryContributor', () => {
 		});
 
 		for (const key of Object.keys(results)) {
-			it((results[key] ? 'allows' : 'rejects') + ' the file '+key, () => {
+			it((results[key] ? 'allows' : 'rejects') + ' the file ' + key, () => {
 				const listener = sinon.stub();
 				sut.on('file', listener);
 				const ignored = !results[key];
@@ -260,7 +260,9 @@ describe('LibraryContributor', () => {
 			const verify = (result) => {
 				expect(sut._buildValidatePromise).to.have.been.calledWith(libraryName);
 				expect(sut._buildNotifyPromise).to.have.been.calledWith(callback, 'validatingLibrary', validatePromise, libraryDirectory);
-				expect(sut._doContributeDirect).to.have.been.calledWith(callback, libraryName, libraryDirectory, dryRun);
+				expect(sut._doContributeDirect).to.have.been.calledWith(
+					callback, libraryName, libraryDirectory, dryRun
+				);
 				expect(result).equals(expectedResult);
 			};
 

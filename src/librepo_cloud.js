@@ -91,9 +91,9 @@ export class CloudLibrary extends AbstractLibrary{
 						// call next when you are done with this entry
 						const fqname = path.join(dir, header.name);
 
-						if (header.type==='directory') {
+						if (header.type === 'directory') {
 							createDir(fqname, callback);
-						} else if (header.type==='file') {
+						} else if (header.type === 'file') {
 							createDir(path.dirname(fqname), () => {
 								const write = fs.createWriteStream(fqname);
 								write.on('open', () => {
@@ -127,7 +127,7 @@ export class CloudLibraryRepository extends AbstractLibraryRepository {
 	/**
 	 * @param {String} endpoint The root of the library API.
 	 */
-	constructor({ auth=undefined, client = new Particle().client({ auth }) }) {
+	constructor({ auth = undefined, client = new Particle().client({ auth }) }) {
 		super();
 		this.api = client.api;
 		this.client = client;
