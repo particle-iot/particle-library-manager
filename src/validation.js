@@ -241,13 +241,13 @@ export function formatValidationError(key, message) {
 
 export function formatValidationErrors(results) {
 	const errors = [];
-	for (let key in results.errors) {
+	for (const key in results.errors) {
 		const value = results.errors[key];
 		errors.push(formatValidationError(key, value));
 	}
 	return errors;
 }
 
-export function validationMessage(results, separator='\n') {
+export function validationMessage(results, separator = '\n') {
 	return formatValidationErrors(results).join(separator);
 }

@@ -45,7 +45,7 @@ describe('Build', () => {
 			expect(sut).eventually.reject;
 		});
 
-		it('fetches library names', sinon.test(()=> {
+		it('fetches library names', sinon.test(() => {
 			const sut = new BuildLibraryRepository({ endpoint: 'abc.com/' });
 			const index = sinon.stub(sut, 'index');
 			index.returns(Promise.resolve([{ title: 'lib1' }, { title: 'lib2' }]));
