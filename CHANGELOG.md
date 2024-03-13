@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0 - 13 Mar 2024
+
+- Remove Yeoman dependency and use own template engine
+
 ## 0.1.15 - 16 May 2023
 
 - Fix implementation of library upload so it works in Node 16
