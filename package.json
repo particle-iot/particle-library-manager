@@ -88,8 +88,8 @@
     "source-map-support": "^0.4.0",
     "timekeeper": "^1.0.0",
     "yeoman-assert": "^3.0.0",
-    "yeoman-generator": "^1.1.0",
-    "yeoman-test": "^1.4.0"
+    "yeoman-generator": "^7.1.1",
+    "yeoman-test": "^8.2.0"
   },
   "pre-commit": [
     "lint",
