@@ -22,7 +22,7 @@ The module provides library management:
 
 # Development Deets
 
-- Node >=0.10.33
+- Node >= 16
 - ECMA 2015
 - full unit test coverage, xtensive use of stubbing for focused unit tests.
 - integration tests (these require access to a running instance of Build.)
