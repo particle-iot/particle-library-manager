@@ -591,7 +591,7 @@ describe('File System Mock', () => {
 			it('rejects a library layout when expected location is a file', () => {
 				const sut = new FileSystemLibraryRepository('mydir');
 				const name = 'whatever';
-				fs.writeFileSync(path.join('mydir', name, ''));
+				fs.writeFileSync(path.join('mydir', name), '');
 				return expect(sut.getLibraryLayout(name))
 					.to.eventually.be.rejected.deep.equal(new LibraryNotFoundError(sut, name));
 			});
@@ -838,10 +838,10 @@ describe('File System Mock', () => {
 			// given
 			fs.mkdirSync('mydir/lib');
 			fs.mkdirSync('mydir/headers');
-			fs.writeFileSync('mydir/header1.h');
-			fs.writeFileSync('mydir/header2.h');
-			fs.writeFileSync('mydir/lib/header1.h');
-			fs.writeFileSync('mydir/headers/lib.h');
+			fs.writeFileSync('mydir/header1.h', '');
+			fs.writeFileSync('mydir/header2.h', '');
+			fs.writeFileSync('mydir/lib/header1.h', '');
+			fs.writeFileSync('mydir/headers/lib.h', '');
 
 			function fileExists(name, content) {
 				expect(fs.statSync(name).isFile()).to.be.true;
