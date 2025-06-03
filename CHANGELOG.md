@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 - 3 June 2025
+
+- Upgrade particle-api-js to remove github.com/spark dependency
+
 ## 1.0.0 - 13 Mar 2024
 
 - Remove Yeoman dependency and use own template engine
