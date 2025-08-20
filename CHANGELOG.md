@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 - 20 Aug 2025
+
+- Clarify license is Apache 2.0
+
 ## 1.0.1 - 3 June 2025
 
 - Upgrade particle-api-js to remove github.com/spark dependency
