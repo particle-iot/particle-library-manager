@@ -75,7 +75,7 @@
     "doctoc": "^1.2.0",
     "doctrine": "^2.0.0",
     "es6-promise": "^4.0.5",
-    "eslint": "^3.15.0",
+    "eslint": "^8.57.0",
     "eslint-config-particle": "^2.0.0",
     "mocha": "^3.0.2",
     "mock-fs": "^5.5.0",
@@ -88,7 +88,7 @@
     "source-map-support": "^0.4.0",
     "timekeeper": "^1.0.0",
     "yeoman-assert": "^3.0.0",
-    "yeoman-generator": "^1.1.0",
+    "yeoman-generator": "^7.1.1",
     "yeoman-test": "^1.4.0"
   },
   "pre-commit": [
