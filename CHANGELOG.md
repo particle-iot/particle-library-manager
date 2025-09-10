@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.0.3 - 20 Aug 2025
+## 1.0.4 - 10 Sep 2025
+
+- Fix compilation script before publishing new version
+
+## 1.0.3 - 10 Sep 2025
 
 - Update particle-api-js version to fix security warning
 
