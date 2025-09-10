@@ -16,7 +16,7 @@ describe('Build', () => {
 			const sut = new BuildLibraryRepository({ endpoint: 'abc.com/' });
 			const agent = sinon.stub(sut.agent);
 			agent.get.returns(Promise.reject('unknown args'));
-			agent.get.withArgs('abc.com/libs.json').returns(Promise.resolve({ body: '123' }));
+			agent.get.withArgs({ uri: 'abc.com/libs.json', query: undefined }).returns(Promise.resolve({ body: '123' }));
 			return expect(sut.index()).to.eventually.equal('123');
 		}));
 

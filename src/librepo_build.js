@@ -88,8 +88,8 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 		return this.get(this.root + this.dot_json);
 	}
 
-	get(resource, args) {
-		return this.agent.get(this.qualify(resource), undefined, args).then(result => result.body);
+	get(resource, query) {
+		return this.agent.get({ uri: this.qualify(resource), query }).then(result => result.body);
 	}
 
 	qualify(uri) {
