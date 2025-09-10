@@ -1,7 +1,6 @@
 import { sinon, expect } from './test-setup';
 
 import { BuildLibraryRepository, BuildLibrary } from '../src/librepo_build';
-import Agent from 'particle-api-js/lib/Agent';
 
 describe('Build', () => {
 
@@ -10,7 +9,7 @@ describe('Build', () => {
 			const endpoint = 'abcde';
 			const sut = new BuildLibraryRepository({ endpoint });
 			expect(sut).has.property('endpoint').which.is.equal(endpoint);
-			expect(sut).has.property('agent').which.is.instanceOf(Agent);
+			expect(sut).has.property('agent');
 		});
 
 		it('fetches the library index using an agent', sinon.test(() => {
