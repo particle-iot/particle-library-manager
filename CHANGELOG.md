@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3 - 20 Aug 2025
+
+- Update particle-api-js version to fix security warning
+
 ## 1.0.2 - 20 Aug 2025
 
 - Clarify license is Apache 2.0
