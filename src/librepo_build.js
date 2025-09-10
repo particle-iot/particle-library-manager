@@ -1,5 +1,5 @@
 import { AbstractLibraryRepository, LibraryNotFoundError, MemoryLibraryFile, AbstractLibrary } from './librepo';
-import Agent from 'particle-api-js/lib/Agent';
+import Particle from 'particle-api-js';
 import { LibraryFormatError } from './librepo';
 
 /**
@@ -49,7 +49,7 @@ export class BuildLibraryRepository extends AbstractLibraryRepository {
 	constructor({ endpoint }) {
 		super();
 		this.endpoint = endpoint;
-		this.agent = new Agent();
+		this.agent = new Particle().agent;
 		this.root = 'libs';
 		this.dot_json = '.json';
 	}
