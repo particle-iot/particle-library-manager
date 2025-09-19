@@ -18,7 +18,7 @@ export class DependencyResolverSession {
 		this.repo = libraryRepo;
 	}
 
-	dependencies(dependency) {
+	dependencies(_dependency) {
 
 	}
 }
@@ -33,11 +33,11 @@ export class DependencyResolver {
 
 	/**
 	 * Determines the transitive closure of dependencies from a given set of roots.
-	 * @param {object} session   The dependency resolution session
-	 * @param {Array<object>} roots     The dependency roots.
+	 * @param {object} _session   The dependency resolution session
+	 * @param {Array<object>} _roots     The dependency roots.
 	 * @returns {object} something to please the linter
 	 */
-	collectDependencies(session, roots) {
+	collectDependencies(_session, _roots) {
 		// iterate across the list of roots
 		// for each root, fetch the subdependencies and add any that don't already
 		// exist in the list to the end of the list.
@@ -46,7 +46,7 @@ export class DependencyResolver {
 
 	}
 
-	resolveDependencies(session, dependencies) {
+	resolveDependencies(_session, _dependencies) {
 		// the dependencies are bucketed by library and version
 		// then each version reduced to a single item (the most recent)
 

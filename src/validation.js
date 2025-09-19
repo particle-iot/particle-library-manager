@@ -5,7 +5,7 @@ const REQUIRED_FIELDS = ['name', 'version', 'author', 'sentence'];
 
 const PATTERNS = {
 	name: {
-		pattern: /^[A-Za-z0-9][A-Za-z0-9-_\+]*$/,
+		pattern: /^[A-Za-z0-9][A-Za-z0-9-_+]*$/,
 		message: 'must only contain letters, numbers, dashes, underscores and plus signs.'
 	},
 
@@ -18,7 +18,7 @@ const PATTERNS = {
 
 Object.entries = x =>
 	Object.keys(x).reduce((y, z) =>
-	y.push([z, x[z]]) && y, []);
+		y.push([z, x[z]]) && y, []);
 
 /**
  * Validate one field of the library metadata
@@ -192,11 +192,11 @@ function _validateLibraryFiles(repo, libraryName) {
 	};
 
 	return _mainSourceName(repo, libraryName)
-		.then((mainSourceName) => {
+		.then((_mainSourceName) => {
 			// Match Windows and UNIX paths
 			// todo - factor out the regex (it's copied from PATTERNS.name.pattern without the start/end match)
 			//requiredFiles['main source'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.cpp', 'i');
-			requiredFiles['main header'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_\+]*.h', 'i');
+			requiredFiles['main header'] = new RegExp('src[/\\\\][A-Za-z0-9][A-Za-z0-9-_+]*.h', 'i');
 		})
 		.then(() => _libraryFiles(directory))
 		.then((files) => {

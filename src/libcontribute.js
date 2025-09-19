@@ -29,7 +29,7 @@ export class LibraryContributor extends EventEmitter {
 	_isdirectory(name) {
 		try {
 			return fs.statSync(name).isDirectory();
-		} catch (error) {
+		} catch (_error) {
 			return false;
 		}
 	}
