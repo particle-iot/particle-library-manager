@@ -23,4 +23,3 @@ export async function processTemplate ({ templatePath, destinationPath, options 
 	await fse.ensureDir(path.dirname(destinationPath));
 	await fs.writeFile(destinationPath, file);
 }
-
