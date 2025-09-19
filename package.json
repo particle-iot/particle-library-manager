@@ -16,7 +16,7 @@
     "manager"
   ],
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "config": {
     "build-url": "https://build.particle.io"
