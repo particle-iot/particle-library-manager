@@ -4,7 +4,7 @@ export default [
 	...particle({
 		rootDir: import.meta.dirname,
 		testGlobals: 'mocha',
-		globalIgnores: ['dist']
+		globalIgnores: ['dist', 'coverage']
 	}),
 	{
 		languageOptions: {
