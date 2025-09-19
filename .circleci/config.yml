@@ -19,8 +19,14 @@ jobs:
           name: NPM install
           command: npm ci
       - run:
-          name: Run tests
-          command: npm run test-ci
+          name: Lint
+          command: npm run lint
+      - run:
+          name: Tests
+          command: npm run test
+      - run:
+          name: Coverage
+          command: npm run coverage
       - store_artifacts:
           path: coverage
   publish-npm:
