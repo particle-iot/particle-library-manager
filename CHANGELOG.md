@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5 - 19 Sep 2025
+
+- Add CI
+- Bump to node 22
+- Upgrade to latest eslint
+
 ## 1.0.4 - 10 Sep 2025
 
 - Fix compilation script before publishing new version
