@@ -246,7 +246,7 @@ describe('File System Mock', () => {
 		});
 	});
 
-	describe('Library Repository', () => {      // eslint-disable-line max-statements
+	describe('Library Repository', () => {
 		it('constructor adds trailing slash when missing', () => {
 			const dir = '';
 			const sut = new FileSystemLibraryRepository(dir);
@@ -389,7 +389,7 @@ describe('File System Mock', () => {
 						libFiles(lib, 'mydir')
 					]);
 				}
-			);
+				);
 
 			return result;
 		});

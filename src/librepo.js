@@ -109,7 +109,7 @@ export class LibraryFile {
 	}
 
 	content(stream) {
-		return new Promise((fulfill, reject) => {
+		return new Promise((fulfill, _reject) => {
 			stream.end();
 			fulfill(stream);
 		});
@@ -201,7 +201,7 @@ export class AbstractLibraryRepository extends LibraryRepository {
 	 * @param {AbstractLibrary} lib The library to retrieve files for
 	 * @returns {Array.<LibraryFile>}   The files for the library.
 	 */
-	files(lib) {
+	files(_lib) {
 		return Promise.resolve([]);
 	}
 

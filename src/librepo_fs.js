@@ -77,7 +77,7 @@ export class NamingStrategy {
 	 * @return {string} An identifier for this library, derived from the library metadata.
 	 * @abstract
 	 */
-	toName(metadata) {
+	toName(_metadata) {
 		throw new Error('not implemented');
 	}
 
@@ -98,7 +98,7 @@ export class NamingStrategy {
 				// todo - map directory names back to the library name (if some encoding is used.)
 				return stat(filePath)
 					.then(stat => stat.isFile())
-					.catch(error => false);
+					.catch(_error => false);
 			});
 
 			return Promise.all(libPromises).then(isLib => {
@@ -143,7 +143,7 @@ class LibraryDirectStrategy extends NamingStrategy {
 	 * @returns {string} The filesystem name of the corresponding logical library name.
 	 *
 	 */
-	nameToFilesystem(name) {
+	nameToFilesystem(_name) {
 		return '';
 	}
 
@@ -668,7 +668,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		const v1 = path.join(libdir, firmwareDir);
 		const v2 = path.join(libdir, srcDir);
 		const self = this;
-		function mapper(stat, source, filePath) {
+		function mapper(stat, source, _filePath) {
 			if (stat.isFile()) {
 				return self.migrateSource(name, source, v1, v2);
 			}
@@ -743,6 +743,8 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 	}
 
 	escapeRegExp(str) {
+		// These are in square brackets and likely shouldn't need to be escaped, but I don't want to test it right now
+		// eslint-disable-next-line no-useless-escape
 		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
 	}
 
@@ -770,7 +772,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 		return desc;
 	}
 
-	_requireV2Format(libname) {
+	_requireV2Format(_libname) {
 		return new LibraryRepositoryError(this, 'the library should be in v2 format before adapters can be added.');
 	}
 
@@ -835,7 +837,7 @@ export class FileSystemLibraryRepository extends AbstractLibraryRepository {
 			ignore.push(targetdir);
 			const writeFile = promisify(fs.writeFile);
 			const relative = path.relative(targetdir, srcdir);
-			const handleFile = (stat, file, filePath) => {
+			const handleFile = (stat, file, _filePath) => {
 				if (stat.isDirectory()) {
 					return self._addAdaptersImpl(callback, path.join(targetdir, file), path.join(srcdir, file), ignore);
 				} else {
@@ -1003,7 +1005,7 @@ class LibraryExample {
 	 * @private
 	 */
 	_addDirectory(files, source, destination, subdir = '') {
-		function mapper(stat, file, filePath) {
+		function mapper(stat, file, _filePath) {
 			const traversePath = path.join(subdir, file);
 			const sourcePath = path.join(source, traversePath);             // the path to the source file
 			const destinationPath = path.join(destination, traversePath);   // the path to the destination file
@@ -1052,7 +1054,7 @@ class LibraryExample {
 
 		if (!mandatory) {
 			// chomp chomp
-			promise = promise.catch(error => 0);
+			promise = promise.catch((_err) => 0);
 		}
 		return promise;
 	}

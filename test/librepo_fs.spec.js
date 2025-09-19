@@ -91,7 +91,7 @@ describe('File System', () => {
 		return sut.setLibraryLayout(name, 2).then(() => {
 			const comp2 = dircomp.compareSync(libdir, v2data, { compareContent:true });
 			if (!comp2.same) {
-//				const unequal = comp2.diffSet.filter(item => item.state!=='equal');
+				//				const unequal = comp2.diffSet.filter(item => item.state!=='equal');
 			}
 			expect(comp2.same).to.be.true;
 		});
@@ -196,7 +196,7 @@ describe('File System', () => {
 		// disabling broken tests
 		xit('can attempt to publish from a repo as a dry run', () => {
 			const repo = new FileSystemLibraryRepository('mydir');
-			return expect(repo.contribute('abcd', {}, true, () => arguments[1])).to.eventually.be.rejected;
+			return expect(repo.contribute('abcd', {}, true, (_, secondArg) => secondArg)).to.eventually.be.rejected;
 		});
 	});
 

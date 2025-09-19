@@ -6,8 +6,7 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 const mockfs = require('mock-fs');
-import {CloudLibraryRepository} from '../src/librepo_cloud'
-import {FileSystemLibraryRepository} from "../src/librepo_fs";
+import { CloudLibraryRepository } from '../src/librepo_cloud';
 
 /*
 const config = {
@@ -32,7 +31,7 @@ function createRepo() {
 const auth = 'a1756ba10078bfacd21a26d68c1a6bb2274e565a';
 
 function createRepo() {
-	return new CloudLibraryRepository({auth});
+	return new CloudLibraryRepository({ auth });
 }
 
 

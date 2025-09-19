@@ -6,35 +6,35 @@ const chai = require('chai');
 chai.use(require('chai-as-promised'));
 const expect = chai.expect;
 
-import {BuildLibraryRepository} from '../src/librepo_build.js'
+import { BuildLibraryRepository } from '../src/librepo_build.js';
 
 const config = {
 	endpoint: 'http://build.particle.io/',
 	lib_names: ['neopixel'],
-	lib_unknown: "$$!!@@"
+	lib_unknown: '$$!!@@'
 };
 
 
-describe('BuildLibraryRepository', function build()  {
+describe('BuildLibraryRepository', function build() {
 	this.timeout(10000);
 
-	xit("can fetch names", () => { // TODO (hmontero) fix this test
-		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+	xit('can fetch names', () => { // TODO (hmontero) fix this test
+		const sut = new BuildLibraryRepository({ endpoint: config.endpoint });
 		const promise = sut.names().then((result) => {
 			expect(result).to.have.length.greaterThan(0);
 			expect(result).instanceOf(Array);
-			for (let title of result) {
+			for (const title of result) {
 				expect(typeof title).to.be.equal('string');
 			}
-			for (let name of config.lib_names) {
+			for (const name of config.lib_names) {
 				expect(result).contains(name);
 			}
 		});
 		return promise;
 	});
 
-	xit("can fetch libraries", () => { // TODO (hmontero) fix this test
-		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+	xit('can fetch libraries', () => { // TODO (hmontero) fix this test
+		const sut = new BuildLibraryRepository({ endpoint: config.endpoint });
 		const name = config.lib_names[0];
 		const promise = sut.fetch(name).then((lib) => {
 			expect(lib).has.property('name').that.is.equal(name);
@@ -42,18 +42,18 @@ describe('BuildLibraryRepository', function build()  {
 		return promise;
 	});
 
-	it("raises exception for unknown library", () => {
-		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
-		const promise = sut.fetch(config.lib_unknown).then((lib) => {
-			throw Error("expected failure");
+	it('raises exception for unknown library', () => {
+		const sut = new BuildLibraryRepository({ endpoint: config.endpoint });
+		const promise = sut.fetch(config.lib_unknown).then((_lib) => {
+			throw Error('expected failure');
 		}).catch((error) => {
 			expect(error.name).to.be.string('LibraryNotFoundError');
 		});
 		return promise;
 	});
 
-	xit("can fetch library descriptor", () => { // TODO (hmontero) fix this test
-		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+	xit('can fetch library descriptor', () => { // TODO (hmontero) fix this test
+		const sut = new BuildLibraryRepository({ endpoint: config.endpoint });
 		const name = config.lib_names[0];
 		const promise = sut.fetch(name)
 			.then(lib => lib.definition())
@@ -65,14 +65,14 @@ describe('BuildLibraryRepository', function build()  {
 		return promise;
 	});
 
-	xit("can fetch library files", () => { // TODO (hmontero) fix this test
-		const sut = new BuildLibraryRepository({endpoint: config.endpoint});
+	xit('can fetch library files', () => { // TODO (hmontero) fix this test
+		const sut = new BuildLibraryRepository({ endpoint: config.endpoint });
 		const name = config.lib_names[0];
 		const promise = sut.fetch(name)
 			.then(lib => lib.files())
 			.then(files => {
 				expect(files).has.length.greaterThan(0);
-				for (let file of files) {
+				for (const file of files) {
 					expect(file).has.property('id');
 					expect(file).has.property('extension');
 					expect(file).has.property('kind');
