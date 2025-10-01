@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.6-rc.0 - 1 Oct 2025
+## 1.0.6 - 1 Oct 2025
 -  Simplify publish contents
 
 ## 1.0.5 - 19 Sep 2025
