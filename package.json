@@ -1,7 +1,7 @@
 {
   "name": "particle-library-manager",
   "description": "particle library management package",
-  "version": "1.0.5",
+  "version": "1.0.6-rc.0",
   "author": "mat@particle.io",
   "repository": {
     "type": "git",
@@ -22,6 +22,13 @@
     "build-url": "https://build.particle.io"
   },
   "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "src",
+    "resources",
+    "approot.js",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "babel-watch": "babel src -d dist --watch --source-maps",
     "integration": "mocha integration/ -R spec --compilers js:babel-register",
