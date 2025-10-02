@@ -1,14 +1,7 @@
 import { particle } from 'eslint-config-particle';
 
-export default [
-	...particle({
-		rootDir: import.meta.dirname,
-		testGlobals: 'mocha',
-		globalIgnores: ['dist', 'coverage']
-	}),
-	{
-		languageOptions: {
-			sourceType: 'module'
-		}
-	}
-];
+export default particle({
+	rootDir: import.meta.dirname,
+	sourceType: 'module',
+	testGlobals: 'mocha'
+});
