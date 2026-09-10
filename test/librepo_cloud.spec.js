@@ -1,12 +1,51 @@
 const fs = require('fs');
 const path = require('path');
 const mockfs = require('mock-fs');
+const tar = require('tar-stream');
+const zlib = require('zlib');
 require('es6-promise').polyfill();
 require('promise.prototype.finally');
 
 import { expect, sinon } from './test-setup';
 import { CloudLibraryRepository } from '../src/librepo_cloud';
 import { CloudLibrary } from '../src/librepo_cloud';
+
+// Build a gzipped tar buffer from an ordered list of entries. Unlike `tar c`
+// over a real directory, this can emit a crafted sequence (e.g. a traversing
+// name, or a symlink followed by a file that walks through it) used to exercise
+// the extraction hardening in CloudLibrary.copyTo.
+function makeTarGz(entries) {
+	return new Promise((fulfill, reject) => {
+		const pack = tar.pack();
+		const add = (i) => {
+			if (i >= entries.length) {
+				return pack.finalize();
+			}
+			const entry = entries[i];
+			const header = { name: entry.name, type: entry.type || 'file' };
+			if (entry.linkname) {
+				header.linkname = entry.linkname;
+			}
+			const next = (err) => (err ? reject(err) : add(i + 1));
+			if (header.type === 'file') {
+				pack.entry(header, entry.data || '', next);
+			} else {
+				pack.entry(header, next);
+			}
+		};
+		const chunks = [];
+		const gzip = zlib.createGzip();
+		pack.pipe(gzip);
+		gzip.on('data', (chunk) => chunks.push(chunk));
+		gzip.on('end', () => fulfill(Buffer.concat(chunks)));
+		gzip.on('error', reject);
+		add(0);
+	});
+}
+
+function libraryFrom(buffer) {
+	return new CloudLibrary('malicious', { download: () => Promise.resolve(buffer) });
+}
 
 
 
@@ -105,9 +144,49 @@ describe('CloudLibraryRepository', () => {
 			});
 	});
 
-	it('ignores symlinks ', () => {
-		// todo - build a tar.gz containing symblinks
+	it('rejects an archive entry whose name traverses outside the target directory', () => {
+		// dir=/newlib, entry '../PWNED' -> path.join collapses to /PWNED, outside the target
+		return makeTarGz([
+			{ name: 'src/lib.h', data: '// ok\n' },
+			{ name: '../PWNED', data: 'attacker-controlled\n' }
+		]).then((buffer) => {
+			mockfs({ '/':{} });
+			return libraryFrom(buffer).copyTo('/newlib').then(
+				() => {
+					throw new Error('expected copyTo to reject');
+				},
+				(err) => {
+					expect(err.message).to.match(/escapes target directory/);
+				}
+			).then(() => {
+				expect(fs.existsSync('/PWNED')).to.equal(false);
+				mockfs.restore();
+			}, (err) => {
+				mockfs.restore();
+				throw err;
+			});
+		});
+	});
 
+	it('does not follow a symlink entry to write outside the target directory', () => {
+		// A symlink 'link' -> /outside, then a file 'link/PWNED' that would walk
+		// through it. The symlink entry is skipped, so 'link' is created as a
+		// real directory inside the target and the file lands there, never in
+		// /outside.
+		return makeTarGz([
+			{ name: 'link', type: 'symlink', linkname: '/outside' },
+			{ name: 'link/PWNED', data: 'attacker-controlled\n' }
+		]).then((buffer) => {
+			mockfs({ '/outside':{} });
+			return libraryFrom(buffer).copyTo('/newlib').then(() => {
+				expect(fs.existsSync('/newlib/link/PWNED')).to.equal(true);
+				expect(fs.existsSync('/outside/PWNED')).to.equal(false);
+				mockfs.restore();
+			}, (err) => {
+				mockfs.restore();
+				throw err;
+			});
+		});
 	});
 
 

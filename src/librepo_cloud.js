@@ -53,6 +53,12 @@ export class CloudLibrary extends AbstractLibrary{
 				};
 				return new Promise((fulfill, reject) => {
 					const extract = tar.extract();
+					const closed = [];
+
+					function settle(action) {
+						return (arg) => Promise.all(closed).then(() => action(arg), () => action(arg));
+					}
+					const fail = settle(reject);
 
 					// for some reason this function doesn't get tracked for coverage
 					/* istanbul ignore next */
@@ -60,7 +66,7 @@ export class CloudLibrary extends AbstractLibrary{
 						function createDir(dir, callback) {
 							mkdirp(dir, (err) => {
 								if (err) {
-									reject(err);
+									fail(err);
 								} else {
 									callback();
 								}
@@ -72,13 +78,23 @@ export class CloudLibrary extends AbstractLibrary{
 						// call next when you are done with this entry
 						const fqname = path.join(dir, header.name);
 
+						// Prevent path traversal: a crafted library archive can name an
+						// entry `../../foo` which path.join collapses to a path outside dir.
+						const root = path.resolve(dir) + path.sep;
+						if (path.resolve(fqname) !== path.resolve(dir) && !path.resolve(fqname).startsWith(root)) {
+							stream.resume();
+							extract.destroy();
+							return fail(new Error(`Library archive entry escapes target directory: ${header.name}`));
+						}
+
 						if (header.type === 'directory') {
 							createDir(fqname, callback);
 						} else if (header.type === 'file') {
 							createDir(path.dirname(fqname), () => {
 								const write = fs.createWriteStream(fqname);
+								closed.push(new Promise((resolve) => write.on('close', resolve)));
 								write.on('open', () => {
-									write.on('error', reject);
+									write.on('error', fail);
 									stream.pipe(write);
 									stream.on('end', () => {
 										callback();     // ready for next entry
@@ -92,7 +108,7 @@ export class CloudLibrary extends AbstractLibrary{
 					}
 
 					extract.on('entry', handleEntry);
-					extract.on('finish', fulfill);
+					extract.on('finish', settle(fulfill));
 					read.pipe(gunzip()).pipe(extract);
 				}).then(() => self);
 			});
