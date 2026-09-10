@@ -152,8 +152,12 @@ describe('CloudLibraryRepository', () => {
 		]).then((buffer) => {
 			mockfs({ '/':{} });
 			return libraryFrom(buffer).copyTo('/newlib').then(
-				() => { throw new Error('expected copyTo to reject'); },
-				(err) => { expect(err.message).to.match(/escapes target directory/); }
+				() => {
+					throw new Error('expected copyTo to reject');
+				},
+				(err) => {
+					expect(err.message).to.match(/escapes target directory/);
+				}
 			).then(() => {
 				expect(fs.existsSync('/PWNED')).to.equal(false);
 				mockfs.restore();
