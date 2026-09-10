@@ -1,7 +1,7 @@
 {
   "name": "particle-library-manager",
   "description": "particle library management package",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "author": "mat@particle.io",
   "repository": {
     "type": "git",

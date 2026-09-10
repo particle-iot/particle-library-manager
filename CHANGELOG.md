@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.7 - 10 Sep 2026
+- Avoid path traversal
+
 ## 1.0.6 - 1 Oct 2025
 -  Simplify publish contents
 
