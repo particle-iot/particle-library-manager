@@ -170,13 +170,16 @@ describe('CloudLibraryRepository', () => {
 
 	it('does not follow a symlink entry to write outside the target directory', () => {
 		// A symlink 'link' -> /outside, then a file 'link/PWNED' that would walk
-		// through it. The symlink entry must not be created and honoured.
+		// through it. The symlink entry is skipped, so 'link' is created as a
+		// real directory inside the target and the file lands there, never in
+		// /outside.
 		return makeTarGz([
 			{ name: 'link', type: 'symlink', linkname: '/outside' },
 			{ name: 'link/PWNED', data: 'attacker-controlled\n' }
 		]).then((buffer) => {
 			mockfs({ '/outside':{} });
-			return libraryFrom(buffer).copyTo('/newlib').catch(() => {}).then(() => {
+			return libraryFrom(buffer).copyTo('/newlib').then(() => {
+				expect(fs.existsSync('/newlib/link/PWNED')).to.equal(true);
 				expect(fs.existsSync('/outside/PWNED')).to.equal(false);
 				mockfs.restore();
 			}, (err) => {
