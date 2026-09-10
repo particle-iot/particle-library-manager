@@ -72,6 +72,14 @@ export class CloudLibrary extends AbstractLibrary{
 						// call next when you are done with this entry
 						const fqname = path.join(dir, header.name);
 
+						// Prevent path traversal: a crafted library archive can name an
+						// entry `../../foo` which path.join collapses to a path outside dir.
+						const root = path.resolve(dir) + path.sep;
+						if (path.resolve(fqname) !== path.resolve(dir) && !path.resolve(fqname).startsWith(root)) {
+							stream.resume();
+							return reject(new Error(`Library archive entry escapes target directory: ${header.name}`));
+						}
+
 						if (header.type === 'directory') {
 							createDir(fqname, callback);
 						} else if (header.type === 'file') {
