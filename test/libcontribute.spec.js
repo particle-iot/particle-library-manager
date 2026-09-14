@@ -44,14 +44,17 @@ describe('LibraryContributor', () => {
 		});
 
 		it('tars the directory and contributes', () => {
-			const archiveName = 'archive.tar.gz';
+			// a real file, since the code under test opens a read stream on the archive
+			const archiveName = __filename;
 			sut._targzdir = sinon.stub().resolves(archiveName);
 			sut._contribute = sinon.stub();
 			const dryRun = false;
-			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, dryRun);
+			const whitelist = ['*.*'];
+			const exercise = sut._buildContributePromise(libraryDirectory, libraryName, whitelist, dryRun);
 			const validate = () => {
-				expect(sut._targzdir).to.be.calledWith(libraryDirectory);
+				expect(sut._targzdir).to.be.calledWith(libraryDirectory, whitelist);
 				expect(sut._contribute).to.have.been.calledWith(libraryName);
+				sut._contribute.firstCall.args[1].destroy();
 			};
 			return exercise.then(validate);
 		});

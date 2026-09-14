@@ -109,7 +109,14 @@ export class CloudLibrary extends AbstractLibrary{
 
 					extract.on('entry', handleEntry);
 					extract.on('finish', settle(fulfill));
-					read.pipe(gunzip()).pipe(extract);
+
+					// a corrupt archive errors on whichever stage first chokes on it;
+					// without these the error is thrown uncaught and copyTo never settles
+					const unzip = gunzip();
+					read.on('error', fail);
+					unzip.on('error', fail);
+					extract.on('error', fail);
+					read.pipe(unzip).pipe(extract);
 				}).then(() => self);
 			});
 	}

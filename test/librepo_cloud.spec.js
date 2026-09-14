@@ -192,11 +192,10 @@ describe('CloudLibraryRepository', () => {
 
 	describe('mockfs', () => {
 		it('fails when the tar.gz is not valid', () => {
-			const buffer = new Buffer(2000);
-			buffer.fill(0);
+			const buffer = Buffer.alloc(2000);
 			const lib = { download: sinon.stub().returns(Promise.resolve(buffer)) };
 			const sut = new CloudLibrary('abcd', lib);
-			expect (sut.copyTo('tmp')).to.eventually.reject;
+			return expect(sut.copyTo(require('tmp').dirSync().name)).to.eventually.be.rejected;
 		});
 
 
