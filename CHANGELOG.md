@@ -1,6 +1,9 @@
 # Changelog
 
-## 1.0.7 - 10 Sep 2026
+## 1.1.1 - 11 Sep 2026
+- No code change. Fix 1.1.0 that was incorrectly tagged as 1.0.7
+
+## 1.1.0 - 10 Sep 2026
 - Avoid path traversal
 
 ## 1.0.6 - 1 Oct 2025
